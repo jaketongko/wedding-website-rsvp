@@ -1,0 +1,12 @@
+# The site has no build step - `public/` is served as-is and every other path is
+# handled by the `inject` edge function, which declares its own routing in
+# netlify/edge-functions/inject.ts.
+
+[build]
+  publish = "public"
+  edge_functions = "netlify/edge-functions"
+
+[[headers]]
+  for = "/_wedding/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"

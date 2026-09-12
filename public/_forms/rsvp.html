@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>RSVP form registration</title>
+  </head>
+  <body>
+    <!--
+      This page exists so Netlify's build-time form detection registers the
+      "rsvp" form. Guests never see it.
+
+      Netlify scans static HTML in the publish directory to discover forms. The
+      real RSVP form is injected into the proxied Canva page at runtime, so it
+      is invisible to that scan - without this file, submissions are rejected
+      with "form not found".
+
+      The field names below MUST stay in sync with the injected form in
+      netlify/lib/rsvp.ts, or submitted values are silently dropped.
+    -->
+    <form name="rsvp" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="rsvp" />
+      <input type="text" name="bot-field" />
+      <input type="text" name="name" />
+      <input type="radio" name="attending" value="yes" />
+      <input type="radio" name="attending" value="no" />
+      <textarea name="dietary"></textarea>
+      <textarea name="message"></textarea>
+    </form>
+  </body>
+</html>
