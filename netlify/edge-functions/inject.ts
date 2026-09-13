@@ -1,5 +1,6 @@
 import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
+import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
 
@@ -134,7 +135,8 @@ export default async function inject(request: Request, _context: Context): Promi
    * pathname meant it was absent on exactly that route, and Canva's broken
    * widget showed through. The script scopes itself to /rsvp at runtime instead.
    */
-  const injected = renderPlayer(nonce) + renderRsvp(nonce) + renderHideCanvaFooter(nonce);
+  const injected =
+    renderPlayer(nonce) + renderRsvp(nonce) + renderHideCanvaFooter(nonce) + renderPetals(nonce);
 
   return new Response(insertBeforeBodyClose(html, injected), {
     status: upstream.status,

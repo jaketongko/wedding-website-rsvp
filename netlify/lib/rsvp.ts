@@ -54,8 +54,9 @@ const FONT_FACES = SEASONS_FACES.map(
 // family name, which matches nothing and drops to the browser default font.
 const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
 
-/** Lavender flower colours: buds darken toward the base of each spike. */
-const LAVENDER = {
+/** Lavender flower colours: buds darken toward the base of each spike. Shared
+ * with the falling petals (petals.ts) so the site uses one lavender. */
+export const LAVENDER = {
   buds: ["#a47fc4", "#b896d4", "#cdb3e4"],
   stem: "#b9c3a0",
   leaf: "#cfd8b9",
