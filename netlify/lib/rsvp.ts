@@ -23,8 +23,36 @@
 
 const ENDPOINT = "/_forms/rsvp.html";
 
-const SERIF = 'Didot, "Bodoni MT", "Cormorant Garamond", Georgia, "Times New Roman", serif';
-const SANS = '"Helvetica Neue", Arial, sans-serif';
+/**
+ * "The Seasons", the invitation's own typeface. Not self-hosted: these are the
+ * files Canva already serves for the design, reached same-origin through the
+ * proxy. The paths are content hashes read from Canva's page data; if the couple
+ * drops the font from the design they disappear and the form falls back to
+ * Georgia. Our own family name avoids colliding with whatever Canva registers.
+ */
+const SEASONS_FACES: Array<[weight: number, style: string, hash: string]> = [
+  [300, "normal", "694ad324e926bca090d158ea2c4730c6"],
+  [300, "italic", "c2db0b6c0c129d362eb609bedbaa8f64"],
+  [400, "normal", "8dcc63e6bd4f6d41561f68dbc75529a1"],
+  [400, "italic", "f9026ee74bca9e958959f14f08c41f48"],
+  [700, "normal", "238919b47920553d7b287ec007d67e76"],
+  [700, "italic", "cfcbcaabc41291782c1541b9c6e97ce8"],
+];
+
+const FONT_FACES = SEASONS_FACES.map(
+  ([weight, style, hash]) => `
+  @font-face {
+    font-family: "SJ The Seasons";
+    src: url("/_assets/fonts/${hash}.woff") format("woff");
+    font-weight: ${weight};
+    font-style: ${style};
+    font-display: swap;
+  }`,
+).join("");
+
+// Interpolated raw: wrapping it in JSON.stringify quotes the whole stack as ONE
+// family name, which matches nothing and drops to the browser default font.
+const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
 
 /**
  * Cherry-blossom petal, drawn around the centre (16,16) of a 32x32 box with the
@@ -81,7 +109,7 @@ const BLOOM = `
   <circle cx="16" cy="16" r="2.3" fill="#fbe0b0"/>
 </svg>`;
 
-const STYLES = `
+const STYLES = `${FONT_FACES}
   #sj-rsvp {
     --sj-ink: #6b5c60;
     /* Dark enough to stay legible at the small, tracked-out label size. */
@@ -99,7 +127,7 @@ const STYLES = `
     display: flex;
     justify-content: center;
     width: 100%;
-    font-family: ${JSON.stringify(SANS)};
+    font-family: ${FONT};
     color: var(--sj-ink);
     -webkit-font-smoothing: antialiased;
   }
@@ -191,11 +219,13 @@ const STYLES = `
   }
   #sj-rsvp .sj-bloom { width: 40px; height: 40px; flex: none; }
   #sj-rsvp .sj-head-text {
-    font-family: ${JSON.stringify(SERIF)};
+    font-family: ${FONT};
     font-size: clamp(1.65rem, 3.6vw, 2.1rem);
     line-height: 1.25;
     letter-spacing: 0.09em;
     text-transform: uppercase;
+    /* The Seasons runs wide; without this a wrap strands "US?" on its own line. */
+    text-wrap: balance;
     color: var(--sj-rose);
   }
   #sj-rsvp .sj-head-rule {
@@ -229,7 +259,7 @@ const STYLES = `
   #sj-rsvp textarea {
     width: 100%;
     padding: 1rem 1.15rem;
-    font-family: ${JSON.stringify(SANS)};
+    font-family: ${FONT};
     font-size: 1.08rem;
     line-height: 1.55;
     color: var(--sj-ink);
@@ -297,7 +327,7 @@ const STYLES = `
     transition: opacity 160ms ease, transform 160ms ease;
   }
   #sj-rsvp .sj-choice-text {
-    font-family: ${JSON.stringify(SERIF)};
+    font-family: ${FONT};
     font-size: 1.26rem;
     line-height: 1.35;
     color: #6f6165;
@@ -326,7 +356,7 @@ const STYLES = `
   #sj-rsvp .sj-submit {
     width: 100%;
     padding: 1.15rem 1.5rem;
-    font-family: ${JSON.stringify(SANS)};
+    font-family: ${FONT};
     font-size: 0.88rem;
     font-weight: 500;
     letter-spacing: 0.26em;
@@ -355,7 +385,7 @@ const STYLES = `
   #sj-rsvp-done .sj-bloom { width: 52px; height: 52px; margin: 0 auto 1.1rem; display: block; }
   #sj-rsvp-done h2 {
     margin: 0 0 0.85rem;
-    font-family: ${JSON.stringify(SERIF)};
+    font-family: ${FONT};
     font-size: clamp(2.1rem, 5.2vw, 2.8rem);
     font-weight: 400;
     letter-spacing: 0.1em;
@@ -375,7 +405,7 @@ const STYLES = `
     transform: translateX(-50%);
     z-index: 2147482000;
     padding: 0.85rem 2.4rem;
-    font-family: ${JSON.stringify(SANS)};
+    font-family: ${FONT};
     font-size: 0.68rem;
     letter-spacing: 0.28em;
     text-transform: uppercase;

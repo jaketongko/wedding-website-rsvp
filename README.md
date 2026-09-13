@@ -83,7 +83,9 @@ Two local-only quirks, neither of which affects production:
 
 ## Deploying
 
-Live at **<https://shan-and-jake.netlify.app>** (site ID `78a72add-74f1-473e-828b-459ad302ae77`).
+Live at **<https://shan-and-jake-wedding-invitation.netlify.app>** (site ID
+`78a72add-74f1-473e-828b-459ad302ae77`). The site was renamed from `shan-and-jake` on
+2026-09-13; Netlify does not redirect an old subdomain, so `shan-and-jake.netlify.app` now 404s.
 
 ```bash
 npm run deploy          # production
@@ -181,6 +183,18 @@ transforms count as scrollable overflow, which reintroduces the scrollbar and le
 nudged when a field takes focus. The card is `overflow: hidden`; the scroller is `.sj-card-inner`.
 
 Those two corners are chosen because the heading occupies top-left and Submit sits bottom-right.
+
+### The font
+
+The form uses **The Seasons**, the invitation's own typeface. It is not self-hosted: `rsvp.ts`
+points `@font-face` at the `.woff` files Canva already serves for the design
+(`/_assets/fonts/<hash>.woff`, same-origin through the proxy). The hashes were read from Canva's page
+data (search the page HTML for `"C":"The Seasons"`). If the couple removes the font from the Canva
+design, those files go away and the form falls back to Georgia; re-read the hashes if that happens.
+
+Interpolate the font stack into the CSS raw. An earlier `JSON.stringify` wrapped the whole stack in
+one pair of quotes, which CSS reads as a single nonexistent family, and every guest saw the browser
+default font instead.
 
 ### Previewing the design
 
