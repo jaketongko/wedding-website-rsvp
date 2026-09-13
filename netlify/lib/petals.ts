@@ -1,5 +1,6 @@
 /**
- * Lavender petals drifting down over every page of the invitation.
+ * Lavender petals drifting down over the invitation, from /main onward. The
+ * cover page (/) stays clean so the petals arrive with the invitation itself.
  *
  * Decoration only, so it must never get in the way: the layer ignores pointer
  * events, sits below the music toggle and the RSVP modal, animates only
@@ -97,18 +98,26 @@ const SCRIPT = `
   }
 
   var observer = null;
-  function mount() {
+  function sync() {
     if (!document.body) return;
-    if (layer.parentNode !== document.body) document.body.appendChild(layer);
+    // Every page except the cover. Re-inserting the layer restarts the
+    // animations, and the negative delays put the petals straight back mid-fall.
+    var wanted = location.pathname !== "/";
+    if (wanted && layer.parentNode !== document.body) document.body.appendChild(layer);
+    else if (!wanted && layer.parentNode) layer.parentNode.removeChild(layer);
     if (!observer && window.MutationObserver) {
-      observer = new MutationObserver(mount);
+      observer = new MutationObserver(sync);
       observer.observe(document.body, { childList: true });
     }
   }
 
-  if (document.body) mount();
-  else document.addEventListener("DOMContentLoaded", mount);
-  window.addEventListener("load", mount);
+  if (document.body) sync();
+  else document.addEventListener("DOMContentLoaded", sync);
+  window.addEventListener("load", sync);
+  // Canva routes client-side with pushState, which fires no event, so opening
+  // the invitation (/ -> /main) is caught by a poll. It is one string compare.
+  window.addEventListener("popstate", sync);
+  window.setInterval(sync, 400);
 })();
 `;
 
