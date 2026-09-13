@@ -347,7 +347,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-required-note {
     display: block;
     margin-top: 0.85rem;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     letter-spacing: 0.06em;
     text-align: center;
     color: #ab959c;
