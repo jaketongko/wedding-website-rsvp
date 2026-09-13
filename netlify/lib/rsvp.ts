@@ -245,7 +245,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-label {
     display: block;
     margin-bottom: 0.55rem;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
