@@ -190,6 +190,29 @@ tall. An earlier version saw that as "page too short", set `body { min-height }`
 document scroll too: two scrollbars side by side. `ensureVisible` now only grows the page when no
 ancestor scrolls, and its un-clip loop stops at a scroll container so it cannot disable Canva's.
 
+### The details card
+
+A second card beside the form shows the title, date, location and attire. Its wording lives in
+`INFO_TITLE` / `INFO_ITEMS` in `rsvp.ts` and was **copied from the Canva Details page**; when the
+couple edits that page, update these too.
+
+When both cards fit side by side (the details card at least 280px wide, roughly windows 850px and
+wider), the form is shifted (`left` on `#sj-rsvp`) so the pair is centred on the page. Otherwise the
+details card is hidden and the form stays exactly where Canva placed it. It is deliberately **never stacked below the form**: Canva gives
+each page a fixed height inside `overflow: hidden` frames, so anything past the bottom is cut off
+and cannot be scrolled to (measured on a phone). Showing it on phones needs a taller RSVP page in
+Canva first.
+
+The monogram above the details is `public/_wedding/logo-mark.png`: the original logo cropped to its
+edges and resized to 390x480 (59 KB, from a 6250px, 2.7 MB original), shown at 98x120, so the
+file still covers 3x screens. It is used only as a CSS
+mask, so its colour comes from `--sj-accent` in `rsvp.ts`, not from the file. `/_wedding/*` is cached
+`immutable` for a week, so a replacement logo must use a new filename.
+
+Canva repositions the form *after* the resize event, so the card is re-placed 200ms and 1s after
+each resize and whenever the form's box changes. Automated tabs report `document.hidden` and Chrome
+pauses their timers and Canva's layout code, so test resizing with fresh loads at each width.
+
 ### The font
 
 The form uses **The Seasons**, the invitation's own typeface. It is not self-hosted: `rsvp.ts`

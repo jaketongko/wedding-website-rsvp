@@ -54,72 +54,148 @@ const FONT_FACES = SEASONS_FACES.map(
 // family name, which matches nothing and drops to the browser default font.
 const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
 
+/** Lavender flower colours: buds darken toward the base of each spike. */
+const LAVENDER = {
+  buds: ["#a47fc4", "#b896d4", "#cdb3e4"],
+  stem: "#b9c3a0",
+  leaf: "#cfd8b9",
+};
+
+type Pt = { x: number; y: number };
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
 /**
- * Cherry-blossom petal, drawn around the centre (16,16) of a 32x32 box with the
- * notched tip sakura are recognised by. Five of them, rotated, make a bloom.
+ * A lavender sprig: a gently curved stem (quadratic p0 -> c -> p1) ending in a
+ * spike of buds that pair off along its upper half and shrink toward the tip.
+ * Generated so buds stay evenly spaced on any curve.
  */
-const SAKURA_PETAL =
-  "M16 15.6C11.7 12.6 10.4 7.1 13.8 3.8L16 5.9 18.2 3.8C21.6 7.1 20.3 12.6 16 15.6Z";
+function lavenderSprig(p0: Pt, c: Pt, p1: Pt, buds: number, size: number, stemWidth: number): string {
+  const at = (t: number): Pt => ({
+    x: (1 - t) ** 2 * p0.x + 2 * (1 - t) * t * c.x + t ** 2 * p1.x,
+    y: (1 - t) ** 2 * p0.y + 2 * (1 - t) * t * c.y + t ** 2 * p1.y,
+  });
+  // Direction of travel along the stem, in SVG degrees (clockwise from +x).
+  const heading = (t: number) =>
+    (Math.atan2(
+      2 * (1 - t) * (c.y - p0.y) + 2 * t * (p1.y - c.y),
+      2 * (1 - t) * (c.x - p0.x) + 2 * t * (p1.x - c.x),
+    ) * 180) / Math.PI;
+  const bud = (x: number, y: number, rx: number, angle: number, fill: string) =>
+    `<ellipse cx="${r2(x)}" cy="${r2(y)}" rx="${r2(rx)}" ry="${r2(rx * 0.56)}" ` +
+    `transform="rotate(${r2(angle)} ${r2(x)} ${r2(y)})" fill="${fill}"/>`;
 
-function sakuraPetals(): string {
-  return [0, 72, 144, 216, 288]
-    .map((angle) => `<path d="${SAKURA_PETAL}" transform="rotate(${angle} 16 16)"/>`)
-    .join("");
-}
-
-/** A bloom placed inside the 200x200 spray, centred on (cx, cy). */
-function sprayBloom(cx: number, cy: number, scale: number, fill: string): string {
-  return (
-    `<g fill="${fill}" transform="translate(${cx} ${cy}) scale(${scale}) translate(-16 -16)">` +
-    sakuraPetals() +
-    `</g><circle cx="${cx}" cy="${cy}" r="${2.4 * scale}" fill="#fbe0b0"/>`
-  );
+  let svg =
+    `<path d="M${p0.x} ${p0.y}Q${c.x} ${c.y} ${p1.x} ${p1.y}" fill="none" ` +
+    `stroke="${LAVENDER.stem}" stroke-width="${stemWidth}" stroke-linecap="round"/>`;
+  for (let i = 0; i < buds; i++) {
+    const f = i / (buds - 1); // 0 at the base of the spike, 1 at the tip
+    const p = at(0.52 + 0.46 * f);
+    const a = heading(0.52 + 0.46 * f);
+    const rx = size * (1 - 0.5 * f);
+    const fill = LAVENDER.buds[Math.min(LAVENDER.buds.length - 1, Math.floor(f * LAVENDER.buds.length))];
+    for (const side of [-1, 1]) {
+      const n = ((a + 90 * side) * Math.PI) / 180;
+      svg += bud(p.x + Math.cos(n) * rx * 0.55, p.y + Math.sin(n) * rx * 0.55, rx, a + 38 * side, fill);
+    }
+  }
+  return svg + bud(p1.x, p1.y, size * 0.5, heading(1), LAVENDER.buds[LAVENDER.buds.length - 1]);
 }
 
 /**
- * Botanical spray echoing the invitation's blossoms. Drawn rather than imported
- * so it costs no request and inherits no external dependency; placed at two
- * opposite corners of the card and clipped by it.
+ * Lavender spray for the card corners. Drawn rather than imported so it costs no
+ * request; stems start at the bottom-left and the spikes reach top-right, so the
+ * untransformed SVG fits a top-right corner. Clipped by the card.
  */
 const SPRAY = `
 <svg class="sj-spray" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-  <g fill="none" stroke="#c2cbab" stroke-width="1.9" stroke-linecap="round">
-    <path d="M2 198C44 162 74 128 95 92"/>
-    <path d="M95 92C81 83 63 83 51 92"/>
-    <path d="M62 138C50 130 37 128 25 132"/>
-    <path d="M122 64C120 50 125 36 135 26"/>
+  <g fill="${LAVENDER.leaf}" opacity="0.85">
+    <ellipse cx="30" cy="170" rx="15" ry="3.8" transform="rotate(-58 30 170)"/>
+    <ellipse cx="48" cy="178" rx="14" ry="3.6" transform="rotate(-22 48 178)"/>
   </g>
-  <g fill="#cfd8b9" opacity="0.85">
-    <ellipse cx="41" cy="134" rx="15" ry="6" transform="rotate(-20 41 134)"/>
-    <ellipse cx="59" cy="95" rx="14" ry="6" transform="rotate(-8 59 95)"/>
-  </g>
-  ${sprayBloom(104, 74, 1.9, "#f0a9c1")}
-  ${sprayBloom(140, 28, 1.35, "#f7c8d8")}
+  ${lavenderSprig({ x: 4, y: 196 }, { x: 44, y: 120 }, { x: 98, y: 22 }, 7, 6.2, 1.5)}
+  ${lavenderSprig({ x: 4, y: 196 }, { x: 70, y: 140 }, { x: 150, y: 34 }, 8, 7, 1.6)}
+  ${lavenderSprig({ x: 4, y: 196 }, { x: 92, y: 168 }, { x: 186, y: 86 }, 7, 6.2, 1.5)}
 </svg>`;
 
-/** Single sakura used beside the heading. */
+/** Small bundle of three sprigs used above each heading. */
 const BLOOM = `
 <svg class="sj-bloom" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-  <g fill="#f2a8c0">${sakuraPetals()}</g>
-  <g stroke="#fbe0b0" stroke-width="1" stroke-linecap="round">
-    <path d="M16 16L16 11.6"/><path d="M16 16L19.8 13.9"/>
-    <path d="M16 16L18.4 19.8"/><path d="M16 16L13.6 19.8"/>
-    <path d="M16 16L12.2 13.9"/>
-  </g>
-  <circle cx="16" cy="16" r="2.3" fill="#fbe0b0"/>
+  ${lavenderSprig({ x: 16, y: 31 }, { x: 13, y: 20 }, { x: 8, y: 5 }, 5, 2.3, 0.9)}
+  ${lavenderSprig({ x: 16, y: 31 }, { x: 16, y: 18 }, { x: 16, y: 2 }, 6, 2.5, 0.9)}
+  ${lavenderSprig({ x: 16, y: 31 }, { x: 19, y: 20 }, { x: 24, y: 5 }, 5, 2.3, 0.9)}
 </svg>`;
+
+/** Line icons for the details card, on a 24x24 grid. */
+const INFO_ICONS = {
+  date: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  location:
+    '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>',
+  attire:
+    '<path d="M10 5.2a2 2 0 1 1 2 2v1.3"/><path d="M12 8.5 3.7 15.1a1.3 1.3 0 0 0 .8 2.4h15a1.3 1.3 0 0 0 .8-2.4z"/>',
+};
+
+/**
+ * The details card beside the form. Wording is copied from the Canva "Details"
+ * page (checked 2026-09-13); if the couple edits that page, update this too.
+ */
+const INFO_TITLE = "Wedding Details";
+const INFO_ITEMS: Array<{ icon: keyof typeof INFO_ICONS; label: string; main: string; sub: string[] }> = [
+  {
+    icon: "date",
+    label: "Date",
+    main: "Sunday, 7 February 2027",
+    sub: ["Ceremony &middot; 3:00 &ndash; 4:00 PM", "Reception &middot; 6:00 &ndash; 10:00 PM"],
+  },
+  {
+    icon: "location",
+    label: "Location",
+    main: "Nuuk Taal",
+    sub: ["295 Talisay-Laurel Road, Kilometer 89, Barangay Berinayan, Laurel, Batangas, Philippines"],
+  },
+  {
+    icon: "attire",
+    label: "Attire",
+    main: "Formal attire in pastel tones",
+    sub: ["Soft, pastel colors that complement the romantic garden setting."],
+  },
+];
+
+const INFO = `
+<div class="sj-card-inner">
+  <div class="sj-head">${BLOOM}
+    <span class="sj-head-text">${INFO_TITLE}</span>
+    <span class="sj-head-rule"></span>
+  </div>
+  <div class="sj-info-logo-wrap"><span class="sj-info-logo" aria-hidden="true"></span></div>
+  <div class="sj-info-list">${INFO_ITEMS.map(
+    (item) => `
+    <div class="sj-info-item">
+      <span class="sj-label sj-info-label"><svg class="sj-info-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${INFO_ICONS[item.icon]}</svg>${item.label}</span>
+      <span class="sj-info-main">${item.main}</span>
+      ${item.sub.map((line) => `<span class="sj-info-sub">${line}</span>`).join("")}
+    </div>`,
+  ).join("")}
+  </div>
+</div>`;
 
 const STYLES = `${FONT_FACES}
   #sj-rsvp {
-    --sj-ink: #6b5c60;
+    /* Lavender-pink palette. The -rgb triplets feed the translucent rgba()
+       tints below, so a re-theme only touches this block. The accent keeps
+       ~4.5:1 contrast on the card, like the sakura rose it replaced
+       (#c4566b; retheme requested 2026-09-13). */
+    --sj-ink: #655a66;
     /* Dark enough to stay legible at the small, tracked-out label size. */
-    --sj-muted: #90767f;
-    --sj-olive: #8a8b6f;
-    --sj-rose: #c4566b;
-    --sj-rose-soft: #d98fa6;
-    --sj-blush: #fbf1f4;
-    --sj-line: #eed6dd;
-    --sj-paper: #fffcfd;
+    --sj-muted: #8a7889;
+    --sj-text-soft: #6a5f6b;
+    --sj-accent: #9e6297;
+    --sj-accent-rgb: 158, 98, 151;
+    --sj-accent-soft: #cfa3c8;
+    --sj-accent-soft-rgb: 207, 163, 200;
+    --sj-tint: #f8f0f7;
+    --sj-line: #ecdcea;
+    --sj-paper: #fefcff;
+    --sj-shadow-rgb: 140, 100, 138;
 
     /* In normal flow, where Canva's widget sat. Deliberately NOT fixed: a fixed
        panel floats over the artwork and follows the scroll. */
@@ -140,37 +216,130 @@ const STYLES = `${FONT_FACES}
     z-index: 2147483100;
     align-items: center;
     padding: clamp(0.75rem, 2vh, 1.5rem);
-    background: rgba(72, 56, 62, 0.45);
+    background: rgba(66, 52, 68, 0.45);
     overflow-y: auto;
     -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
   }
 
-  #sj-rsvp-card {
-    position: relative;
+  /* The form card and the details card share one look. */
+  #sj-rsvp-card, #sj-rsvp-info {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 620px;
     /* Clips the corner sprays. */
     overflow: hidden;
-    background: rgba(255, 253, 254, 0.97);
-    border: 1px solid rgba(196, 86, 107, 0.11);
+    background: rgba(254, 252, 255, 0.97);
+    border: 1px solid rgba(var(--sj-accent-rgb), 0.12);
     border-radius: 22px;
     box-shadow:
-      0 1px 2px rgba(160, 110, 125, 0.05),
-      0 22px 56px rgba(160, 110, 125, 0.17);
+      0 1px 2px rgba(var(--sj-shadow-rgb), 0.05),
+      0 22px 56px rgba(var(--sj-shadow-rgb), 0.17);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
   }
+  #sj-rsvp-card {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+  }
+
+  /* Beside the form, same top and at least the same height. placeInfo sets
+     left and width, or hides it when there is no room to the right. */
+  #sj-rsvp-info {
+    position: absolute;
+    top: 0;
+    min-height: 100%;
+  }
+  #sj-rsvp-info[hidden] { display: none; }
+  #sj-rsvp-info .sj-card-inner { flex: 1; display: flex; flex-direction: column; }
+
+  /* Centred, echoing the heading; items split by a short rule like the one
+     under the heading. Text is larger than the form's, at the couple's request. */
+  /* The logo takes all spare height and sits in the middle of it, so it is
+     centred between the heading and the details, which end at the bottom like
+     the form's content does. */
+  /* Two ids: must outrank the shared .sj-head rule further down. */
+  #sj-rsvp #sj-rsvp-info .sj-head { margin-bottom: 0; }
+  #sj-rsvp .sj-info-logo-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1.2rem, 2.6vh, 1.8rem) 0;
+  }
+  #sj-rsvp .sj-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 2.2vh, 1.5rem);
+    /* Matches the empty .sj-note under the form, so both cards end level. */
+    margin-bottom: 0.9rem;
+  }
+  #sj-rsvp .sj-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  /* The couple's monogram. The PNG is used only as a mask, so its colour is
+     set here to match the heading. public/_wedding is cached immutably, so a
+     new logo needs a new filename. */
+  #sj-rsvp .sj-info-logo {
+    flex: none;
+    width: 98px;
+    height: 120px;
+    /* A shade lighter than the heading, so it reads as an ornament. */
+    background-color: rgba(var(--sj-accent-rgb), 0.75);
+    -webkit-mask: url("/_wedding/logo-mark.png") center / contain no-repeat;
+    mask: url("/_wedding/logo-mark.png") center / contain no-repeat;
+  }
+  #sj-rsvp .sj-info-item + .sj-info-item::before {
+    content: "";
+    width: 44px;
+    height: 1px;
+    margin-bottom: clamp(1rem, 2.2vh, 1.5rem);
+    background: var(--sj-accent-soft);
+    opacity: 0.55;
+  }
+  /* Two classes: must outrank the generic .sj-label rule further down. */
+  #sj-rsvp .sj-label.sj-info-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    margin-bottom: 0.45rem;
+    font-size: 1.1rem;
+  }
+  #sj-rsvp .sj-info-icon {
+    flex: none;
+    width: 1.4em;
+    height: 1.4em;
+    fill: none;
+    stroke: var(--sj-accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  #sj-rsvp .sj-info-main {
+    display: block;
+    font-size: 1.7rem;
+    line-height: 1.3;
+    color: var(--sj-text-soft);
+  }
+  #sj-rsvp .sj-info-sub {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--sj-muted);
+  }
 
   /* Soft wash behind the heading. */
+  #sj-rsvp-info::before,
   #sj-rsvp-card::before {
     content: "";
     position: absolute;
     inset: 0 0 auto 0;
     height: 150px;
-    background: linear-gradient(180deg, rgba(249, 225, 233, 0.55) 0%, rgba(249, 225, 233, 0) 100%);
+    background: linear-gradient(180deg, rgba(var(--sj-accent-soft-rgb), 0.2) 0%, rgba(var(--sj-accent-soft-rgb), 0) 100%);
     pointer-events: none;
   }
   #sj-rsvp.sj-rsvp--overlay #sj-rsvp-card { max-height: 94vh; }
@@ -193,17 +362,22 @@ const STYLES = `${FONT_FACES}
     user-select: none;
   }
   /* Submit is full-width now, so keep the lower accent very faint. */
-  #sj-rsvp .sj-spray--bl { opacity: 0.26; }
+  #sj-rsvp .sj-spray--bl,
+  #sj-rsvp .sj-spray--br { opacity: 0.26; }
   /* Flush to the corner with no outward offset. Anything sticking out - negative
      insets OR a translate - counts as scrollable overflow, and the card could
      then be nudged when a field takes focus.
 
      Top-right and bottom-left are the two genuinely empty corners: the heading
      occupies top-left and the Submit button sits bottom-right. The artwork's
-     blossoms already sit at its own top-right with the stem trailing down-left,
+     lavender spikes already reach its own top-right from stems at bottom-left,
      so the untransformed SVG lands correctly in the top-right corner. */
   #sj-rsvp .sj-spray--tr { top: 0; right: 0; }
   #sj-rsvp .sj-spray--bl { bottom: 0; left: 0; transform: rotate(180deg); }
+  /* The details card mirrors the form's pair, so the two cards frame each
+     other across the gap. Flips happen in place, so nothing sticks out. */
+  #sj-rsvp .sj-spray--tl { top: 0; left: 0; transform: scaleX(-1); }
+  #sj-rsvp .sj-spray--br { bottom: 0; right: 0; transform: scaleY(-1); }
   @media (max-width: 560px) {
     #sj-rsvp .sj-spray { opacity: 0.3; width: 84px; }
   }
@@ -226,13 +400,13 @@ const STYLES = `${FONT_FACES}
     text-transform: uppercase;
     /* The Seasons runs wide; without this a wrap strands "US?" on its own line. */
     text-wrap: balance;
-    color: var(--sj-rose);
+    color: var(--sj-accent);
   }
   #sj-rsvp .sj-head-rule {
     width: 64px;
     height: 2px;
     border-radius: 2px;
-    background: linear-gradient(90deg, rgba(217,143,166,0) 0%, var(--sj-rose-soft) 50%, rgba(217,143,166,0) 100%);
+    background: linear-gradient(90deg, rgba(var(--sj-accent-soft-rgb), 0) 0%, var(--sj-accent-soft) 50%, rgba(var(--sj-accent-soft-rgb), 0) 100%);
   }
 
   /* Single column, always. */
@@ -252,7 +426,7 @@ const STYLES = `${FONT_FACES}
     line-height: 1.5;
     color: var(--sj-muted);
   }
-  #sj-rsvp .sj-req { color: var(--sj-rose); margin-left: 0.15em; }
+  #sj-rsvp .sj-req { color: var(--sj-accent); margin-left: 0.15em; }
 
   /* Soft filled fields - a modern control surface rather than ruled lines. */
   #sj-rsvp input[type="text"],
@@ -263,20 +437,20 @@ const STYLES = `${FONT_FACES}
     font-size: 1.08rem;
     line-height: 1.55;
     color: var(--sj-ink);
-    background: var(--sj-blush);
+    background: var(--sj-tint);
     border: 1px solid transparent;
     border-radius: 13px;
     transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
   #sj-rsvp textarea { resize: none; }
   #sj-rsvp input::placeholder, #sj-rsvp textarea::placeholder {
-    color: #c8b2b9;
+    color: #c3b3c2;
   }
   #sj-rsvp input:focus, #sj-rsvp textarea:focus {
     outline: none;
     background: #fffdfe;
-    border-color: var(--sj-rose-soft);
-    box-shadow: 0 0 0 4px rgba(217, 143, 166, 0.14);
+    border-color: var(--sj-accent-soft);
+    box-shadow: 0 0 0 4px rgba(var(--sj-accent-soft-rgb), 0.18);
   }
 
   #sj-rsvp .sj-choices { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -285,14 +459,14 @@ const STYLES = `${FONT_FACES}
     align-items: center;
     gap: 0.8rem;
     padding: 0.95rem 1rem;
-    background: var(--sj-blush);
+    background: var(--sj-tint);
     border: 1px solid transparent;
     border-radius: 14px;
     cursor: pointer;
     transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
   }
   #sj-rsvp .sj-choice:hover {
-    border-color: rgba(217, 143, 166, 0.55);
+    border-color: rgba(var(--sj-accent-soft-rgb), 0.6);
     transform: translateY(-1px);
   }
   #sj-rsvp .sj-choice input {
@@ -308,7 +482,7 @@ const STYLES = `${FONT_FACES}
     width: 25px;
     height: 25px;
     position: relative;
-    border: 1.5px solid rgba(217, 143, 166, 0.7);
+    border: 1.5px solid rgba(var(--sj-accent-soft-rgb), 0.8);
     border-radius: 50%;
     background: #fffdfe;
     transition: border-color 180ms ease, background-color 180ms ease;
@@ -330,15 +504,15 @@ const STYLES = `${FONT_FACES}
     font-family: ${FONT};
     font-size: 1.26rem;
     line-height: 1.35;
-    color: #6f6165;
+    color: var(--sj-text-soft);
   }
   #sj-rsvp .sj-choice--on {
-    border-color: var(--sj-rose);
-    background: linear-gradient(180deg, rgba(196,86,107,0.10) 0%, rgba(196,86,107,0.05) 100%);
+    border-color: var(--sj-accent);
+    background: linear-gradient(180deg, rgba(var(--sj-accent-rgb), 0.10) 0%, rgba(var(--sj-accent-rgb), 0.05) 100%);
   }
   #sj-rsvp .sj-choice--on .sj-mark {
-    border-color: var(--sj-rose);
-    background: var(--sj-rose);
+    border-color: var(--sj-accent);
+    background: var(--sj-accent);
   }
   #sj-rsvp .sj-choice--on .sj-mark::after { opacity: 1; transform: rotate(45deg) scale(1); }
 
@@ -350,7 +524,7 @@ const STYLES = `${FONT_FACES}
     font-size: 0.95rem;
     letter-spacing: 0.06em;
     text-align: center;
-    color: #ab959c;
+    color: #a597a6;
   }
 
   #sj-rsvp .sj-submit {
@@ -362,24 +536,24 @@ const STYLES = `${FONT_FACES}
     letter-spacing: 0.26em;
     text-transform: uppercase;
     color: #fffdfc;
-    background: linear-gradient(135deg, #e0a0b4 0%, var(--sj-rose) 100%);
+    background: linear-gradient(135deg, #d4acd0 0%, var(--sj-accent) 100%);
     border: none;
     border-radius: 14px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(196, 86, 107, 0.3);
+    box-shadow: 0 6px 20px rgba(var(--sj-accent-rgb), 0.3);
     transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   }
   #sj-rsvp .sj-submit:hover {
     filter: brightness(1.05);
     transform: translateY(-1px);
-    box-shadow: 0 10px 26px rgba(196, 86, 107, 0.34);
+    box-shadow: 0 10px 26px rgba(var(--sj-accent-rgb), 0.34);
   }
   #sj-rsvp .sj-submit:active { transform: translateY(0); }
   #sj-rsvp .sj-submit[disabled] { opacity: 0.55; cursor: default; }
 
   #sj-rsvp .sj-note { margin: 0.9rem 0 0; font-size: 0.92rem; line-height: 1.5; text-align: center; }
   #sj-rsvp .sj-note--error { color: #a83a52; }
-  #sj-rsvp .sj-note a { color: var(--sj-rose); }
+  #sj-rsvp .sj-note a { color: var(--sj-accent); }
 
   #sj-rsvp-done { text-align: center; padding: clamp(2rem, 6vh, 3.6rem) 1rem; }
   #sj-rsvp-done .sj-bloom { width: 52px; height: 52px; margin: 0 auto 1.1rem; display: block; }
@@ -390,9 +564,9 @@ const STYLES = `${FONT_FACES}
     font-weight: 400;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--sj-rose);
+    color: var(--sj-accent);
   }
-  #sj-rsvp-done p { margin: 0; font-size: 1.1rem; line-height: 1.7; color: #85757a; }
+  #sj-rsvp-done p { margin: 0; font-size: 1.1rem; line-height: 1.7; color: #807481; }
 
   #sj-rsvp .sj-hp { position: absolute; left: -9999px; opacity: 0; }
 
@@ -410,10 +584,11 @@ const STYLES = `${FONT_FACES}
     letter-spacing: 0.28em;
     text-transform: uppercase;
     color: #fffdf8;
-    background: #c4566b;
+    /* Outside #sj-rsvp, so the palette variables do not reach it. */
+    background: #9e6297;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 18px rgba(70, 62, 48, 0.3);
+    box-shadow: 0 4px 18px rgba(66, 52, 68, 0.3);
   }
 
   #sj-rsvp-close {
@@ -424,12 +599,12 @@ const STYLES = `${FONT_FACES}
     height: 36px;
     font-size: 1.25rem;
     line-height: 1;
-    color: #9d9587;
+    color: #9a8e9a;
     background: transparent;
     border: none;
     cursor: pointer;
   }
-  #sj-rsvp-close:hover { color: var(--sj-rose); }
+  #sj-rsvp-close:hover { color: var(--sj-accent); }
 `;
 
 const SCRIPT = `
@@ -444,6 +619,12 @@ const SCRIPT = `
   // Inlined at build time from the module constants.
   var SPRAY = ${JSON.stringify(SPRAY)};
   var BLOOM = ${JSON.stringify(BLOOM)};
+  var INFO = ${JSON.stringify(INFO)};
+
+  // Details card placement, in px.
+  var INFO_GAP = 24;
+  var INFO_EDGE = 16;
+  var INFO_MIN_WIDTH = 280;
 
   function el(tag, attrs, html) {
     var node = document.createElement(tag);
@@ -517,6 +698,15 @@ const SCRIPT = `
         '</form>' +
         '</div>' +
       '</div>';
+    // Inline page only; the fallback modal has no room beside it.
+    if (!withClose) {
+      var info = el("aside", { id: "sj-rsvp-info", "aria-label": "Wedding details" },
+        SPRAY.replace("sj-spray", "sj-spray sj-spray--tl") +
+        SPRAY.replace("sj-spray", "sj-spray sj-spray--br") +
+        INFO);
+      info.hidden = true;
+      wrap.appendChild(info);
+    }
     return wrap;
   }
 
@@ -634,7 +824,7 @@ const SCRIPT = `
       node = node.parentElement;
     }
 
-    if (hasScrollingAncestor(form)) return;
+    if (scrollingAncestor(form)) return;
 
     var needed = Math.ceil(
       card.getBoundingClientRect().bottom + (window.pageYOffset || 0) + 48
@@ -650,12 +840,48 @@ const SCRIPT = `
     }
   }
 
-  function hasScrollingAncestor(el) {
+  function scrollingAncestor(el) {
     for (var n = el.parentElement; n && n !== document.body; n = n.parentElement) {
       var overflowY = window.getComputedStyle(n).overflowY;
-      if (overflowY === "auto" || overflowY === "scroll") return true;
+      if (overflowY === "auto" || overflowY === "scroll") return n;
     }
-    return false;
+    return null;
+  }
+
+  /**
+   * Shows the details card to the right of the form and centres the pair on
+   * the page when both fit; otherwise hides the card and leaves the form where
+   * Canva put it. It is never stacked below: Canva fixes the page height and
+   * clips it, so anything below the form is cut off (measured on a phone,
+   * 2026-09-13). Guests on narrow screens still have the Details page.
+   */
+  function placeInfo() {
+    if (!formIsLive() || formNode.classList.contains("sj-rsvp--overlay")) return;
+    var info = formNode.querySelector("#sj-rsvp-info");
+    var card = formNode.querySelector("#sj-rsvp-card");
+    if (!info || !card) return;
+
+    // Measure from Canva's own position, not from our previous shift.
+    formNode.style.left = "";
+
+    var scroller = scrollingAncestor(formNode);
+    var viewLeft = scroller ? scroller.getBoundingClientRect().left : 0;
+    var viewWidth = scroller ? scroller.clientWidth : document.documentElement.clientWidth;
+    var cardRect = card.getBoundingClientRect();
+    var width = Math.floor(Math.min(
+      cardRect.width,
+      viewWidth - 2 * INFO_EDGE - cardRect.width - INFO_GAP
+    ));
+
+    if (width < INFO_MIN_WIDTH) {
+      info.hidden = true;
+      return;
+    }
+    var pairLeft = viewLeft + (viewWidth - (cardRect.width + INFO_GAP + width)) / 2;
+    formNode.style.left = Math.round(pairLeft - cardRect.left) + "px";
+    info.style.left = card.offsetLeft + card.offsetWidth + INFO_GAP + "px";
+    info.style.width = width + "px";
+    info.hidden = false;
   }
 
   /** Mounted in place of the widget so it sits in the page and scrolls with it. */
@@ -669,11 +895,38 @@ const SCRIPT = `
     formNode = form;
     mounted = true;
     ensureVisible(form);
+    placeInfo();
+    // Canva may still be settling its layout, and the webfont changes heights.
+    window.setTimeout(placeInfo, 1000);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeInfo);
+    watchLayout(form);
+  }
+
+  /**
+   * Canva repositions the form AFTER the resize event, so placing the details
+   * card only on resize measured the old position and hid it. Re-place once
+   * things settle, and whenever Canva changes the box the form sits in.
+   */
+  var placeTimers = [];
+  var layoutObserver = null;
+  function schedulePlaceInfo() {
+    while (placeTimers.length) window.clearTimeout(placeTimers.pop());
+    // Canva may only MOVE the form (no resize to observe), so check twice.
+    placeTimers.push(window.setTimeout(placeInfo, 200), window.setTimeout(placeInfo, 1000));
+  }
+  function watchLayout(form) {
+    if (!window.ResizeObserver) return;
+    if (layoutObserver) layoutObserver.disconnect();
+    layoutObserver = new ResizeObserver(schedulePlaceInfo);
+    if (form.parentElement) layoutObserver.observe(form.parentElement);
+    layoutObserver.observe(form);
   }
 
   window.addEventListener("resize", function () {
     if (formIsLive() && !formNode.classList.contains("sj-rsvp--overlay")) {
       ensureVisible(formNode);
+      placeInfo();
+      schedulePlaceInfo();
     }
   });
 
