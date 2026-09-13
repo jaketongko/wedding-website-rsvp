@@ -434,9 +434,9 @@ const STYLES = `${FONT_FACES}
     width: 100%;
     padding: 1rem 1.15rem;
     font-family: ${FONT};
-    /* px, not rem: Canva's root is 10px. Must stay at least 16px, the minimum
-       that stops iOS Safari zooming the page when a field takes focus. */
-    font-size: 18px;
+    /* px, not rem: Canva's root is 10px. 16px is also the minimum that stops
+       iOS Safari zooming the page when a field takes focus. */
+    font-size: 16px;
     line-height: 1.55;
     color: var(--sj-ink);
     background: var(--sj-tint);
