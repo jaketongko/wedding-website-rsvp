@@ -434,7 +434,7 @@ const STYLES = `${FONT_FACES}
     width: 100%;
     padding: 1rem 1.15rem;
     font-family: ${FONT};
-    font-size: 1.08rem;
+    font-size: 1.3rem;
     line-height: 1.55;
     color: var(--sj-ink);
     background: var(--sj-tint);
