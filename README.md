@@ -221,6 +221,14 @@ points `@font-face` at the `.woff` files Canva already serves for the design
 data (search the page HTML for `"C":"The Seasons"`). If the couple removes the font from the Canva
 design, those files go away and the form falls back to Georgia; re-read the hashes if that happens.
 
+**Font sizes are in px, spacing stays in rem.** Canva sets `html { font-size: 10px }`, so every
+`rem` in the form is 62.5% of what it would be elsewhere. Text is sized in px so it reads the same
+everywhere. Inputs are 16px, the minimum that stops iOS zooming on focus. Spacing was deliberately left in rem:
+scaling it too would make the cards about 60% taller, and Canva cuts off anything past its fixed
+page height. With px text the cards are about 730px tall and still end ~125px above the cutoff
+(checked at 390, 1366x768 and 2000px). Measure on a real Canva page; `/_preview-rsvp` has a 16px
+root and shows spacing larger than it really is.
+
 Interpolate the font stack into the CSS raw. An earlier `JSON.stringify` wrapped the whole stack in
 one pair of quotes, which CSS reads as a single nonexistent family, and every guest saw the browser
 default font instead.

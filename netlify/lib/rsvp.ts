@@ -306,7 +306,7 @@ const STYLES = `${FONT_FACES}
     align-items: center;
     gap: 0.5em;
     margin-bottom: 0.45rem;
-    font-size: 1.1rem;
+    font-size: 14px;
   }
   #sj-rsvp .sj-info-icon {
     flex: none;
@@ -320,14 +320,14 @@ const STYLES = `${FONT_FACES}
   }
   #sj-rsvp .sj-info-main {
     display: block;
-    font-size: 1.7rem;
+    font-size: 22px;
     line-height: 1.3;
     color: var(--sj-text-soft);
   }
   #sj-rsvp .sj-info-sub {
     display: block;
     margin-top: 0.3rem;
-    font-size: 1.25rem;
+    font-size: 16px;
     line-height: 1.5;
     color: var(--sj-muted);
   }
@@ -394,7 +394,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-bloom { width: 40px; height: 40px; flex: none; }
   #sj-rsvp .sj-head-text {
     font-family: ${FONT};
-    font-size: clamp(1.65rem, 3.6vw, 2.1rem);
+    font-size: clamp(22px, 2.2vw, 30px);
     line-height: 1.25;
     letter-spacing: 0.09em;
     text-transform: uppercase;
@@ -419,7 +419,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-label {
     display: block;
     margin-bottom: 0.55rem;
-    font-size: 0.95rem;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -504,7 +504,7 @@ const STYLES = `${FONT_FACES}
   }
   #sj-rsvp .sj-choice-text {
     font-family: ${FONT};
-    font-size: 1.26rem;
+    font-size: 18px;
     line-height: 1.35;
     color: var(--sj-text-soft);
   }
@@ -523,7 +523,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-required-note {
     display: block;
     margin-top: 0.85rem;
-    font-size: 0.95rem;
+    font-size: 13px;
     letter-spacing: 0.06em;
     text-align: center;
     color: #a597a6;
@@ -533,7 +533,7 @@ const STYLES = `${FONT_FACES}
     width: 100%;
     padding: 1.15rem 1.5rem;
     font-family: ${FONT};
-    font-size: 0.88rem;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.26em;
     text-transform: uppercase;
@@ -553,7 +553,7 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp .sj-submit:active { transform: translateY(0); }
   #sj-rsvp .sj-submit[disabled] { opacity: 0.55; cursor: default; }
 
-  #sj-rsvp .sj-note { margin: 0.9rem 0 0; font-size: 0.92rem; line-height: 1.5; text-align: center; }
+  #sj-rsvp .sj-note { margin: 0.9rem 0 0; font-size: 14px; line-height: 1.5; text-align: center; }
   #sj-rsvp .sj-note--error { color: #a83a52; }
   #sj-rsvp .sj-note a { color: var(--sj-accent); }
 
@@ -562,13 +562,13 @@ const STYLES = `${FONT_FACES}
   #sj-rsvp-done h2 {
     margin: 0 0 0.85rem;
     font-family: ${FONT};
-    font-size: clamp(2.1rem, 5.2vw, 2.8rem);
+    font-size: clamp(28px, 4vw, 36px);
     font-weight: 400;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--sj-accent);
   }
-  #sj-rsvp-done p { margin: 0; font-size: 1.1rem; line-height: 1.7; color: #807481; }
+  #sj-rsvp-done p { margin: 0; font-size: 16px; line-height: 1.7; color: #807481; }
 
   #sj-rsvp .sj-hp { position: absolute; left: -9999px; opacity: 0; }
 
@@ -582,7 +582,7 @@ const STYLES = `${FONT_FACES}
     z-index: 2147482000;
     padding: 0.85rem 2.4rem;
     font-family: ${FONT};
-    font-size: 0.68rem;
+    font-size: 12px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
     color: #fffdf8;
@@ -599,7 +599,7 @@ const STYLES = `${FONT_FACES}
     right: 0.55rem;
     width: 36px;
     height: 36px;
-    font-size: 1.25rem;
+    font-size: 20px;
     line-height: 1;
     color: #9a8e9a;
     background: transparent;
