@@ -610,12 +610,16 @@ const SCRIPT = `
 
   /**
    * The vertical form is taller than the box Canva reserved for the widget
-   * (~565px), and the RSVP page is exactly one viewport tall with no scrolling.
-   * Left alone the bottom of the card - including the Submit button - could be
-   * clipped or pushed off-screen.
+   * (~565px). Left alone the bottom of the card - including the Submit
+   * button - could be clipped.
    *
-   * So: un-clip any ancestor that would cut it off, and grow the page just
-   * enough to reach the bottom of the card. Both act only when actually needed.
+   * So: un-clip any ancestor that would cut it off. The overflow then extends
+   * the scroll range of Canva's own page scroller, which reaches the card.
+   *
+   * Canva scrolls the page inside a container, not the document, so the
+   * document is always one viewport tall. Growing <body> to fit the card
+   * therefore made the document scroll too, putting a second scrollbar beside
+   * Canva's. Only grow the page if no ancestor scrolls at all.
    */
   function ensureVisible(form) {
     var card = form.querySelector("#sj-rsvp-card");
@@ -624,9 +628,13 @@ const SCRIPT = `
     var node = form.parentElement;
     for (var i = 0; i < 6 && node && node !== document.body; i++) {
       var cs = window.getComputedStyle(node);
+      // Never un-clip Canva's page scroller; that would stop the page scrolling.
+      if (cs.overflowY === "auto" || cs.overflowY === "scroll") break;
       if (cs.overflow !== "visible") node.style.overflow = "visible";
       node = node.parentElement;
     }
+
+    if (hasScrollingAncestor(form)) return;
 
     var needed = Math.ceil(
       card.getBoundingClientRect().bottom + (window.pageYOffset || 0) + 48
@@ -640,6 +648,14 @@ const SCRIPT = `
         document.body.style.overflowY = "visible";
       }
     }
+  }
+
+  function hasScrollingAncestor(el) {
+    for (var n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      var overflowY = window.getComputedStyle(n).overflowY;
+      if (overflowY === "auto" || overflowY === "scroll") return true;
+    }
+    return false;
   }
 
   /** Mounted in place of the widget so it sits in the page and scrolls with it. */

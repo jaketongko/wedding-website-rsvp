@@ -184,6 +184,12 @@ nudged when a field takes focus. The card is `overflow: hidden`; the scroller is
 
 Those two corners are chosen because the heading occupies top-left and Submit sits bottom-right.
 
+**Never grow `<body>` or `<html>` to make room for the card.** Canva scrolls the page inside its own
+container (`overflow-y: scroll`), not the document, so the document is always exactly one viewport
+tall. An earlier version saw that as "page too short", set `body { min-height }`, and made the
+document scroll too: two scrollbars side by side. `ensureVisible` now only grows the page when no
+ancestor scrolls, and its un-clip loop stops at a scroll container so it cannot disable Canva's.
+
 ### The font
 
 The form uses **The Seasons**, the invitation's own typeface. It is not self-hosted: `rsvp.ts`
