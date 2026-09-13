@@ -19,10 +19,13 @@
  */
 
 /*
+ * A small black vinyl record floating in the top-right corner. It spins while
+ * the music plays and stops where it is when muted, when a badge also appears.
+ *
  * Top-right. Checked against Canva's layout on 2026-09-13: the only thing up
  * there is the page nav, which is centred and starts at y=82 even at 390px
- * wide, so a 44px button at 16px from the corner clears it. Palette matches the
- * RSVP card (rsvp.ts).
+ * wide, so a 48px button at 16px from the corner clears it, bob and shadow
+ * included. The label and badge use the RSVP card's accent (rsvp.ts).
  *
  * Pixels, not rem: Canva sets the root font-size to 10px, so 1rem is 10px here.
  */
@@ -32,58 +35,102 @@ const STYLES = `
     top: max(16px, env(safe-area-inset-top));
     right: max(16px, env(safe-area-inset-right));
     z-index: 2147482000;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
     padding: 0;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.75);
+    border: 0;
     border-radius: 50%;
-    background: rgba(255, 249, 251, 0.78);
-    box-shadow:
-      0 0 0 1px rgba(196, 86, 107, 0.12),
-      0 6px 18px rgba(160, 110, 125, 0.22);
-    color: #c4566b;
+    background: transparent;
     cursor: pointer;
-    -webkit-backdrop-filter: blur(10px) saturate(1.2);
-    backdrop-filter: blur(10px) saturate(1.2);
     -webkit-tap-highlight-color: transparent;
     opacity: 0;
-    transition: transform 200ms ease, opacity 500ms ease, background-color 200ms ease, color 200ms ease;
+    transition: transform 200ms ease, opacity 500ms ease;
   }
   #bgm-toggle.bgm-toggle--ready { opacity: 1; }
-  #bgm-toggle:hover { transform: scale(1.06); background: rgba(255, 253, 254, 0.94); }
+  #bgm-toggle:hover { transform: scale(1.06); }
   #bgm-toggle:active { transform: scale(0.94); }
-  #bgm-toggle:focus-visible { outline: 2px solid #c4566b; outline-offset: 3px; }
-  #bgm-toggle[data-muted="true"] { color: #b3949d; }
+  #bgm-toggle:focus-visible { outline: 2px solid #9e6297; outline-offset: 2px; }
 
-  #bgm-toggle svg {
-    width: 22px;
-    height: 22px;
+  /* Bobs gently; the shadow tightens as the record sinks, so it reads as
+     hovering over the page rather than sliding up and down. Kept separate from
+     the disc so the bob and the spin do not share one transform. */
+  #bgm-toggle .bgm-float {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    animation: bgm-float 4.5s ease-in-out infinite;
+  }
+  @keyframes bgm-float {
+    0%, 100% {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(45, 25, 45, 0.22), 0 3px 6px rgba(45, 25, 45, 0.14);
+    }
+    50% {
+      transform: translateY(2px);
+      box-shadow: 0 5px 10px rgba(45, 25, 45, 0.3), 0 1px 3px rgba(45, 25, 45, 0.2);
+    }
+  }
+
+  /* Paused rather than removed when muted, so the record stops where it is
+     and picks up from there, like a turntable. */
+  #bgm-toggle .bgm-disc {
+    display: block;
+    width: 100%;
+    height: 100%;
+    animation: bgm-spin 3s linear infinite paused;
+  }
+  #bgm-toggle[data-muted="false"] .bgm-disc { animation-play-state: running; }
+  @keyframes bgm-spin { to { transform: rotate(360deg); } }
+
+  /* Light catching the grooves. It does not spin with the record, which is
+     what makes the record look like it is turning under a light. */
+  #bgm-toggle .bgm-sheen {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 20deg,
+      transparent 0deg, rgba(255, 255, 255, 0.16) 28deg, transparent 56deg,
+      transparent 180deg, rgba(255, 255, 255, 0.1) 208deg, transparent 236deg
+    );
+    pointer-events: none;
+  }
+
+  #bgm-toggle .bgm-badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #fffdfe;
+    box-shadow: 0 1px 4px rgba(45, 25, 45, 0.28);
+    color: #9e6297;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 200ms ease, transform 200ms ease;
+  }
+  #bgm-toggle[data-muted="true"] .bgm-badge { opacity: 1; transform: scale(1); }
+  #bgm-toggle .bgm-badge svg {
+    width: 13px;
+    height: 13px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 1.6;
+    stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
-    overflow: visible;
   }
-  #bgm-toggle .bgm-speaker { fill: currentColor; fill-opacity: 0.14; }
-  #bgm-toggle .bgm-wave { transition: opacity 200ms ease; }
-  #bgm-toggle .bgm-x { opacity: 0; transition: opacity 200ms ease; }
-  #bgm-toggle[data-muted="true"] .bgm-wave { opacity: 0; animation: none; }
-  #bgm-toggle[data-muted="true"] .bgm-x { opacity: 1; }
-
-  /* Waves breathe while music plays, so the control reads as live. */
-  #bgm-toggle[data-muted="false"] .bgm-wave { animation: bgm-wave 1.8s ease-in-out infinite; }
-  #bgm-toggle[data-muted="false"] .bgm-wave--far { animation-delay: 0.3s; }
-  @keyframes bgm-wave {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+  #bgm-toggle .bgm-badge .bgm-speaker { fill: currentColor; fill-opacity: 0.2; }
 
   @media (prefers-reduced-motion: reduce) {
-    #bgm-toggle { transition: none; }
-    #bgm-toggle .bgm-wave { animation: none !important; }
+    #bgm-toggle, #bgm-toggle .bgm-badge { transition: none; }
+    #bgm-toggle .bgm-float, #bgm-toggle .bgm-disc { animation: none; }
   }
 `;
 
@@ -114,13 +161,32 @@ const SCRIPT = `
   toggle.type = "button";
   toggle.setAttribute("aria-label", "Mute music");
   toggle.setAttribute("aria-pressed", "false");
+  // The record: grooves, the brighter gap between two tracks, a label with two
+  // lines of "print" (so the spin is visible), and the spindle hole.
   toggle.innerHTML =
-    '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<path class="bgm-speaker" d="M3.5 9.5h3.2l4.8-4v13l-4.8-4H3.5z"></path>' +
-      '<path class="bgm-wave" d="M15 9.3a3.8 3.8 0 0 1 0 5.4"></path>' +
-      '<path class="bgm-wave bgm-wave--far" d="M17.8 6.6a7.6 7.6 0 0 1 0 10.8"></path>' +
-      '<path class="bgm-x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"></path>' +
-    '</svg>';
+    '<span class="bgm-float">' +
+      '<svg class="bgm-disc" viewBox="0 0 44 44" aria-hidden="true" focusable="false">' +
+        '<circle cx="22" cy="22" r="22" fill="#141214"></circle>' +
+        '<g fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="0.5">' +
+          '<circle cx="22" cy="22" r="19.5"></circle>' +
+          '<circle cx="22" cy="22" r="17.5"></circle>' +
+          '<circle cx="22" cy="22" r="14.5"></circle>' +
+          '<circle cx="22" cy="22" r="12.5"></circle>' +
+        '</g>' +
+        '<circle cx="22" cy="22" r="16" fill="none" stroke="#ffffff" stroke-opacity="0.13" stroke-width="0.8"></circle>' +
+        '<circle cx="22" cy="22" r="21.6" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="0.7"></circle>' +
+        '<circle cx="22" cy="22" r="9" fill="#b67fae"></circle>' +
+        '<path d="M17.5 18.6h9M18.5 25.4h7" stroke="#ffffff" stroke-opacity="0.6" stroke-width="1.1" stroke-linecap="round"></path>' +
+        '<circle cx="22" cy="22" r="1.6" fill="#f7f2ef"></circle>' +
+      '</svg>' +
+      '<span class="bgm-sheen"></span>' +
+      '<span class="bgm-badge">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+          '<path class="bgm-speaker" d="M3.5 9.5h3.2l4.8-4v13l-4.8-4H3.5z"></path>' +
+          '<path d="M15.5 9.5l5 5M20.5 9.5l-5 5"></path>' +
+        '</svg>' +
+      '</span>' +
+    '</span>';
 
   var nodes = [audio, toggle];
 
