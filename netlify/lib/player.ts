@@ -27,13 +27,19 @@
  * wide, so a 48px button at 16px from the corner clears it, bob and shadow
  * included. The label and badge use the RSVP card's accent (rsvp.ts).
  *
+ * Canva scrolls an inner, full-width element, so on desktops with classic
+ * scrollbars the scrollbar sits inside the viewport, under a right-anchored
+ * button. The script measures it into --bgm-scrollbar so the gap to the
+ * scrollbar matches the gap to the top. Overlay scrollbars (phones, macOS)
+ * measure 0.
+ *
  * Pixels, not rem: Canva sets the root font-size to 10px, so 1rem is 10px here.
  */
 const STYLES = `
   #bgm-toggle {
     position: fixed;
     top: max(16px, env(safe-area-inset-top));
-    right: max(16px, env(safe-area-inset-right));
+    right: calc(max(16px, env(safe-area-inset-right)) + var(--bgm-scrollbar, 0px));
     z-index: 2147482000;
     width: 48px;
     height: 48px;
@@ -351,6 +357,18 @@ const SCRIPT = `
     }
   }, true);
 
+  // The platform's scrollbar width, which Canva's inner scroller also uses.
+  // Re-measured on resize, since browser zoom changes it in CSS pixels.
+  function measureScrollbar() {
+    if (!document.body) return;
+    var probe = document.createElement("div");
+    probe.style.cssText = "position:absolute;top:-9999px;width:100px;height:100px;overflow:scroll";
+    document.body.appendChild(probe);
+    toggle.style.setProperty("--bgm-scrollbar", probe.offsetWidth - probe.clientWidth + "px");
+    document.body.removeChild(probe);
+  }
+  window.addEventListener("resize", measureScrollbar);
+
   // Some mobile browsers pause media when the tab is backgrounded.
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden && audio.paused && sourceReady) attemptPlay();
@@ -360,6 +378,8 @@ const SCRIPT = `
   else document.addEventListener("DOMContentLoaded", mount);
   window.addEventListener("load", function () {
     mount();
+    // Measured before the reveal, so the button never visibly jumps.
+    measureScrollbar();
     // Reveal the control only once there is something to control.
     toggle.classList.add("bgm-toggle--ready");
     paintToggle();
