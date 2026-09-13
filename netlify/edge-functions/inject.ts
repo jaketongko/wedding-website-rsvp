@@ -1,4 +1,5 @@
 import type { Config, Context } from "@netlify/edge-functions";
+import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
 
@@ -126,14 +127,14 @@ export default async function inject(request: Request, _context: Context): Promi
   responseHeaders.set("cache-control", "no-store");
 
   /**
-   * Both go on EVERY page, not just /rsvp.
+   * All of these go on EVERY page, not just /rsvp.
    *
    * Canva navigates between pages client-side, so arriving at /rsvp from the
    * invitation fires no new document load. Gating the RSVP code on the initial
    * pathname meant it was absent on exactly that route, and Canva's broken
    * widget showed through. The script scopes itself to /rsvp at runtime instead.
    */
-  const injected = renderPlayer(nonce) + renderRsvp(nonce);
+  const injected = renderPlayer(nonce) + renderRsvp(nonce) + renderHideCanvaFooter(nonce);
 
   return new Response(insertBeforeBodyClose(html, injected), {
     status: upstream.status,

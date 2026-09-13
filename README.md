@@ -216,6 +216,7 @@ nowhere.
 | `netlify/edge-functions/inject.ts` | Proxies to Canva, rewrites HTML, handles headers |
 | `netlify/lib/player.ts` | The injected audio element and mute toggle |
 | `netlify/lib/rsvp.ts` | The injected RSVP form that replaces Canva's blocked widget |
+| `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
 | `netlify.toml` | Static publish dir and asset caching |
 
