@@ -18,46 +18,72 @@
  * itself whenever Canva moves it.
  */
 
+/*
+ * Top-right. Checked against Canva's layout on 2026-09-13: the only thing up
+ * there is the page nav, which is centred and starts at y=82 even at 390px
+ * wide, so a 44px button at 16px from the corner clears it. Palette matches the
+ * RSVP card (rsvp.ts).
+ *
+ * Pixels, not rem: Canva sets the root font-size to 10px, so 1rem is 10px here.
+ */
 const STYLES = `
   #bgm-toggle {
     position: fixed;
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: max(1rem, env(safe-area-inset-bottom));
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
     z-index: 2147482000;
     width: 44px;
     height: 44px;
     padding: 0;
     display: grid;
     place-items: center;
-    border: 1px solid #ddd9cc;
+    border: 1px solid rgba(255, 255, 255, 0.75);
     border-radius: 50%;
-    background: rgba(255, 253, 248, 0.88);
-    box-shadow: 0 2px 10px rgba(90, 85, 70, 0.14);
+    background: rgba(255, 249, 251, 0.78);
+    box-shadow:
+      0 0 0 1px rgba(196, 86, 107, 0.12),
+      0 6px 18px rgba(160, 110, 125, 0.22);
+    color: #c4566b;
     cursor: pointer;
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-tap-highlight-color: transparent;
     opacity: 0;
-    transition: transform 200ms ease, opacity 500ms ease;
+    transition: transform 200ms ease, opacity 500ms ease, background-color 200ms ease, color 200ms ease;
   }
   #bgm-toggle.bgm-toggle--ready { opacity: 1; }
-  #bgm-toggle:hover { transform: scale(1.06); }
+  #bgm-toggle:hover { transform: scale(1.06); background: rgba(255, 253, 254, 0.94); }
+  #bgm-toggle:active { transform: scale(0.94); }
   #bgm-toggle:focus-visible { outline: 2px solid #c4566b; outline-offset: 3px; }
+  #bgm-toggle[data-muted="true"] { color: #b3949d; }
 
   #bgm-toggle svg {
-    width: 21px;
-    height: 21px;
+    width: 22px;
+    height: 22px;
     fill: none;
-    stroke: #8a8b6f;
+    stroke: currentColor;
     stroke-width: 1.6;
     stroke-linecap: round;
     stroke-linejoin: round;
+    overflow: visible;
   }
-  #bgm-toggle .bgm-icon-slash { opacity: 0; }
-  #bgm-toggle[data-muted="true"] .bgm-icon-note { stroke: #b4b0a2; }
-  #bgm-toggle[data-muted="true"] .bgm-icon-slash { opacity: 1; stroke: #b4b0a2; }
+  #bgm-toggle .bgm-speaker { fill: currentColor; fill-opacity: 0.14; }
+  #bgm-toggle .bgm-wave { transition: opacity 200ms ease; }
+  #bgm-toggle .bgm-x { opacity: 0; transition: opacity 200ms ease; }
+  #bgm-toggle[data-muted="true"] .bgm-wave { opacity: 0; animation: none; }
+  #bgm-toggle[data-muted="true"] .bgm-x { opacity: 1; }
+
+  /* Waves breathe while music plays, so the control reads as live. */
+  #bgm-toggle[data-muted="false"] .bgm-wave { animation: bgm-wave 1.8s ease-in-out infinite; }
+  #bgm-toggle[data-muted="false"] .bgm-wave--far { animation-delay: 0.3s; }
+  @keyframes bgm-wave {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     #bgm-toggle { transition: none; }
+    #bgm-toggle .bgm-wave { animation: none !important; }
   }
 `;
 
@@ -90,10 +116,10 @@ const SCRIPT = `
   toggle.setAttribute("aria-pressed", "false");
   toggle.innerHTML =
     '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<path class="bgm-icon-note" d="M9 17.5V7.2l8-1.6v9.6"></path>' +
-      '<circle class="bgm-icon-note" cx="7" cy="17.5" r="2.2"></circle>' +
-      '<circle class="bgm-icon-note" cx="15" cy="15.2" r="2.2"></circle>' +
-      '<path class="bgm-icon-slash" d="M4 20L20 4"></path>' +
+      '<path class="bgm-speaker" d="M3.5 9.5h3.2l4.8-4v13l-4.8-4H3.5z"></path>' +
+      '<path class="bgm-wave" d="M15 9.3a3.8 3.8 0 0 1 0 5.4"></path>' +
+      '<path class="bgm-wave bgm-wave--far" d="M17.8 6.6a7.6 7.6 0 0 1 0 10.8"></path>' +
+      '<path class="bgm-x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"></path>' +
     '</svg>';
 
   var nodes = [audio, toggle];
@@ -113,6 +139,7 @@ const SCRIPT = `
     toggle.setAttribute("data-muted", audio.muted ? "true" : "false");
     toggle.setAttribute("aria-pressed", audio.muted ? "true" : "false");
     toggle.setAttribute("aria-label", audio.muted ? "Unmute music" : "Mute music");
+    toggle.title = audio.muted ? "Play music" : "Mute music";
   }
 
   /**
