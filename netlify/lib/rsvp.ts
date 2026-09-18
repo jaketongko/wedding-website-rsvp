@@ -143,18 +143,32 @@ const INFO_ICONS = {
  * page (checked 2026-09-13); if the couple edits that page, update this too.
  */
 const INFO_TITLE = "Wedding Details";
-const INFO_ITEMS: Array<{ icon: keyof typeof INFO_ICONS; label: string; main: string; sub: string[] }> = [
+/**
+ * `sub` is the full wording for the card beside the form. `brief` is the phone
+ * version, which has roughly one line to work with - see BRIEF below for why.
+ * Both come from this one list so the facts can never drift apart.
+ */
+const INFO_ITEMS: Array<{
+  icon: keyof typeof INFO_ICONS;
+  label: string;
+  main: string;
+  sub: string[];
+  brief?: string;
+}> = [
   {
     icon: "date",
     label: "Date",
     main: "Sunday, 7 February 2027",
     sub: ["Ceremony &middot; 3:00 &ndash; 4:00 PM", "Reception &middot; 6:00 &ndash; 10:00 PM"],
+    brief: "Ceremony 3 PM &middot; Reception 6 PM",
   },
   {
     icon: "location",
     label: "Location",
     main: "Nuuk Taal",
     sub: ["295 Talisay-Laurel Road, Kilometer 89, Barangay Berinayan, Laurel, Batangas, Philippines"],
+    // The full street address does not fit; the Details page carries it.
+    brief: "Laurel, Batangas",
   },
   {
     icon: "attire",
@@ -163,6 +177,36 @@ const INFO_ITEMS: Array<{ icon: keyof typeof INFO_ICONS; label: string; main: st
     sub: ["Soft, pastel colors that complement the romantic garden setting."],
   },
 ];
+
+/**
+ * The details, condensed, for inside the form card.
+ *
+ * On a phone the card beside the form has nowhere to go: Canva fixes the RSVP
+ * page at ~925px and clips everything past it with four nested overflow:hidden
+ * ancestors, and the form already ends around 764px. Stacking the full card
+ * below would mean growing and un-clipping a dozen Canva elements on every
+ * re-render. ~160px is what is actually available, so this fits in about 115px
+ * (measured at 390px wide, 2026-09-19) and leaves real margin.
+ *
+ * No labels: the icons carry date / place / dress visually, which saves a line
+ * each. The words are still there for screen readers.
+ */
+const BRIEF = `
+<div id="sj-rsvp-brief" hidden>
+  <span class="sj-brief-rule" aria-hidden="true"></span>
+  <ul class="sj-brief-list">${INFO_ITEMS.map(
+    (item) => `
+    <li class="sj-brief-item">
+      <svg class="sj-brief-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${INFO_ICONS[item.icon]}</svg>
+      <span>
+        <span class="sj-brief-label">${item.label}: </span>
+        <span class="sj-brief-main">${item.main}</span>
+        ${item.brief ? `<span class="sj-brief-sub">${item.brief}</span>` : ""}
+      </span>
+    </li>`,
+  ).join("")}
+  </ul>
+</div>`;
 
 const INFO = `
 <div class="sj-card-inner">
@@ -333,6 +377,66 @@ const STYLES = `${FONT_FACES}
     margin-top: 0.3rem;
     font-size: 16px;
     line-height: 1.5;
+    color: var(--sj-muted);
+  }
+
+  /* The same details, condensed, inside the form card - what a phone gets
+     instead of the card beside the form. Sized to stay well inside the ~160px
+     Canva leaves below the form; see BRIEF for the measurement. */
+  #sj-rsvp-brief { margin-top: 0.9rem; }
+  #sj-rsvp-brief[hidden] { display: none; }
+  #sj-rsvp .sj-brief-rule {
+    display: block;
+    height: 1px;
+    margin-bottom: 0.9rem;
+    background: linear-gradient(90deg, transparent, var(--sj-line), transparent);
+  }
+  #sj-rsvp .sj-brief-list {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  #sj-rsvp .sj-brief-item {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  #sj-rsvp .sj-brief-icon {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    fill: none;
+    stroke: var(--sj-accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Read out, never drawn: the icon already says which field this is. */
+  #sj-rsvp .sj-brief-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* Sized against the form's own scale, not picked by eye: Canva scales the
+     whole page down on a phone (0.638 at 360px wide), so these must sit with
+     the card's other text rather than beside it. 16px matches the inputs,
+     13px matches the "fields marked *" note. */
+  #sj-rsvp .sj-brief-main {
+    display: block;
+    font-size: 16px;
+    line-height: 1.35;
+    color: var(--sj-text-soft);
+  }
+  #sj-rsvp .sj-brief-sub {
+    display: block;
+    font-size: 13px;
+    line-height: 1.4;
     color: var(--sj-muted);
   }
 
@@ -626,6 +730,7 @@ const SCRIPT = `
   var SPRAY = ${JSON.stringify(SPRAY)};
   var BLOOM = ${JSON.stringify(BLOOM)};
   var INFO = ${JSON.stringify(INFO)};
+  var BRIEF = ${JSON.stringify(BRIEF)};
 
   // Details card placement, in px.
   var INFO_GAP = 24;
@@ -702,6 +807,8 @@ const SCRIPT = `
           '</div>' +
           '<p class="sj-note" id="sj-rsvp-note"></p>' +
         '</form>' +
+        // Shown only when the card beside the form has no room; placeInfo decides.
+        BRIEF +
         '</div>' +
       '</div>';
     // Inline page only; the fallback modal has no room beside it.
@@ -856,15 +963,17 @@ const SCRIPT = `
 
   /**
    * Shows the details card to the right of the form and centres the pair on
-   * the page when both fit; otherwise hides the card and leaves the form where
-   * Canva put it. It is never stacked below: Canva fixes the page height and
-   * clips it, so anything below the form is cut off (measured on a phone,
-   * 2026-09-13). Guests on narrow screens still have the Details page.
+   * the page when both fit. The full card is never stacked below: Canva fixes
+   * the page height and clips it, so anything past the form is cut off
+   * (measured on a phone, 2026-09-13). When there is no room beside the form,
+   * the condensed version inside the card takes over instead, so a phone still
+   * gets the date, the place and the dress code.
    */
   function placeInfo() {
     if (!formIsLive() || formNode.classList.contains("sj-rsvp--overlay")) return;
     var info = formNode.querySelector("#sj-rsvp-info");
     var card = formNode.querySelector("#sj-rsvp-card");
+    var brief = formNode.querySelector("#sj-rsvp-brief");
     if (!info || !card) return;
 
     // Measure from Canva's own position, not from our previous shift.
@@ -881,8 +990,10 @@ const SCRIPT = `
 
     if (width < INFO_MIN_WIDTH) {
       info.hidden = true;
+      if (brief) brief.hidden = false;
       return;
     }
+    if (brief) brief.hidden = true;
     var pairLeft = viewLeft + (viewWidth - (cardRect.width + INFO_GAP + width)) / 2;
     formNode.style.left = Math.round(pairLeft - cardRect.left) + "px";
     info.style.left = card.offsetLeft + card.offsetWidth + INFO_GAP + "px";
