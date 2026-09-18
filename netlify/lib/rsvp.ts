@@ -52,7 +52,10 @@ const FONT_FACES = SEASONS_FACES.map(
 
 // Interpolated raw: wrapping it in JSON.stringify quotes the whole stack as ONE
 // family name, which matches nothing and drops to the browser default font.
-const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
+// Exported so the gallery lightbox uses the same type. The @font-face rules
+// above ship in this module's <style>, which is injected on every page, so the
+// family is registered site-wide and no one else needs to declare it.
+export const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
 
 /** Lavender flower colours: buds darken toward the base of each spike. Shared
  * with the falling petals (petals.ts) so the site uses one lavender. */

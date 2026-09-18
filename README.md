@@ -249,6 +249,7 @@ nowhere.
 | `netlify/lib/rsvp.ts` | The injected RSVP form that replaces Canva's blocked widget |
 | `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
 | `netlify/lib/petals.ts` | Lavender petals drifting over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
+| `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
 | `netlify.toml` | Static publish dir and asset caching |
 
@@ -277,6 +278,17 @@ the synchronous path. Do not `await` anything before calling `play()` or clearin
 
 **HTML responses are `no-store`.** The CSP nonce is per-request, and caching would also hide fresh
 Canva edits.
+
+**A Canva photo is bigger than the tile you see.** Canva puts the whole image in an absolutely
+positioned `<img>` (with `pointer-events: none`) inside an `overflow: hidden` frame, and the frame
+does the cropping. So the gallery's hover lives on the frame, the zoom scales the `img` inside it,
+and the lightbox costs no extra download — `img.src` is already the full-size photo. `gallery.ts`
+tells the tiles apart from the page's background artwork by size: a frame at least 90% of the
+viewport wide *and* 60% of it tall is backdrop, not a photo.
+
+**Do not reveal an overlay from `requestAnimationFrame`.** A tab that is not visible never runs
+one, so the element stays at `opacity: 0` while still covering — and swallowing clicks on — the
+page. Force a style flush (`void el.offsetWidth`) and add the class in the same tick instead.
 
 ## Not yet verified
 
