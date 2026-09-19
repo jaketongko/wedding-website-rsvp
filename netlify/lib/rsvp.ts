@@ -382,18 +382,20 @@ const STYLES = `${FONT_FACES}
 
   /* The same details, condensed, inside the form card - what a phone gets
      instead of the card beside the form. Sized to stay well inside the ~160px
-     Canva leaves below the form; see BRIEF for the measurement. */
-  #sj-rsvp-brief { margin-top: 0.9rem; }
+     Canva leaves below the form; see BRIEF for the measurement. Spacing is in
+     px, like the text: 1rem is only 10px on the real page. Roomier at the
+     couple's request (2026-09-19) - it read as crammed against the card edge. */
+  #sj-rsvp-brief { margin-top: 14px; padding-bottom: 10px; }
   #sj-rsvp-brief[hidden] { display: none; }
   #sj-rsvp .sj-brief-rule {
     display: block;
     height: 1px;
-    margin-bottom: 0.9rem;
+    margin-bottom: 16px;
     background: linear-gradient(90deg, transparent, var(--sj-line), transparent);
   }
   #sj-rsvp .sj-brief-list {
     display: grid;
-    gap: 9px;
+    gap: 14px;
     margin: 0;
     padding: 0;
     list-style: none;
