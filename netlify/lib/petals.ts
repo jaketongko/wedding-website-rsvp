@@ -7,6 +7,13 @@
  * transform and opacity, and is not rendered at all for visitors who ask for
  * reduced motion.
  *
+ * Each petal is three nested elements so three motions can run on their own
+ * clocks without fighting over one transform: the outer one falls and drifts
+ * with the wind, the middle one swings across that line like a pendulum, and
+ * the inner one turns the petal over on its own axis. Every duration, phase and
+ * axis is randomised per petal, so no two fall alike and the loop never reads
+ * as a loop.
+ *
  * Canva re-renders <body> after hydration and detaches injected nodes, so the
  * layer is built in JS and re-mounted from a MutationObserver, like the player.
  */
@@ -28,33 +35,63 @@ const STYLES = `
   }
   #sj-petals .sj-petal {
     position: absolute;
-    top: -24px;
+    top: 0;
     left: var(--x);
     width: var(--size);
-    height: calc(var(--size) * 0.62);
+    height: calc(var(--size) * 0.72);
     opacity: 0;
     will-change: transform, opacity;
     animation: sj-petal-fall var(--fall) linear var(--delay) infinite;
   }
-  /* Inner element sways and tumbles while the outer one falls, so the two
-     motions combine without fighting over one transform. */
+  /* Swings across the fall line. Eased at both ends, so the petal lingers at
+     the edge of each swing the way a real one does before it comes back. */
   #sj-petals .sj-petal > span {
     display: block;
     width: 100%;
     height: 100%;
-    border-radius: 80% 0 80% 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), var(--colour) 60%);
-    animation: sj-petal-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+    animation: sj-petal-sway var(--sway) cubic-bezier(0.45, 0, 0.55, 1)
+      var(--sway-delay) infinite alternate;
   }
+  /* Turns the petal over. Rotating mostly about Y foreshortens it to an edge
+     twice per turn; the opacity dip in the keyframes is that edge catching less
+     light. Nested opacities multiply, so it reads against --alpha for free. */
+  #sj-petals .sj-petal > span > b {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Asymmetric on both axes: a rounded body with the tip drawn out to one
+       corner, so it reads as a petal rather than a symmetric leaf. */
+    border-radius: 96% 24% 84% 12% / 86% 38% 62% 14%;
+    background:
+      radial-gradient(125% 95% at 22% 16%, rgba(255, 255, 255, 0.8),
+        rgba(255, 255, 255, 0.1) 54%, rgba(255, 255, 255, 0) 72%),
+      linear-gradient(150deg, rgba(255, 255, 255, 0.3), var(--colour) 60%,
+        rgba(86, 58, 108, 0.32));
+    filter: blur(var(--blur));
+    animation: sj-petal-turn var(--turn) linear var(--turn-delay) infinite
+      var(--turn-dir);
+  }
+  /* Drift is the wind, and it eases in rather than ramping evenly, so the path
+     curves instead of running dead straight. The vertical stops stay close to a
+     constant speed: petals reach terminal velocity almost at once. */
   @keyframes sj-petal-fall {
-    0% { transform: translate3d(0, -4vh, 0); opacity: 0; }
-    8% { opacity: var(--alpha); }
-    88% { opacity: var(--alpha); }
-    100% { transform: translate3d(var(--drift), 106vh, 0); opacity: 0; }
+    0% { transform: translate3d(0, -10vh, 0); opacity: 0; }
+    7% { opacity: var(--alpha); }
+    35% { transform: translate3d(calc(var(--drift) * 0.22), 30vh, 0); }
+    70% { transform: translate3d(calc(var(--drift) * 0.72), 71vh, 0); }
+    93% { opacity: var(--alpha); }
+    100% { transform: translate3d(var(--drift), 108vh, 0); opacity: 0; }
   }
   @keyframes sj-petal-sway {
-    from { transform: translateX(-14px) rotate(-30deg); }
-    to { transform: translateX(14px) rotate(40deg); }
+    from { transform: translateX(calc(var(--swing) * -1)) rotate(-22deg); }
+    to { transform: translateX(var(--swing)) rotate(26deg); }
+  }
+  @keyframes sj-petal-turn {
+    0% { transform: rotate3d(var(--ax), var(--ay), var(--az), 0deg); opacity: 1; }
+    25% { opacity: 0.68; }
+    50% { transform: rotate3d(var(--ax), var(--ay), var(--az), 180deg); opacity: 1; }
+    75% { opacity: 0.68; }
+    100% { transform: rotate3d(var(--ax), var(--ay), var(--az), 360deg); opacity: 1; }
   }
   @media (prefers-reduced-motion: reduce) {
     #sj-petals { display: none; }
@@ -72,28 +109,62 @@ const SCRIPT = `
 
   function between(min, max) { return min + Math.random() * (max - min); }
 
-  // Fewer and smaller on phones: less to animate, and a small screen fills up
-  // quickly. Larger on wide screens, where 8-16px petals read as specks.
-  var phone = window.innerWidth < 600;
-  var wide = window.innerWidth >= 1200;
-  var count = phone ? 10 : 18;
-  var minSize = wide ? 10 : 8;
-  var maxSize = wide ? 19 : phone ? 14 : 16;
+  // Size and count follow the viewport rather than stepping at a breakpoint: a
+  // fixed pixel range that looks right at 1280 reads as specks at 2048 and
+  // crowds a phone. Both are clamped so phones stay cheap to animate and very
+  // wide screens do not turn into a blizzard.
+  var w = window.innerWidth;
+  var scale = Math.min(1.35, Math.max(0.78, w / 1280));
+  // Count follows screen area, not width, so a tall portrait tablet gets as
+  // many petals as a short wide laptop instead of looking half empty.
+  var count = Math.max(11, Math.min(28, Math.round(Math.sqrt(w * window.innerHeight) / 52)));
+  var minSize = 9 * scale;
+  var maxSize = 20 * scale;
   for (var i = 0; i < count; i++) {
     var petal = document.createElement("i");
     petal.className = "sj-petal";
-    var fall = between(11, 20);
     var style = petal.style;
-    style.setProperty("--x", between(0, 100).toFixed(2) + "vw");
-    style.setProperty("--size", between(minSize, maxSize).toFixed(1) + "px");
+
+    // Depth: a petal's size, speed, opacity and focus all follow from how near
+    // it is, so the near ones sweep past big and sharp and the far ones hang
+    // back as soft specks. One variable keeps those four in step.
+    var near = Math.random();
+    var size = minSize + (maxSize - minSize) * near;
+    var fall = between(13, 19) - near * 4; // nearer falls faster
+    style.setProperty("--size", size.toFixed(1) + "px");
     style.setProperty("--fall", fall.toFixed(2) + "s");
-    style.setProperty("--sway", between(2.2, 4).toFixed(2) + "s");
-    // Negative delay: petals are already mid-fall on the first frame.
+    style.setProperty("--alpha", (0.42 + near * 0.44).toFixed(2));
+    style.setProperty("--blur", ((1 - near) * 0.9).toFixed(2) + "px");
+
+    // Start off screen on both sides too, so petals also blow in from the edges
+    // rather than every column starting full.
+    style.setProperty("--x", between(-8, 106).toFixed(2) + "vw");
+    style.setProperty("--drift", between(-16, 16).toFixed(1) + "vw");
+    // Swing is set against the petal's own width, so the near ones sweep wide
+    // and the far ones only shiver, whatever the screen size.
+    style.setProperty("--swing", (size * between(0.8, 1.9)).toFixed(1) + "px");
+
+    // Each motion gets its own period and its own negative delay, so the swing
+    // and the turn are already under way on the first frame and stay out of
+    // phase with the fall. Otherwise every petal turns over in lockstep.
+    style.setProperty("--sway", between(2.4, 4.6).toFixed(2) + "s");
+    style.setProperty("--turn", between(3.4, 9).toFixed(2) + "s");
     style.setProperty("--delay", (-between(0, fall)).toFixed(2) + "s");
-    style.setProperty("--drift", between(-12, 12).toFixed(1) + "vw");
-    style.setProperty("--alpha", between(0.55, 0.85).toFixed(2));
+    style.setProperty("--sway-delay", (-between(0, 6)).toFixed(2) + "s");
+    style.setProperty("--turn-delay", (-between(0, 9)).toFixed(2) + "s");
+    style.setProperty("--turn-dir", Math.random() < 0.5 ? "normal" : "reverse");
+
+    // Tumble axis: mostly Y, which is the flip, tilted by a little X and Z so
+    // the petal turns on a slant instead of spinning flat.
+    style.setProperty("--ax", between(-0.5, 0.5).toFixed(2));
+    style.setProperty("--ay", "1");
+    style.setProperty("--az", between(-0.45, 0.45).toFixed(2));
+
     style.setProperty("--colour", COLOURS[i % COLOURS.length]);
-    petal.appendChild(document.createElement("span"));
+
+    var sway = document.createElement("span");
+    sway.appendChild(document.createElement("b"));
+    petal.appendChild(sway);
     layer.appendChild(petal);
   }
 
