@@ -141,7 +141,8 @@ export default async function inject(request: Request, _context: Context): Promi
     renderRsvp(nonce) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
-    renderGallery(nonce);
+    renderGallery(nonce) +
+    renderHero(nonce);
 
   return new Response(insertBeforeBodyClose(html, injected), {
     status: upstream.status,
