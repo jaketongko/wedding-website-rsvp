@@ -52,6 +52,7 @@ const SCRIPT = `
 
   var reflowed = []; // { el, prop, before, value } - every style we changed
   var applied = "";  // the route and screen size the current changes are for
+  var photoPending = false; // grown, but Canva had not added the photo yet
   var observer = null;
 
   function onRoute() {
@@ -168,29 +169,39 @@ const SCRIPT = `
     }
     if (!page) return false;
 
-    /* The photo: the page child with an image that covers the whole section. */
+    /* The photo: the page child with an image that covers the whole section.
+       Optional: Canva draws the section and its text a second or more before
+       it adds the photo, and waiting for the photo meant guests watched the
+       short layout snap to full screen. Grow now; the photo is fitted when it
+       arrives (see photoPending in sync). */
     var photo = null;
+    var layers = []; // full-size background fills: they stretch with the page by CSS
+    function covers(el) {
+      var r = at(el);
+      return r.x <= 1 && r.y <= 1 && r.x + r.w >= page.offsetWidth - 1 && r.y + r.h >= old - 1;
+    }
     for (var c = 0; c < page.children.length; c++) {
       var child = page.children[c];
-      var r = at(child);
-      if (child.querySelector("img") && r.x <= 1 && r.y <= 1 &&
-          r.x + r.w >= page.offsetWidth - 1 && r.y + r.h >= old - 1) {
-        photo = child;
-        break;
-      }
+      if (!covers(child)) continue;
+      /* Canva sizes the photo frame inline, in px, even before its image has
+         loaded; a fill has no inline size. */
+      if (!photo && (child.querySelector("img") || /px$/.test(child.style.width))) photo = child;
+      else layers.push(child);
     }
-    if (!photo) return false;
+    photoPending = !photo || !photo.querySelector("img");
 
     /* Measure everything before changing anything. */
-    var p = at(photo);
-    var canvaTransform = photo.style.transform;
-    photo.style.transform = "none";
-    var box = at(photo);
-    photo.style.transform = canvaTransform;
+    if (photo) {
+      var p = at(photo);
+      var canvaTransform = photo.style.transform;
+      photo.style.transform = "none";
+      var box = at(photo);
+      photo.style.transform = canvaTransform;
+    }
     var moves = [];
     for (var m = 0; m < page.children.length; m++) {
       var el = page.children[m];
-      if (el === photo || sized.indexOf(el) !== -1) continue;
+      if (el === photo || sized.indexOf(el) !== -1 || layers.indexOf(el) !== -1) continue;
       var er = at(el);
       if (er.y + er.h <= old * NAV_BAND) continue;     // the nav stays at the top
       moves.push(el);
@@ -202,14 +213,16 @@ const SCRIPT = `
     /* 2. The photo, scaled about the section centre and re-centred in the
        taller box. Scaling by the growth makes it cover the new height exactly,
        as it covered the old; at 1x or more it still covers the width. */
-    var scale = target / old;
-    var cx = page.offsetWidth / 2;
-    var x = cx + scale * (p.x - cx);
-    var y = target / 2 + scale * (p.y - old / 2);
-    put(photo, "transform-origin", "0 0");
-    put(photo, "transform",
-      "translate(" + (x - box.x).toFixed(2) + "px, " + (y - box.y).toFixed(2) + "px) scale(" +
-      scale.toFixed(4) + ")");
+    if (photo) {
+      var scale = target / old;
+      var cx = page.offsetWidth / 2;
+      var x = cx + scale * (p.x - cx);
+      var y = target / 2 + scale * (p.y - old / 2);
+      put(photo, "transform-origin", "0 0");
+      put(photo, "transform",
+        "translate(" + (x - box.x).toFixed(2) + "px, " + (y - box.y).toFixed(2) + "px) scale(" +
+        scale.toFixed(4) + ")");
+    }
 
     /* 3. The content, kept centred. */
     for (var n = 0; n < moves.length; n++) put(moves[n], "margin-top", (added / 2).toFixed(2) + "px");
@@ -223,7 +236,11 @@ const SCRIPT = `
       if (reflowed.length) unflow();
     } else {
       var key = location.pathname + " " + window.innerWidth + "x" + window.innerHeight;
-      if (key !== applied || !flowIntact()) {
+      /* Grown before the photo existed: redo once Canva adds it, so it is
+         scaled to cover the taller box. */
+      var photoArrived = photoPending && applied && heroSection() &&
+        heroSection().getElementsByTagName("img").length > 0;
+      if (key !== applied || photoArrived || !flowIntact()) {
         /* Back to Canva's own layout first, so the measurements are of the
            real section rather than our version of it. */
         unflow();
