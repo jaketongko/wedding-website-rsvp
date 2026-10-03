@@ -1,6 +1,7 @@
 import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderGallery } from "../lib/gallery.ts";
+import { renderHero } from "../lib/hero.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
