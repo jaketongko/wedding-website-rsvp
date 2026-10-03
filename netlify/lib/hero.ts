@@ -276,6 +276,68 @@ const SCRIPT = `
 })();
 `;
 
+/**
+ * A `<link rel="preload">` for the main page's hero photo, or "" if it cannot
+ * be found.
+ *
+ * Canva does not ask for the photo until its JS has laid the page out, 2-4s
+ * after the HTML arrives (measured 2026-10-04), and the photo is a 2.2MB PNG.
+ * Preloading starts that download with the HTML instead: on a 4G-like link
+ * the photo showed at ~6.4s instead of ~14.5s. Guests land on the cover (/)
+ * and tap through to /main, so the cover preloads it too. Low priority: it
+ * showed the photo as fast as high did, while competing less with Canva's own
+ * scripts and the cover's images.
+ *
+ * Read from Canva's page data on every request rather than hard-coded, so a
+ * new photo in Canva is picked up with no redeploy:
+ *
+ *   page index    {"K":"PBlMZ...","L":"main", ...}
+ *   page content  "a":"PBlMZ..." ... first image fill
+ *                 "a":{"B":{"A":{"A?":"d","A":"MAHW-XidlJw","B":1},"I":{"A?":"d","A":"MAHW-V2d2qc",...
+ *                 ("A" is the upload, "I" the edited copy Canva shows, if any)
+ *   media table   {"type":"RASTER","id":"MAHW-V2d2qc","version":1,"files":[{"url":"_assets/media/<hash>.png", ..."width":1932
+ *
+ * Canva lists one entry per size (800/1600/1932px wide); the browser asked for
+ * the widest on a 3x phone and on desktop alike, so that is the one preloaded.
+ */
+export function renderHeroPreload(html: string, pathname: string): string {
+  const onCover = pathname === "/";
+  if (!onCover && !pathname.startsWith(ROUTE_PREFIX)) return "";
+  try {
+    const slug = ROUTE_PREFIX.slice(1);
+    const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)];
+    const page = pages.find((m) => m[2] === slug) ?? pages.find((m) => m[2].startsWith(slug));
+    if (!page) return "";
+
+    const start = html.indexOf(`"a":"${page[1]}"`);
+    if (start === -1) return "";
+    // The hero is the page's first element; bound the search so a page with no
+    // image cannot pick up the next page's. Its image fill names the original
+    // upload ("A") and, once the photo has been adjusted in Canva, the edited
+    // copy ("I") - which is the one Canva displays.
+    const ref = /"a":\{"B":\{"A":\{"A\?":"d","A":"([A-Za-z0-9_-]+)","B":\d+\}(?:,"I":\{"A\?":"d","A":"([A-Za-z0-9_-]+)")?/
+      .exec(html.slice(start, start + 20000));
+    if (!ref) return "";
+
+    const id = (ref[2] ?? ref[1]).replace(/[^A-Za-z0-9_-]/g, "");
+    const entry = new RegExp(
+      `\\{"type":"RASTER","id":"${id}","version":\\d+,"files":\\[\\{"url":"(_assets/media/[0-9a-f]+\\.(?:png|jpe?g|webp))","urlDenied":false,"width":(\\d+)`,
+      "g",
+    );
+    let best: { url: string; width: number } | null = null;
+    for (const m of html.matchAll(entry)) {
+      const width = Number(m[2]);
+      if (!best || width > best.width) best = { url: m[1], width };
+    }
+    if (!best) return "";
+
+    return `<link rel="preload" as="image" href="/${best.url}" fetchpriority="low">`;
+  } catch (error) {
+    console.warn("[hero] could not find the hero photo to preload:", error);
+    return "";
+  }
+}
+
 export function renderHero(nonce: string | null): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
   return `\n<script${nonceAttr}>${SCRIPT}</script>\n`;
