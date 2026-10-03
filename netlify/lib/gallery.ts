@@ -249,6 +249,18 @@ const SCRIPT = `
   var observer = null;
   var imageCount = -1;
 
+  /* Phone grid: Canva stacks the couple's photo grid one per row on a phone,
+     even though it is a Grid element. At least this many tiles sharing one
+     left edge, with nothing beside them, is that stacked column. */
+  var STACKED = 4;
+  /* Belt and braces: never reflow a page this wide. Canva's phone layout is
+     ~390px; its desktop layout is wider than any phone. */
+  var NARROW = 700;
+  var COLS = 2;
+  var GUTTER = 16;   // matches the title divider's inset on a phone
+  var GAP = 10;
+  var reflowed = []; // { el, prop, before, value } - every style we changed
+
   function onRoute() {
     return location.pathname.indexOf(ROUTE) === 0;
   }
@@ -359,6 +371,168 @@ const SCRIPT = `
     }
     tiles = [];
     photos = [];
+  }
+
+  /* ---------- two columns on phones ----------------------------------- */
+
+  /**
+   * How Canva builds the phone layout (measured on the live page, 2026-10-03):
+   * one page container with an inline px height, and every element inside it
+   * absolutely positioned. The photos are the slots of three Grid groups,
+   * stacked into a single 251px column, with the divider, buttons and footer
+   * placed below them.
+   *
+   * So the reflow is three moves, all in the page's own px:
+   *  1. scale each photo slot down and translate it into a two-column grid,
+   *  2. lift everything below the old column by the height saved,
+   *  3. shrink the page (and anything sized to it) by that same amount, or
+   *     the page would end in a long empty stretch.
+   *
+   * Every change goes through put(), so it can be undone exactly, and sync()
+   * redoes the whole thing whenever Canva overwrites one of them.
+   */
+  function put(el, prop, value) {
+    var record = { el: el, prop: prop, before: el.style.getPropertyValue(prop) };
+    el.style.setProperty(prop, value);
+    /* Read back, so the comparison in flowIntact sees the browser's spelling. */
+    record.value = el.style.getPropertyValue(prop);
+    reflowed.push(record);
+  }
+
+  function unflow() {
+    for (var i = reflowed.length - 1; i >= 0; i--) {
+      var r = reflowed[i];
+      /* A value Canva has since rewritten is Canva's again; leave it alone. */
+      if (r.el.isConnected && r.el.style.getPropertyValue(r.prop) === r.value) {
+        r.el.style.setProperty(r.prop, r.before);
+      }
+    }
+    reflowed = [];
+  }
+
+  function flowIntact() {
+    for (var i = 0; i < reflowed.length; i++) {
+      var r = reflowed[i];
+      if (!r.el.isConnected || r.el.style.getPropertyValue(r.prop) !== r.value) return false;
+    }
+    return true;
+  }
+
+  function pxHeight(el) {
+    var m = /^([0-9.]+)px$/.exec(el.style.height);
+    return m ? parseFloat(m[1]) : NaN;
+  }
+
+  function reflow() {
+    /* The stacked column: the largest set of tiles sharing a left edge. */
+    var byLeft = {};
+    var column = [];
+    for (var i = 0; i < tiles.length; i++) {
+      var key = Math.round(tiles[i].frame.getBoundingClientRect().left);
+      (byLeft[key] = byLeft[key] || []).push(tiles[i]);
+      if (byLeft[key].length > column.length) column = byLeft[key];
+    }
+    if (column.length < STACKED) return;
+
+    var frames = column.map(function (t) { return t.frame; });
+
+    /* On desktop, a column of the 4-across grid also shares a left edge; what
+       sets the phone layout apart is that no other photo sits beside it. */
+    var colTop = Infinity, colBottom = -Infinity;
+    for (var e = 0; e < frames.length; e++) {
+      var fr0 = frames[e].getBoundingClientRect();
+      colTop = Math.min(colTop, fr0.top);
+      colBottom = Math.max(colBottom, fr0.bottom);
+    }
+    for (var o = 0; o < tiles.length; o++) {
+      if (column.indexOf(tiles[o]) !== -1) continue;
+      var or = tiles[o].frame.getBoundingClientRect();
+      if (or.bottom > colTop && or.top < colBottom) return;
+    }
+    function holdsTwo(el) {
+      var n = 0;
+      for (var j = 0; j < frames.length && n < 2; j++) if (el.contains(frames[j])) n++;
+      return n > 1;
+    }
+
+    /* The page: the nearest ancestor holding every photo. */
+    var page = frames[0].parentElement;
+    while (page && !frames.every(function (f) { return page.contains(f); })) page = page.parentElement;
+    if (!page || !page.offsetWidth || page.offsetWidth >= NARROW) return;
+
+    var pr = page.getBoundingClientRect();
+    var k = pr.width / page.offsetWidth;   // Canva's own page scale, if any
+    function at(el) {
+      var r = el.getBoundingClientRect();
+      return { x: (r.left - pr.left) / k, y: (r.top - pr.top) / k, w: r.width / k, h: r.height / k };
+    }
+
+    /* Each photo's slot: the outermost ancestor that holds no other photo. */
+    var items = [];
+    for (var a = 0; a < frames.length; a++) {
+      var slot = frames[a];
+      while (slot.parentElement && slot.parentElement !== page && !holdsTwo(slot.parentElement)) {
+        slot = slot.parentElement;
+      }
+      /* Only plain translations are understood; a scaled wrapper means Canva
+         has changed how it builds this, and the stacked column is safer. */
+      var parent = slot.parentElement;
+      if (Math.abs(at(parent).w / parent.offsetWidth - 1) > 0.01) return;
+      var f = at(frames[a]);
+      var s = at(slot);
+      items.push({ slot: slot, frame: f, off: { x: f.x - s.x, y: f.y - s.y } });
+    }
+    items.sort(function (p, q) { return p.frame.y - q.frame.y; });
+
+    var top = items[0].frame.y;
+    var bottom = 0;
+    for (var b = 0; b < items.length; b++) bottom = Math.max(bottom, items[b].frame.y + items[b].frame.h);
+
+    /* 1. The grid. The slot's untransformed box is measured with Canva's
+       translate switched off, then one transform puts the photo in its cell. */
+    var cell = (page.offsetWidth - 2 * GUTTER - (COLS - 1) * GAP) / COLS;
+    var y = top;
+    for (var row = 0; row * COLS < items.length; row++) {
+      var rowHeight = 0;
+      for (var c = 0; c < COLS; c++) {
+        var item = items[row * COLS + c];
+        if (!item) break;
+        var scale = cell / item.frame.w;
+        var canvaTransform = item.slot.style.transform;
+        item.slot.style.transform = "none";
+        var box = at(item.slot);
+        item.slot.style.transform = canvaTransform;
+        var tx = GUTTER + c * (cell + GAP) - item.off.x * scale - box.x;
+        var ty = y - item.off.y * scale - box.y;
+        put(item.slot, "transform-origin", "0 0");
+        put(item.slot, "transform",
+          "translate(" + tx.toFixed(2) + "px, " + ty.toFixed(2) + "px) scale(" + scale.toFixed(4) + ")");
+        rowHeight = Math.max(rowHeight, item.frame.h * scale);
+      }
+      y += rowHeight + GAP;
+    }
+    var saved = bottom - (y - GAP);
+    if (saved < 1) return;
+
+    /* 2 and 3. The page's other children: lift what sat below the column,
+       shorten what spanned it (the frame border drawn round the content). */
+    var oldHeight = page.offsetHeight;
+    for (var d = 0; d < page.children.length; d++) {
+      var child = page.children[d];
+      if (frames.some(function (fr) { return child.contains(fr); })) continue;
+      var r = at(child);
+      if (r.y >= bottom - 1) {
+        put(child, "margin-top", (-saved).toFixed(2) + "px");
+      } else if (r.y < top && r.y + r.h > bottom && !isNaN(pxHeight(child))) {
+        put(child, "height", (pxHeight(child) - saved).toFixed(2) + "px");
+      }
+    }
+    /* The page and the wrappers above it that Canva sized to the same height. */
+    for (var el = page; el && el !== document.body; el = el.parentElement) {
+      var h = pxHeight(el);
+      if (Math.abs(h - oldHeight) < 2) put(el, "height", (h - saved).toFixed(2) + "px");
+      else if (!isNaN(h)) break;
+    }
   }
 
   /* ---------- the lightbox ------------------------------------------- */
@@ -514,12 +688,14 @@ const SCRIPT = `
     }
   }, true);
 
-  /* Re-measure the crop centres after a rotation or resize. */
+  /* A rotation or resize can change Canva's layout under us: redo the tiles,
+     the phone grid and the crop centres from scratch. */
   var resizeTimer = 0;
   window.addEventListener("resize", function () {
     window.clearTimeout(resizeTimer);
     resizeTimer = window.setTimeout(function () {
-      for (var i = 0; i < tiles.length; i++) setOrigin(tiles[i]);
+      imageCount = -1;
+      sync();
     }, 200);
   });
 
@@ -533,6 +709,7 @@ const SCRIPT = `
     if (!document.body) return;
 
     if (!onRoute()) {
+      if (reflowed.length) unflow();
       if (tiles.length) untag();
       if (box) { close(); if (box.parentNode) box.parentNode.removeChild(box); }
       imageCount = -1;
@@ -544,8 +721,13 @@ const SCRIPT = `
       for (var i = 0; !stale && i < tiles.length; i++) {
         if (!tiles[i].frame.isConnected || !tiles[i].frame.classList.contains("sj-gtile")) stale = true;
       }
+      if (!stale && !flowIntact()) stale = true;
       if (stale) {
+        /* Back to Canva's own layout first, so the scan measures the real
+           grid rather than our reflow of it. */
+        unflow();
         tag();
+        reflow();
         imageCount = document.images.length;
       }
       if (box) mount();
