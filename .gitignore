@@ -6,3 +6,6 @@ node_modules/
 Thumbs.db
 npm-debug.log*
 source-audio/
+
+# Our Story photo originals; the resized copies in public/ are what ships.
+source-images/

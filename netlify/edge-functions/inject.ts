@@ -1,6 +1,7 @@
 import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderGallery } from "../lib/gallery.ts";
+import { renderMenu } from "../lib/menu.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
@@ -141,14 +142,16 @@ export default async function inject(request: Request, _context: Context): Promi
   // Every page's data is in every page's HTML, so the slideshow photos can be
   // read here even when the guest lands on the cover.
   const slides = findSlides(html);
+  const pages = findPages(html);
   const injected =
     renderPlayer(nonce) +
     renderRsvp(nonce) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +
-    renderSlideshow(nonce, slides, findPages(html)) +
-    renderStory(nonce);
+    renderSlideshow(nonce, slides, pages) +
+    renderStory(nonce) +
+    renderMenu(nonce, pages);
 
   // In <head>, so the first photo downloads with the HTML rather than seconds
   // later, when Canva's JS gets round to rendering the page.

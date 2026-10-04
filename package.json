@@ -5,6 +5,7 @@
   "description": "Netlify reverse proxy that adds background music to the Shan & Jake Canva invitation",
   "scripts": {
     "dev": "netlify dev",
+    "photos": "node scripts/story-photos.mjs",
     "deploy:preview": "netlify deploy --build",
     "deploy": "netlify deploy --prod --build"
   },

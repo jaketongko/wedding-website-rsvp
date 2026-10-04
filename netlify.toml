@@ -1,8 +1,12 @@
-# The site has no build step - `public/` is served as-is and every other path is
-# handled by the `inject` edge function, which declares its own routing in
-# netlify/edge-functions/inject.ts.
+# `public/` is served as-is and every other path is handled by the `inject` edge
+# function, which declares its own routing in netlify/edge-functions/inject.ts.
+#
+# The one build step resizes the Our Story photos in source-images/our-story/
+# into public/ and lists them for the edge function (scripts/story-photos.mjs).
+# `netlify deploy --build` runs it locally before every deploy.
 
 [build]
+  command = "node scripts/story-photos.mjs"
   publish = "public"
   edge_functions = "netlify/edge-functions"
 
