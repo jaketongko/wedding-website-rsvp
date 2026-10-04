@@ -1,7 +1,6 @@
 import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderGallery } from "../lib/gallery.ts";
-import { renderHero, renderHeroPreload } from "../lib/hero.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
@@ -142,15 +141,9 @@ export default async function inject(request: Request, _context: Context): Promi
     renderRsvp(nonce) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
-    renderGallery(nonce) +
-    renderHero(nonce);
+    renderGallery(nonce);
 
-  // In <head>, so the hero photo starts downloading with the HTML rather than
-  // seconds later, when Canva's JS gets round to asking for it.
-  const preload = renderHeroPreload(html, incoming.pathname);
-  const page = preload ? insertBeforeHeadClose(html, preload) : html;
-
-  return new Response(insertBeforeBodyClose(page, injected), {
+  return new Response(insertBeforeBodyClose(html, injected), {
     status: upstream.status,
     statusText: upstream.statusText,
     headers: responseHeaders,
@@ -212,12 +205,6 @@ function rewriteLocation(location: string, selfOrigin: string): string {
   } catch {
     return location;
   }
-}
-
-function insertBeforeHeadClose(html: string, markup: string): string {
-  const index = html.indexOf("</head>");
-  if (index === -1) return html;
-  return html.slice(0, index) + markup + html.slice(index);
 }
 
 function insertBeforeBodyClose(html: string, markup: string): string {
