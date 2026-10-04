@@ -5,7 +5,7 @@ import { renderMenu } from "../lib/menu.ts";
 import { findOpeningPhotos, renderOpening, renderOpeningPreload } from "../lib/opening.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
-import { renderRsvp } from "../lib/rsvp.ts";
+import { RSVP_FONTS, renderRsvp } from "../lib/rsvp.ts";
 import { findPages, findSections, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
 import { renderStory } from "../lib/story.ts";
 
@@ -157,10 +157,12 @@ export default async function inject(request: Request, _context: Context): Promi
     renderStory(nonce, sections) +
     renderMenu(nonce, pages);
 
-  // In <head>, so the first photo downloads with the HTML rather than seconds
-  // later, when Canva's JS gets round to rendering the page.
+  // In <head>, so the RSVP fonts and the first photo download with the HTML rather
+  // than seconds later, when Canva's JS gets round to rendering the page.
   const preload =
-    renderSlideshowPreload(slides, incoming.pathname) + renderOpeningPreload(openingPhotos, incoming.pathname);
+    RSVP_FONTS +
+    renderSlideshowPreload(slides, incoming.pathname) +
+    renderOpeningPreload(openingPhotos, incoming.pathname);
   const page = preload ? insertBeforeHeadClose(html, preload) : html;
 
   return new Response(insertBeforeBodyClose(page, injected), {
@@ -190,6 +192,7 @@ function renderRsvpPreview(): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RSVP preview</title>
+${RSVP_FONTS}
 <style>
   body { margin: 0; background: #f6f3f7; }
 </style>

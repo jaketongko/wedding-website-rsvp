@@ -2,10 +2,10 @@
  * The RSVP page, rebuilt as one section of our own on a touch of lavender:
  *
  *   nav (desktop; the phone menu stands in on phones, menu.ts)
- *   "Please RSVP" on the left, the Canva envelope in a rounded card on the right
- *   "Kindly reply by ..." card
- *   four reminder cards (save the date, let us know, dress code, the venue)
- *   the RSVP form
+ *   a centred opening: kicker, Canva's "Please RSVP", the tagline, and the
+ *     Canva envelope under an arch with the reply-by date pinned to its foot
+ *   "Good to know" (save the date, let us know, dress code, the venue) beside
+ *     the RSVP form; stacked on narrow screens
  *
  * Why our own form at all: Canva's form widget redirects to
  * `https://www.canva.com/_website-element-widget`, which answers with
@@ -66,6 +66,23 @@ const FONT_FACES = SEASONS_FACES.map(
 // above ship in this module's <style>, which is injected on every page, so the
 // family is registered site-wide and no one else needs to declare it.
 export const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
+
+/**
+ * The RSVP page's three faces, each with one job: Dancing Script for the warm
+ * lines, Playfair Display for headings and the date, Lato for everything read.
+ * Canva's own "Please RSVP" title and nav keep the invitation's fonts.
+ */
+const SCRIPT = '"Dancing Script", "Brush Script MT", cursive';
+const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
+const SANS = '"Lato", "Helvetica Neue", Arial, sans-serif';
+
+/** In <head> on every page (Canva routes client-side, so a guest can reach
+ *  /rsvp without a page load); `display=swap` shows the fallbacks meanwhile. */
+export const RSVP_FONTS =
+  '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600' +
+  '&family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500&display=swap">';
 
 /** Lavender flower colours: buds darken toward the base of each spike. Shared
  * with the falling petals (petals.ts) so the site uses one lavender. */
@@ -172,37 +189,35 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     pointer-events: none !important;
   }
 
-  #sj-rsvp-page {
+  #sj-rsvp-page, #sj-rsvp {
     --sjr-ink: #4d4256;
     --sjr-muted: #7d7187;
     --sjr-accent: #8a6aa8;
     --sjr-accent-rgb: 138, 106, 168;
     --sjr-soft: #b9a0d0;
     --sjr-line: rgba(164, 127, 196, 0.28);
-    --sjr-card: rgba(252, 250, 254, 0.94);
+    --sjr-card: rgba(252, 250, 254, 0.95);
+    color: var(--sjr-ink);
+    font-family: ${SANS};
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+  #sj-rsvp-page {
     position: relative;
     box-sizing: border-box;
     width: 100%;
-    padding: 7em 1.5em 5em;
+    padding: 6em 1.5em 5em;
     background-color: #f6f3f7;
     background-position: center top;
     background-size: cover;
-    color: var(--sjr-ink);
-    font-family: ${FONT};
-    -webkit-font-smoothing: antialiased;
   }
   #sj-rsvp-page * { box-sizing: border-box; }
-  #sj-rsvp-page .sjr-inner { max-width: 66em; margin: 0 auto; }
+  #sj-rsvp-page .sjr-inner { max-width: 68em; margin: 0 auto; }
 
-  /* One card look for everything on the page: near-white with a touch of
-     lavender, a hairline edge, a soft shadow. */
-  #sj-rsvp-page .sjr-card,
-  #sj-rsvp #sj-rsvp-card {
-    background: var(--sjr-card);
-    border: 1px solid var(--sjr-line);
-    border-radius: 1.6em;
-    box-shadow: 0 1em 2.6em rgba(110, 80, 140, 0.08);
-  }
+  /* Three faces with a job each: a script for the warm lines, a display
+     serif for headings and the date, a sans for everything read. */
+  #sj-rsvp-page .sjr-script, #sj-rsvp .sjr-script { font-family: ${SCRIPT}; font-weight: 500; }
+  #sj-rsvp-page .sjr-serif, #sj-rsvp .sjr-serif { font-family: ${SERIF}; font-weight: 400; }
 
   /* ---------- nav (desktop) ---------- */
   #sj-rsvp-page .sjr-nav {
@@ -234,56 +249,51 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp-page.sjr-has-nav { padding-top: 10em; }
 
-  /* ---------- "Please RSVP" and the envelope ---------- */
-  #sj-rsvp-page .sjr-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
-    gap: 2.5em;
-    align-items: center;
-    margin-bottom: 3em;
-  }
-  #sj-rsvp-page .sjr-title { margin: 0; line-height: 0.9; }
-  #sj-rsvp-page .sjr-please {
-    display: block;
-    font-size: 5.6em;
-    line-height: 1;
-    margin: 0 0 -0.1em 0.05em;
-  }
-  #sj-rsvp-page .sjr-rsvp {
-    display: block;
-    font-size: 5em;
-    letter-spacing: 0.08em;
+  /* ---------- the opening: centred title, the envelope under an arch ---------- */
+  #sj-rsvp-page .sjr-hero { text-align: center; }
+  #sj-rsvp-page .sjr-kicker {
+    margin: 0 0 1.4em;
+    font-size: 0.8em;
+    letter-spacing: 0.42em;
     text-transform: uppercase;
-  }
-  #sj-rsvp-page .sjr-tagline {
-    margin: 0.9em 0 0;
-    font-size: 2.5em;
-    line-height: 1.25;
-    color: var(--sjr-soft);
-  }
-  #sj-rsvp-page .sjr-rule {
-    position: relative;
-    width: min(20em, 90%);
-    height: 1px;
-    margin: 1.4em 0;
-    background: linear-gradient(90deg, var(--sjr-line), var(--sjr-line) 44%, transparent 44%, transparent 56%, var(--sjr-line) 56%);
-  }
-  #sj-rsvp-page .sjr-rule::after {
-    content: "\\2661";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -54%);
-    font-size: 0.85em;
-    color: var(--sjr-soft);
-  }
-  #sj-rsvp-page .sjr-lead {
-    margin: 0;
-    font-size: 1.15em;
-    line-height: 1.7;
     color: var(--sjr-muted);
   }
-  #sj-rsvp-page .sjr-envelope { padding: 1.4em; overflow: hidden; }
+  #sj-rsvp-page .sjr-title { margin: 0; line-height: 0.9; font-weight: 400; }
+  #sj-rsvp-page .sjr-please { display: block; font-size: 5em; line-height: 1; margin-bottom: -0.12em; }
+  #sj-rsvp-page .sjr-rsvp { display: block; font-size: 4.6em; letter-spacing: 0.1em; text-transform: uppercase; }
+  #sj-rsvp-page .sjr-tagline {
+    margin: 0.7em 0 0;
+    font-size: 2.1em;
+    line-height: 1.25;
+    color: var(--sjr-accent);
+  }
+  #sj-rsvp-page .sjr-lead {
+    max-width: 30em;
+    margin: 0.9em auto 2.6em;
+    font-size: 1.05em;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--sjr-muted);
+  }
+  #sj-rsvp-page .sjr-arch {
+    position: relative;
+    width: min(27em, 100%);
+    margin: 0 auto;
+    padding: 0.7em;
+    border: 1px solid var(--sjr-line);
+    border-radius: 14em 14em 1.4em 1.4em;
+    background: rgba(255, 255, 255, 0.55);
+  }
+  #sj-rsvp-page .sjr-window {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26em;
+    padding: 5.5em 1.6em 4.2em;
+    border-radius: 13.3em 13.3em 1em 1em;
+    background: radial-gradient(120% 80% at 50% 0%, #ffffff 0%, #f3edf8 70%, #ece3f4 100%);
+    overflow: hidden;
+  }
   /* Canva's envelope pieces, laid out as Canva lays them, scaled to fit. */
   #sj-rsvp-page .sjr-art { position: relative; width: 100%; margin: 0 auto; }
   #sj-rsvp-page .sjr-clip { position: absolute; overflow: hidden; }
@@ -294,115 +304,132 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     transition: opacity 600ms ease;
   }
   #sj-rsvp-page .sjr-art img.is-loaded { opacity: 1; }
-
-  /* ---------- kindly reply by ---------- */
-  #sj-rsvp-page .sjr-reply {
-    max-width: 46em;
-    margin: 0 auto 2.5em;
-    padding: 2.4em 1.5em 2.2em;
-    text-align: center;
+  /* The reply-by date, pinned over the foot of the arch like a ribbon. */
+  #sj-rsvp-page .sjr-badge {
+    position: relative;
+    display: inline-block;
+    margin: -2.4em 0 0;
+    padding: 0.95em 2.4em 1em;
+    background: #fff;
+    border: 1px solid var(--sjr-line);
+    border-radius: 999px;
+    box-shadow: 0 0.8em 2em rgba(110, 80, 140, 0.12);
   }
-  #sj-rsvp-page .sjr-kicker {
-    margin: 0 0 0.6em;
-    font-size: 0.85em;
-    letter-spacing: 0.32em;
+  #sj-rsvp-page .sjr-badge-label {
+    display: block;
+    font-size: 0.72em;
+    letter-spacing: 0.36em;
     text-transform: uppercase;
     color: var(--sjr-muted);
   }
   #sj-rsvp-page .sjr-date {
-    margin: 0;
-    font-size: 2.3em;
-    letter-spacing: 0.06em;
+    display: block;
+    margin-top: 0.15em;
+    font-size: 1.7em;
+    letter-spacing: 0.04em;
     color: var(--sjr-ink);
   }
-  #sj-rsvp-page .sjr-reply .sjr-rule { margin: 1.3em auto 0; width: 12em; }
-  #sj-rsvp-page .sjr-reply .sjr-rule::after { content: "\\273F"; font-size: 0.75em; }
 
-  /* ---------- reminders ---------- */
-  #sj-rsvp-page .sjr-reminders {
+  /* ---------- below: good to know | the form ---------- */
+  #sj-rsvp-page .sjr-body {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1.5em;
-    margin-bottom: 3em;
-    padding: 2.4em 2em;
+    grid-template-columns: minmax(0, 19em) minmax(0, 1fr);
+    gap: 3.5em;
+    align-items: start;
+    margin-top: 4.5em;
   }
-  #sj-rsvp-page .sjr-reminder { text-align: center; }
+  #sj-rsvp-page .sjr-notes { padding-top: 1.2em; }
+  #sj-rsvp-page .sjr-notes-title {
+    margin: 0 0 0.2em;
+    font-size: 2.6em;
+    line-height: 1.1;
+    color: var(--sjr-accent);
+  }
+  #sj-rsvp-page .sjr-notes .sjr-notes-sub {
+    margin: 0 0 1.6em;
+    font-size: 0.95em;
+    font-weight: 300;
+    color: var(--sjr-muted);
+  }
+  #sj-rsvp-page .sjr-notes ul { margin: 0; padding: 0; list-style: none; }
+  #sj-rsvp-page .sjr-notes li {
+    display: grid;
+    grid-template-columns: 2.6em minmax(0, 1fr);
+    gap: 1em;
+    align-items: start;
+    padding: 1.15em 0;
+    border-top: 1px solid var(--sjr-line);
+  }
+  #sj-rsvp-page .sjr-notes li:last-child { border-bottom: 1px solid var(--sjr-line); }
   #sj-rsvp-page .sjr-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 3em;
-    height: 3em;
-    margin-bottom: 1.1em;
+    width: 2.6em;
+    height: 2.6em;
     border: 1px solid var(--sjr-line);
-    border-radius: 0.8em;
+    border-radius: 50%;
     color: var(--sjr-accent);
     background: #fff;
   }
-  #sj-rsvp-page .sjr-icon svg { width: 1.4em; height: 1.4em; }
-  #sj-rsvp-page .sjr-reminder h3 {
-    margin: 0 0 0.5em;
-    font-size: 1em;
-    font-weight: 400;
-    letter-spacing: 0.26em;
+  #sj-rsvp-page .sjr-icon svg { width: 1.2em; height: 1.2em; }
+  #sj-rsvp-page .sjr-notes h3 {
+    margin: 0.15em 0 0.3em;
+    font-size: 0.9em;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--sjr-ink);
   }
-  #sj-rsvp-page .sjr-reminder p {
+  #sj-rsvp-page .sjr-notes p {
     margin: 0;
-    font-size: 1.05em;
+    font-size: 0.98em;
+    font-weight: 300;
     line-height: 1.6;
     color: var(--sjr-muted);
   }
 
   /* ---------- the form ---------- */
-  #sj-rsvp {
-    --sjr-ink: #4d4256;
-    --sjr-muted: #7d7187;
-    --sjr-accent: #8a6aa8;
-    --sjr-accent-rgb: 138, 106, 168;
-    --sjr-soft: #b9a0d0;
-    --sjr-line: rgba(164, 127, 196, 0.28);
-    --sjr-card: rgba(252, 250, 254, 0.96);
-    position: relative;
-    font-family: ${FONT};
-    font-size: 16px;
-    color: var(--sjr-ink);
-    -webkit-font-smoothing: antialiased;
-  }
+  #sj-rsvp { position: relative; font-size: 16px; }
   #sj-rsvp-page #sj-rsvp { font-size: 1em; }
   #sj-rsvp * { box-sizing: border-box; }
-  #sj-rsvp #sj-rsvp-card { position: relative; padding: 2.6em 2.8em 2em; }
+  #sj-rsvp #sj-rsvp-card {
+    position: relative;
+    padding: 2.6em 2.8em 2em;
+    background: var(--sjr-card);
+    border: 1px solid var(--sjr-line);
+    border-radius: 1.6em;
+    box-shadow: 0 1em 2.6em rgba(110, 80, 140, 0.08);
+  }
   #sj-rsvp .sjr-form-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 1em;
-    margin-bottom: 1.6em;
+    margin-bottom: 1.5em;
   }
   #sj-rsvp .sjr-form-title {
     margin: 0;
-    font-size: 3.6em;
-    font-weight: 400;
+    font-size: 2.5em;
     line-height: 1.15;
     color: var(--sjr-accent);
   }
   #sj-rsvp .sjr-bloom { width: 2.4em; height: 2.4em; flex: none; }
-  #sj-rsvp .sjr-field { margin-bottom: 1.6em; }
+  #sj-rsvp .sjr-field { margin-bottom: 1.5em; }
   #sj-rsvp .sjr-label {
     display: block;
-    margin-bottom: 0.75em;
-    font-size: 0.85em;
-    letter-spacing: 0.2em;
+    margin-bottom: 0.8em;
+    font-size: 0.78em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--sjr-muted);
   }
-  #sj-rsvp .sjr-req { margin-left: 0.3em; color: var(--sjr-soft); }
+  #sj-rsvp .sjr-req { margin-left: 0.3em; color: var(--sjr-accent); }
   #sj-rsvp input[type="text"],
   #sj-rsvp textarea {
     width: 100%;
-    padding: 0.95em 1.4em;
-    font-family: ${FONT};
+    padding: 0.85em 1.3em;
+    font-family: ${SANS};
+    font-weight: 400;
     /* px, not em/rem: 16px is the minimum that stops iOS Safari zooming the
        page when a field takes focus. */
     font-size: 16px;
@@ -414,7 +441,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     transition: border-color 180ms ease, box-shadow 180ms ease;
   }
   #sj-rsvp textarea { border-radius: 1.1em; resize: vertical; min-height: 6.5em; }
-  #sj-rsvp input::placeholder, #sj-rsvp textarea::placeholder { color: #b7abc1; }
+  #sj-rsvp input::placeholder, #sj-rsvp textarea::placeholder { color: #b7abc1; font-weight: 300; }
   #sj-rsvp input:focus, #sj-rsvp textarea:focus {
     outline: none;
     border-color: var(--sjr-soft);
@@ -422,13 +449,13 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
 
   /* Attendance: two cards side by side, each a title and a soft line. */
-  #sj-rsvp .sjr-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 1em; }
+  #sj-rsvp .sjr-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9em; }
   #sj-rsvp .sjr-choice {
     position: relative;
     display: flex;
     align-items: center;
     gap: 1em;
-    padding: 1.1em 1.3em;
+    padding: 1em 1.2em;
     background: #fff;
     border: 1px solid var(--sjr-line);
     border-radius: 1.1em;
@@ -439,8 +466,8 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp .sjr-choice input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
   #sj-rsvp .sjr-mark {
     flex: none;
-    width: 1.25em;
-    height: 1.25em;
+    width: 1.2em;
+    height: 1.2em;
     border: 1.5px solid var(--sjr-soft);
     border-radius: 50%;
     background: #fff;
@@ -448,12 +475,12 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp .sjr-choice-title {
     display: block;
-    font-size: 1em;
-    letter-spacing: 0.16em;
+    font-size: 0.86em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--sjr-ink);
   }
-  #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.2em; font-size: 1em; color: var(--sjr-muted); }
+  #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.25em; font-size: 0.95em; font-weight: 300; color: var(--sjr-muted); }
   #sj-rsvp .sjr-choice--on {
     border-color: var(--sjr-accent);
     background: rgba(var(--sjr-accent-rgb), 0.06);
@@ -469,11 +496,11 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     display: flex;
     align-items: center;
     gap: 0.6em;
-    margin: 2.2em 0 1.6em;
-    padding-bottom: 1em;
+    margin: 2.1em 0 1.5em;
+    padding-bottom: 0.9em;
     border-bottom: 1px solid var(--sjr-line);
   }
-  #sj-rsvp .sjr-more h3 { margin: 0; font-size: 2.8em; font-weight: 400; color: var(--sjr-accent); }
+  #sj-rsvp .sjr-more h3 { margin: 0; font-size: 1.9em; color: var(--sjr-accent); }
   #sj-rsvp .sjr-more .sjr-bloom { width: 1.6em; height: 1.6em; }
 
   #sj-rsvp .sjr-submit {
@@ -483,10 +510,10 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     gap: 0.9em;
     width: 100%;
     margin-top: 0.6em;
-    padding: 1.15em 1.5em;
-    font-family: ${FONT};
+    padding: 1.1em 1.5em;
+    font-family: ${SERIF};
     font-size: 0.95em;
-    letter-spacing: 0.32em;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
     color: #fff;
     background: linear-gradient(135deg, #c3aadb 0%, #9c7dbd 100%);
@@ -503,11 +530,12 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp .sjr-required-note {
     margin: 1em 0 0;
     text-align: center;
-    font-size: 0.95em;
+    font-size: 0.88em;
+    font-weight: 300;
     color: var(--sjr-muted);
   }
   #sj-rsvp .sjr-required-note .sjr-req { margin: 0; }
-  #sj-rsvp .sjr-note { margin: 0.9em 0 0; text-align: center; font-size: 1em; line-height: 1.5; }
+  #sj-rsvp .sjr-note { margin: 0.9em 0 0; text-align: center; font-size: 0.95em; line-height: 1.5; }
   #sj-rsvp .sjr-note:empty { display: none; }
   #sj-rsvp .sjr-note--error { color: #a3456a; }
   #sj-rsvp .sjr-note a { color: var(--sjr-accent); }
@@ -515,8 +543,8 @@ const styles = (heroSelector: string) => `${FONT_FACES}
 
   #sj-rsvp .sjr-done { padding: 2.5em 1em; text-align: center; }
   #sj-rsvp .sjr-done .sjr-bloom { display: block; width: 3.2em; height: 3.2em; margin: 0 auto 1em; }
-  #sj-rsvp .sjr-done h2 { margin: 0 0 0.5em; font-size: 3.6em; font-weight: 400; color: var(--sjr-accent); }
-  #sj-rsvp .sjr-done p { margin: 0; font-size: 1.15em; line-height: 1.7; color: var(--sjr-muted); }
+  #sj-rsvp .sjr-done h2 { margin: 0 0 0.4em; font-size: 2.8em; color: var(--sjr-accent); }
+  #sj-rsvp .sjr-done p { margin: 0; font-size: 1.05em; font-weight: 300; line-height: 1.7; color: var(--sjr-muted); }
 
   /* ---------- the fallback: a floating button and the form in a modal ---------- */
   #sj-rsvp.sjr-overlay {
@@ -552,7 +580,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     transform: translateX(-50%);
     z-index: 2147482000;
     padding: 0.85rem 2.4rem;
-    font-family: ${FONT};
+    font-family: ${SERIF};
     font-size: 12px;
     letter-spacing: 0.28em;
     text-transform: uppercase;
@@ -566,32 +594,35 @@ const styles = (heroSelector: string) => `${FONT_FACES}
 
   /* ---------- tablets and phones ---------- */
   @media (max-width: 900px) {
-    #sj-rsvp-page .sjr-reminders { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2em; }
+    #sj-rsvp-page .sjr-body { grid-template-columns: 1fr; gap: 2.4em; margin-top: 3.5em; }
+    #sj-rsvp-page .sjr-notes { padding-top: 0; }
+    #sj-rsvp-page .sjr-notes-head { text-align: center; }
+    #sj-rsvp-page .sjr-notes ul { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2em; }
+    #sj-rsvp-page .sjr-notes li:nth-last-child(2) { border-bottom: 1px solid var(--sjr-line); }
   }
   @media (max-width: 720px) {
-    #sj-rsvp-page { padding: 5.5em 1em 3.5em; }
-    #sj-rsvp-page .sjr-top { grid-template-columns: 1fr; gap: 1.8em; margin-bottom: 2em; text-align: center; }
-    #sj-rsvp-page .sjr-please { font-size: 4.2em; margin-left: 0; }
+    #sj-rsvp-page { padding: 5em 1em 3.5em; }
+    #sj-rsvp-page .sjr-kicker { font-size: 0.7em; letter-spacing: 0.32em; }
+    #sj-rsvp-page .sjr-please { font-size: 4em; }
     #sj-rsvp-page .sjr-rsvp { font-size: 3.6em; }
-    #sj-rsvp-page .sjr-tagline { font-size: 2.1em; }
-    #sj-rsvp-page .sjr-rule { margin: 1.2em auto; }
-    #sj-rsvp-page .sjr-lead { font-size: 1.05em; }
-    #sj-rsvp-page .sjr-envelope { padding: 1em; }
-    #sj-rsvp-page .sjr-reply { margin-bottom: 1.6em; padding: 1.8em 1em; }
-    #sj-rsvp-page .sjr-date { font-size: 1.8em; }
-    #sj-rsvp-page .sjr-reminders { gap: 1.4em 1em; margin-bottom: 1.6em; padding: 1.8em 1em; }
-    #sj-rsvp-page .sjr-reminder h3 { font-size: 0.85em; letter-spacing: 0.2em; }
-    #sj-rsvp-page .sjr-reminder p { font-size: 0.95em; }
+    #sj-rsvp-page .sjr-tagline { font-size: 1.6em; }
+    #sj-rsvp-page .sjr-lead { margin-bottom: 2em; font-size: 1em; }
+    #sj-rsvp-page .sjr-window { min-height: 0; padding: 3.2em 1.2em 3.6em; }
+    #sj-rsvp-page .sjr-badge { padding: 0.85em 1.8em 0.9em; }
+    #sj-rsvp-page .sjr-date { font-size: 1.45em; }
+    #sj-rsvp-page .sjr-notes-title { font-size: 2.2em; }
+    #sj-rsvp-page .sjr-notes ul { grid-template-columns: 1fr; }
+    #sj-rsvp-page .sjr-notes li:nth-last-child(2) { border-bottom: 0; }
     #sj-rsvp #sj-rsvp-card { padding: 1.8em 1.3em 1.5em; }
-    #sj-rsvp .sjr-form-title { font-size: 2.7em; }
+    #sj-rsvp .sjr-form-title { font-size: 2.1em; }
     #sj-rsvp .sjr-choices { grid-template-columns: 1fr; gap: 0.7em; }
-    #sj-rsvp .sjr-more h3 { font-size: 2.3em; }
-    #sj-rsvp .sjr-submit { letter-spacing: 0.24em; }
+    #sj-rsvp .sjr-more h3 { font-size: 1.7em; }
+    #sj-rsvp .sjr-submit { letter-spacing: 0.22em; }
   }
   /* Phones: the menu button (menu.ts) stands in for the nav row. */
   @media ${MOBILE} {
     #sj-rsvp-page .sjr-nav { display: none; }
-    #sj-rsvp-page.sjr-has-nav { padding-top: 5.5em; }
+    #sj-rsvp-page.sjr-has-nav { padding-top: 5em; }
   }
 `;
 
@@ -608,7 +639,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
   var FALLBACK_FONT = ${JSON.stringify(FONT)};
   var READ_WAIT = 6000;   // for Canva's title and envelope before building with what there is
   var FALLBACK_AFTER = 12000;
-  var ART_MAX = 24;       // em: the tallest the envelope art may be
+  var ART_MAX = 17;       // em: the tallest the envelope art may be
 
   var page = null;        // our section
   var canva = null;       // Canva's RSVP section, hidden behind ours
@@ -771,50 +802,56 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     if (c.nav.length) { s.appendChild(navNode(c.nav)); s.classList.add("sjr-has-nav"); }
     var inner = el("div", "sjr-inner");
 
-    var top = el("div", "sjr-top");
-    var intro = el("div", "sjr-intro");
+    /* The opening, centred: kicker, Canva's title, the tagline, then the
+       envelope under an arch with the reply-by date pinned to its foot. */
+    var hero = el("div", "sjr-hero");
+    hero.appendChild(el("p", "sjr-kicker", "R&eacute;pondez s&rsquo;il vous pla&icirc;t"));
     var title = el("h1", "sjr-title");
     var words = c.title.length === 2 ? c.title : [
       { text: "Please", look: { font: FALLBACK_FONT, color: "#725885" } },
       { text: "RSVP", look: { font: FALLBACK_FONT, color: "#725885" } },
     ];
-    var please = el("span", "sjr-please");
-    please.textContent = words[0].text;
-    please.style.fontFamily = words[0].look.font + ", " + FALLBACK_FONT;
-    please.style.color = words[0].look.color;
-    var rsvp = el("span", "sjr-rsvp");
-    rsvp.textContent = words[1].text;
-    rsvp.style.fontFamily = words[1].look.font + ", " + FALLBACK_FONT;
-    rsvp.style.color = words[1].look.color;
-    title.appendChild(please);
-    title.appendChild(rsvp);
-    intro.appendChild(title);
-    var tagline = el("p", "sjr-tagline");
-    tagline.textContent = "We can\\u2019t wait to celebrate with you!";
-    tagline.style.fontFamily = words[0].look.font + ", " + FALLBACK_FONT;
-    intro.appendChild(tagline);
-    intro.appendChild(el("div", "sjr-rule"));
-    intro.appendChild(el("p", "sjr-lead", "Please let us know if you\\u2019ll be joining us on our special day."));
-    top.appendChild(intro);
-    var envelope = el("div", "sjr-card sjr-envelope");
-    envelope.appendChild(artNode(c.art));
-    top.appendChild(envelope);
-    inner.appendChild(top);
-
-    inner.appendChild(el("div", "sjr-card sjr-reply",
-      '<p class="sjr-kicker">Kindly reply by</p><p class="sjr-date"></p><div class="sjr-rule"></div>'));
-    inner.querySelector(".sjr-date").textContent = REPLY_BY;
-
-    var reminders = el("div", "sjr-card sjr-reminders");
-    for (var i = 0; i < REMINDERS.length; i++) {
-      reminders.appendChild(el("div", "sjr-reminder",
-        '<span class="sjr-icon">' + REMINDERS[i].icon + "</span><h3>" + REMINDERS[i].title + "</h3><p>" + REMINDERS[i].text + "</p>"));
+    var cls = ["sjr-please", "sjr-rsvp"];
+    for (var w = 0; w < 2; w++) {
+      var word = el("span", cls[w]);
+      word.textContent = words[w].text;
+      word.style.fontFamily = words[w].look.font + ", " + FALLBACK_FONT;
+      word.style.color = words[w].look.color;
+      title.appendChild(word);
     }
-    inner.appendChild(reminders);
+    hero.appendChild(title);
+    hero.appendChild(el("p", "sjr-tagline sjr-script", "We can&rsquo;t wait to celebrate with you!"));
+    hero.appendChild(el("p", "sjr-lead", "Please let us know if you&rsquo;ll be joining us on our special day."));
+    var arch = el("div", "sjr-arch");
+    var win = el("div", "sjr-window");
+    win.appendChild(artNode(c.art));
+    arch.appendChild(win);
+    hero.appendChild(arch);
+    var badge = el("p", "sjr-badge", '<span class="sjr-badge-label">Kindly reply by</span><span class="sjr-date sjr-serif"></span>');
+    badge.querySelector(".sjr-date").textContent = REPLY_BY;
+    hero.appendChild(badge);
+    inner.appendChild(hero);
 
-    var form = buildForm(false, words[0].look.font);
-    inner.appendChild(form);
+    /* Below: the little things to know beside the form. */
+    var body = el("div", "sjr-body");
+    var notes = el("aside", "sjr-notes");
+    notes.setAttribute("aria-label", "Good to know");
+    notes.appendChild(el("div", "sjr-notes-head",
+      '<h2 class="sjr-notes-title sjr-script">Good to know</h2>' +
+      '<p class="sjr-notes-sub">A few little things before you reply</p>'));
+    var list = el("ul");
+    for (var i = 0; i < REMINDERS.length; i++) {
+      list.appendChild(el("li", null,
+        '<span class="sjr-icon">' + REMINDERS[i].icon + '</span>' +
+        '<div><h3 class="sjr-serif">' + REMINDERS[i].title + '</h3><p>' + REMINDERS[i].text + '</p></div>'));
+    }
+    notes.appendChild(list);
+    body.appendChild(notes);
+    var form = buildForm(false);
+    body.appendChild(form);
     wire(form);
+    inner.appendChild(body);
+
     s.appendChild(inner);
     return s;
   }
@@ -825,20 +862,19 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     return '<label class="sjr-choice" data-choice="' + value + '">' +
       '<input type="radio" name="attending" value="' + value + '">' +
       '<span class="sjr-mark"></span>' +
-      '<span><span class="sjr-choice-title">' + title + '</span>' +
+      '<span><span class="sjr-choice-title sjr-serif">' + title + '</span>' +
       '<span class="sjr-choice-sub">' + sub + '</span></span>' +
     '</label>';
   }
 
-  function buildForm(overlay, scriptFont) {
+  function buildForm(overlay) {
     var wrap = el("div");
     wrap.id = "sj-rsvp";
     if (overlay) wrap.className = "sjr-overlay";
-    var script = scriptFont ? ' style="font-family:' + scriptFont.replace(/"/g, "'") + ", " + FALLBACK_FONT.replace(/"/g, "'") + '"' : "";
     wrap.innerHTML =
       '<div id="sj-rsvp-card">' +
         (overlay ? '<button class="sjr-close" type="button" aria-label="Close">&#10005;</button>' : "") +
-        '<div class="sjr-form-head"><h2 class="sjr-form-title"' + script + '>Will you celebrate with us?</h2>' + BLOOM + '</div>' +
+        '<div class="sjr-form-head"><h2 class="sjr-form-title sjr-script">Will you celebrate with us?</h2>' + BLOOM + '</div>' +
         '<form id="sj-rsvp-form" novalidate>' +
           '<div class="sjr-hp"><label>Do not fill this in <input name="bot-field" tabindex="-1" autocomplete="off"></label></div>' +
           '<div class="sjr-field">' +
@@ -856,7 +892,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
             '<label class="sjr-label" for="sj-dietary">Dietary restrictions or allergies<span class="sjr-req">*</span></label>' +
             '<textarea id="sj-dietary" name="dietary" rows="3" placeholder="Please let us know, or write \\u201cnone\\u201d"></textarea>' +
           '</div>' +
-          '<div class="sjr-more"><h3' + script + '>Tell us more</h3>' + BLOOM + '</div>' +
+          '<div class="sjr-more"><h3 class="sjr-script">Tell us more</h3>' + BLOOM + '</div>' +
           '<div class="sjr-field">' +
             '<label class="sjr-label" for="sj-song">What song will definitely get you on the dance floor?</label>' +
             '<input id="sj-song" name="song" type="text" placeholder="Song title / Artist">' +
@@ -865,7 +901,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
             '<label class="sjr-label" for="sj-message">Leave a message for the bride &amp; groom</label>' +
             '<textarea id="sj-message" name="message" rows="4" placeholder="Write your message here..."></textarea>' +
           '</div>' +
-          '<button type="submit" class="sjr-submit">Send with love &#9825;' + SEND_ICON + '</button>' +
+          '<button type="submit" class="sjr-submit sjr-serif">Send with love &#9825;' + SEND_ICON + '</button>' +
           '<p class="sjr-required-note">Fields marked with <span class="sjr-req">*</span> are required.</p>' +
           '<p class="sjr-note" id="sj-rsvp-note"></p>' +
         '</form>' +
@@ -932,14 +968,12 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
           var card = root.querySelector("#sj-rsvp-card");
           card.innerHTML =
             '<div class="sjr-done">' + BLOOM +
-              "<h2>Thank you</h2>" +
+              '<h2 class="sjr-script">Thank you</h2>' +
               "<p>" + (coming
                 ? "We cannot wait to celebrate with you."
                 : "We will miss you, but thank you for letting us know.") +
               "</p>" +
             "</div>";
-          var h2 = card.querySelector("h2"), title = root.ownerDocument.querySelector(".sjr-form-title");
-          if (h2 && title) h2.style.fontFamily = title.style.fontFamily;
         })
         .catch(function (error) {
           console.warn("[rsvp] submission failed:", error);

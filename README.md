@@ -170,10 +170,10 @@ registration), then redeploy. Current fields:
 `rsvp.ts` builds the whole RSVP page as one section of ours (`#sj-rsvp-page`), in lavender:
 
 - the nav (desktop; the phone menu stands in on phones, fed by `window.__sjHeroNav`);
-- "Please RSVP" on the left, the envelope in a rounded card on the right;
-- a "Kindly reply by" card (`REPLY_BY`);
-- four reminder cards (`REMINDERS`: save the date, let us know, dress code, the venue);
-- the form.
+- a centred opening: kicker, "Please RSVP", the tagline, and the envelope under an arch with the
+  reply-by date (`REPLY_BY`) pinned to its foot as a pill;
+- "Good to know" (`REMINDERS`: save the date, let us know, dress code, the venue) beside the form,
+  stacked on narrow screens.
 
 **What comes from Canva:** the nav, the "Please" / "RSVP" title (its two largest lines, with their
 fonts and colours), the envelope (every image that is not the page background, cropped the way
@@ -183,11 +183,19 @@ Canva as usual. **What is ours:** the tagline, the reply-by date, the reminders 
 wording; edit them in `rsvp.ts`. The reminders repeat the Details page, so update them together.
 
 Text is sized in `em` from a 16px base on the section (Canva's root is 10px). The envelope art is
-capped at `ART_MAX` (24em) tall: Canva's phone layout of it is a tall stem.
+capped at `ART_MAX` (17em) tall: Canva's phone layout of it is a tall stem.
 
-### The font
+### The fonts
 
-The form uses **The Seasons**, the invitation's own typeface. It is not self-hosted: `rsvp.ts`
+The RSVP page uses three faces from Google Fonts, each with one job: **Dancing Script** for the warm
+lines (tagline, "Good to know", the form titles), **Playfair Display** for headings, choices, the
+date and the button, and **Lato** for everything read (descriptions, labels, fields). `RSVP_FONTS`
+is put in `<head>` on every page, since a guest can reach /rsvp without a page load. Canva's CSP
+restricts only scripts and framing, so the stylesheet loads; if that ever changes, the stacks fall
+back to Georgia / Helvetica.
+
+**The Seasons**, the invitation's own typeface, is still registered here for the rest of the site
+(`FONT`: the gallery lightbox, and the fallback in the slideshow and full-screen openings). It is not self-hosted: `rsvp.ts`
 points `@font-face` at the `.woff` files Canva already serves for the design
 (`/_assets/fonts/<hash>.woff`, same-origin through the proxy). The hashes were read from Canva's page
 data (search the page HTML for `"C":"The Seasons"`). If the couple removes the font from the Canva
