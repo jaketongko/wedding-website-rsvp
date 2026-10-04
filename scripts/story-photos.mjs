@@ -1,7 +1,8 @@
 // Prepares the Our Story photos: resizes the couple's originals for the web and
 // writes the list the edge function injects.
 //
-//   source-images/our-story/<event>/<photos>   originals, not in git
+//   source-images/our-story/<event>/<photos>   originals, not in git - always in
+//                                              the MAIN checkout (see mainCheckout)
 //   public/_wedding/our-story/<event>/<hash>.jpg   resized copies, served
 //   netlify/lib/story-photos.generated.ts      which photos belong to which event
 //
@@ -23,7 +24,27 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SRC = path.resolve(process.env.STORY_SRC || path.join(ROOT, "source-images", "our-story"));
+
+/**
+ * The main checkout (C:\Workspaces\wedding-website-rsvp), where the couple keeps
+ * the originals - even when this runs in a linked worktree, as production
+ * deploys do (the ...-live worktree). Git's shared directory is the main
+ * checkout's .git; outside git, this checkout.
+ */
+function mainCheckout() {
+  try {
+    const common = execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return path.dirname(common);
+  } catch {
+    return ROOT;
+  }
+}
+
+const SRC = path.resolve(process.env.STORY_SRC || path.join(mainCheckout(), "source-images", "our-story"));
 const OUT = path.join(ROOT, "public", "_wedding", "our-story");
 const LIST = path.join(ROOT, "netlify", "lib", "story-photos.generated.ts");
 const URL_BASE = "/_wedding/our-story";

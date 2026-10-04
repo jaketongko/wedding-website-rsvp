@@ -251,7 +251,7 @@ nowhere.
 | `netlify/lib/petals.ts` | Lavender petals drifting over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
 | `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero. On phones its nav row gives way to the menu below |
-| `netlify/lib/story.ts` | `/our-story`: the story section re-set as blush-pink cards with a photo carousel per event; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
+| `netlify/lib/story.ts` | `/our-story`: the opening lines rise in one after another (Canva's own fade on them switched off); the story section re-set as minimal lavender cards with a photo carousel per event, the quotes in a card of their own; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
 | `scripts/story-photos.mjs` | The build step: resizes `source-images/our-story/<event>/*` into `public/_wedding/our-story/` and writes `netlify/lib/story-photos.generated.ts` |
 | `netlify/lib/menu.ts` | Phones: every page's Canva nav row becomes a fixed menu button (top right) with a dropdown; the music button sits level with it, top left. Links map `#page-N` by each page's `"P"` number in Canva's data |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
@@ -259,7 +259,9 @@ nowhere.
 
 ### Our Story photos
 
-Each story card on `/our-story` shows the photos in its event's folder:
+Each story card on `/our-story` shows the photos in its event's folder, in the **main**
+checkout (`C:\Workspaces\wedding-website-rsvp`), even when deploying from a linked worktree -
+the script finds the main checkout through git:
 
 ```
 source-images/our-story/thefirsthello/
