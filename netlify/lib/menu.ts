@@ -26,6 +26,15 @@ const Z_INDEX = 2147482500;
 
 const STYLES = `
   #sj-menu { display: none; }
+
+  /* Desktop: the nav link under the mouse fades back (the couple's
+     reference, 2026-10-04). Links only - the current page's own entry is
+     plain text on some layouts. */
+  @media (hover: hover) and (pointer: fine) {
+    a.sj-canva-nav { transition: opacity 220ms ease; }
+    a.sj-canva-nav:hover { opacity: 0.55; }
+  }
+
   @media ${MOBILE} {
     #sj-menu:not(.sj-menu--off) { display: block; }
     /* Canva's own nav row, replaced by the menu on a phone. */

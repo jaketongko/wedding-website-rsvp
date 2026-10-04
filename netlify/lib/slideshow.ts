@@ -223,11 +223,13 @@ const STYLES = `
     letter-spacing: 0.2em;
     text-transform: uppercase;
     text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
-    opacity: 0.9;
-    transition: opacity 180ms ease;
+    transition: opacity 220ms ease;
   }
-  #sj-hero .sj-hero-nav > button:hover { opacity: 1; }
-  #sj-hero .sj-hero-nav > [aria-current] { opacity: 1; }
+  /* The link under the mouse fades back, as in the nav on every other page
+     (menu.ts). */
+  @media (hover: hover) and (pointer: fine) {
+    #sj-hero .sj-hero-nav > button:hover { opacity: 0.55; }
+  }
 
   #sj-hero .sj-hero-copy {
     position: absolute;

@@ -2,8 +2,8 @@
  * The Our Story page's story section, re-set as minimal rounded cards with a
  * touch of lavender: a photo carousel on one side (arrows, dots, swipe) and
  * the event's date, title and story on the other, alternating sides on
- * desktop and stacked on a phone. The two quotes above the stories share one
- * card of the same look.
+ * desktop and stacked on a phone. The two quotes above the stories are
+ * carried over, open on the paper in two columns.
  *
  * The approach, as for the main page's slideshow: leave Canva's layout alone
  * and put a section of our own in front of it.
@@ -57,9 +57,8 @@ const STYLES = `
   #sj-story * { box-sizing: border-box; }
   #sj-story .sj-story-inner { max-width: 68em; margin: 0 auto; }
 
-  /* One look for the quote box and the story cards: minimal, with a touch of
-     the site's lavender - a near-white fill, a hairline edge, a soft shadow. */
-  #sj-story .sj-quotes,
+  /* The story cards: minimal, with a touch of the site's lavender - a
+     near-white fill, a hairline edge, a soft shadow. */
   #sj-story .sj-card {
     border: 1px solid rgba(164, 127, 196, 0.2);
     border-radius: 2.1em;
@@ -68,24 +67,26 @@ const STYLES = `
   }
 
   /* ---------- the quotes ---------- */
+  /* Open, straight on the paper: two centred columns, the quote in italic and
+     a small, widely spaced name under it. */
   #sj-story .sj-quotes {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    margin: 0 auto 3em;
-    padding: 2.4em 0;
+    gap: 2em 4.5em;
+    max-width: 58em;
+    margin: 0 auto 3.5em;
+    padding: 1.5em 1em 0.5em;
   }
-  #sj-story .sj-quote { margin: 0; padding: 0 3em; }
-  /* A hairline between the two. */
-  #sj-story .sj-quote + .sj-quote { border-left: 1px solid rgba(164, 127, 196, 0.22); }
+  #sj-story .sj-quote { margin: 0; }
   #sj-story .sj-quote blockquote {
-    margin: 0 0 0.6em;
-    font-size: 1.75em;
+    margin: 0 0 1.1em;
+    font-size: 1.55em;
     font-style: italic;
-    line-height: 1.25;
+    line-height: 1.3;
     color: #2f2629;
   }
   #sj-story .sj-quote figcaption {
-    font-size: 1.05em;
+    font-size: 0.8em;
     letter-spacing: 0.3em;
   }
 
@@ -107,7 +108,6 @@ const STYLES = `
     overflow: hidden;
     border-radius: 1.5em;
     background: #eee7f5;
-    transition: transform 420ms cubic-bezier(0.22, 0.68, 0.24, 1), box-shadow 420ms ease;
     touch-action: pan-y;
   }
   #sj-story .sj-card-photos img {
@@ -120,13 +120,6 @@ const STYLES = `
     transition: opacity 700ms ease;
   }
   #sj-story .sj-card-photos img.is-on { opacity: 1; }
-  /* A photo lifts a little under a mouse. */
-  @media (hover: hover) and (pointer: fine) {
-    #sj-story .sj-card-media:hover .sj-card-photos {
-      transform: translateY(-0.3em) scale(1.015);
-      box-shadow: 0 1.2em 2.2em rgba(90, 60, 120, 0.2);
-    }
-  }
 
   #sj-story .sj-card-arrow {
     position: absolute;
@@ -232,11 +225,9 @@ const STYLES = `
   /* ---------- phones and small tablets: one column ---------- */
   @media (max-width: 820px) {
     #sj-story { padding: 2.5em 1em 2em; }
-    #sj-story .sj-quotes { grid-template-columns: 1fr; margin-bottom: 2em; padding: 0.4em 0; border-radius: 1.6em; }
-    #sj-story .sj-quote { padding: 1.5em 1.4em; }
-    #sj-story .sj-quote + .sj-quote { border-left: 0; border-top: 1px solid rgba(164, 127, 196, 0.22); }
-    #sj-story .sj-quote blockquote { font-size: 1.45em; }
-    #sj-story .sj-quote figcaption { font-size: 0.95em; }
+    #sj-story .sj-quotes { grid-template-columns: 1fr; gap: 2.2em; margin-bottom: 2.5em; padding: 0.5em 0.5em 0; }
+    #sj-story .sj-quote blockquote { font-size: 1.4em; margin-bottom: 0.9em; }
+    #sj-story .sj-quote figcaption { font-size: 0.75em; }
     #sj-story .sj-card,
     #sj-story .sj-card--flip {
       grid-template-columns: 1fr;
@@ -271,8 +262,7 @@ const STYLES = `
   .sj-canva-fade-off { opacity: 1 !important; transition: none !important; animation: none !important; }
 
   @media (prefers-reduced-motion: reduce) {
-    #sj-story .sj-card-photos, #sj-story .sj-card-photos img { transition: opacity 300ms ease; }
-    #sj-story .sj-card-media:hover .sj-card-photos { transform: none; }
+    #sj-story .sj-card-photos img { transition: opacity 300ms ease; }
     #sj-story .sj-card.sj-reveal { transform: none; }
     /* A plain fade: no movement. */
     .sj-rise { animation-name: sj-story-fade; }
