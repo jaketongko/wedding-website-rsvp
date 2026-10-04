@@ -328,8 +328,10 @@ const STYLES = `
 
   @media (max-width: 600px) {
     /* One row, like Canva's own nav on a phone. */
-    #sj-hero .sj-hero-nav { top: 5.2em; flex-wrap: nowrap; gap: 1.1em; padding: 0 0.75em; }
-    #sj-hero .sj-hero-nav > * { font-size: 0.7em; letter-spacing: 0.14em; white-space: nowrap; }
+    /* 12px like desktop (0.75em of the 16px root); the gap and tracking are
+       what give, so it still fits one row at 360px wide. */
+    #sj-hero .sj-hero-nav { top: 5.2em; flex-wrap: nowrap; gap: 0.85em; padding: 0 0.5em; }
+    #sj-hero .sj-hero-nav > * { letter-spacing: 0.11em; white-space: nowrap; }
     #sj-hero .sj-hero-names { letter-spacing: 0.1em; }
     #sj-hero .sj-hero-date { font-size: 0.85em; letter-spacing: 0.24em; }
     /* Swipe does the work on a phone. The arrows stay, small, down level with
@@ -422,12 +424,19 @@ const script = (slides: Slide[]) => `
 
   /**
    * Reads the names, date, venue and nav from Canva's hero, with the font each
-   * one is set in. The nav is the row of text level with Canva's page links.
-   * Null until Canva has finished drawing the text.
+   * one is set in. The nav is the text level with any of Canva's page links -
+   * any, not the first: with larger nav text Canva wraps it onto two rows on a
+   * phone, and matching only the first link's row once switched the slideshow
+   * off there. Null until Canva has finished drawing the text.
    */
   function readCopy(section) {
     var links = section.querySelectorAll('a[href^="#page-"]');
-    var navTop = links.length ? links[0].getBoundingClientRect().top : NaN;
+    var linkTops = [];
+    for (var l = 0; l < links.length; l++) linkTops.push(links[l].getBoundingClientRect().top);
+    function navRow(top) {
+      for (var i = 0; i < linkTops.length; i++) if (Math.abs(top - linkTops[i]) < 8) return true;
+      return false;
+    }
     var nav = [], rest = [];
     var walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT, null, false);
     for (var n = walker.nextNode(); n; n = walker.nextNode()) {
@@ -439,7 +448,7 @@ const script = (slides: Slide[]) => `
       var cs = getComputedStyle(el);
       var item = { text: text, top: r.top, left: r.left, size: parseFloat(cs.fontSize), font: cs.fontFamily };
       var link = el.closest("a");
-      if (Math.abs(r.top - navTop) < 8) {
+      if (navRow(r.top)) {
         item.href = link ? link.getAttribute("href") : null;
         nav.push(item);
       } else {
@@ -449,7 +458,8 @@ const script = (slides: Slide[]) => `
     if (!rest.length) return null;
 
     rest.sort(function (a, b) { return a.top - b.top; });
-    nav.sort(function (a, b) { return a.left - b.left; });
+    /* Canva's reading order: row by row, then left to right. */
+    nav.sort(function (a, b) { return Math.abs(a.top - b.top) < 8 ? a.left - b.left : a.top - b.top; });
     /* Read by position, not size - the venue's script face is bigger than the
        names. The date is the first line with a digit in it, whatever its
        format ("7 FEBRUARY 2027" became "02 . 07 . 27" in Canva, and a
