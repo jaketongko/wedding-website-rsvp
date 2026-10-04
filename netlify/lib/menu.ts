@@ -272,10 +272,11 @@ const script = (pages: Record<string, string>) => `
       return;
     }
 
-    /* The slideshow hides the main page's first section, so it shares the
-       nav it read there. */
+    /* The main page's slideshow and Our Story's full-screen opening hide
+       Canva's first section, so they share the nav they read there. */
     var items = null;
-    if (document.getElementById("sj-hero") && window.__sjHeroNav) items = window.__sjHeroNav;
+    var ownHero = document.getElementById("sj-hero") || document.getElementById("sj-shero");
+    if (ownHero && ownHero.querySelector(".sj-hero-nav, .sj-shero-nav") && window.__sjHeroNav) items = window.__sjHeroNav;
     else {
       var section = firstSection();
       if (section) items = readNav(section);

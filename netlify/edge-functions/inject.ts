@@ -6,7 +6,7 @@ import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
 import { findPages, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
-import { renderStory } from "../lib/story.ts";
+import { findStoryHero, renderStory, renderStoryPreload } from "../lib/story.ts";
 
 /**
  * Reverse-proxies the published Canva invitation and injects a background-music
@@ -143,6 +143,7 @@ export default async function inject(request: Request, _context: Context): Promi
   // read here even when the guest lands on the cover.
   const slides = findSlides(html);
   const pages = findPages(html);
+  const storyHero = findStoryHero(html);
   const injected =
     renderPlayer(nonce) +
     renderRsvp(nonce) +
@@ -150,12 +151,13 @@ export default async function inject(request: Request, _context: Context): Promi
     renderPetals(nonce) +
     renderGallery(nonce) +
     renderSlideshow(nonce, slides, pages) +
-    renderStory(nonce) +
+    renderStory(nonce, storyHero, pages) +
     renderMenu(nonce, pages);
 
   // In <head>, so the first photo downloads with the HTML rather than seconds
   // later, when Canva's JS gets round to rendering the page.
-  const preload = renderSlideshowPreload(slides, incoming.pathname);
+  const preload =
+    renderSlideshowPreload(slides, incoming.pathname) + renderStoryPreload(storyHero, incoming.pathname);
   const page = preload ? insertBeforeHeadClose(html, preload) : html;
 
   return new Response(insertBeforeBodyClose(page, injected), {
