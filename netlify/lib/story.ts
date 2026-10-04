@@ -21,9 +21,10 @@
  *   date line     the short line just above a title
  *   story         every block between one title and the next date line
  *
- * Photos come from the repo (story-photos.generated.ts, built from
+ * Each carousel opens with the event's own photo in Canva, followed by the
+ * extra photos from the repo (story-photos.generated.ts, built from
  * source-images/our-story/<event>/ by scripts/story-photos.mjs), keyed by the
- * title. An event with no folder keeps the one photo it has in Canva.
+ * title.
  *
  * If the section cannot be read, nothing is mounted and Canva's stays.
  */
@@ -209,8 +210,29 @@ const STYLES = `
   }
   #sj-story .sj-card-body p.sj-card-text:last-child { margin-bottom: 0; }
 
-  #sj-story .sj-outro { max-width: 46em; margin: 3.5em auto 1em; text-align: center; }
-  #sj-story .sj-outro p { margin: 0 0 0.55em; line-height: 1.5; }
+  #sj-story .sj-outro { margin: 3.5em auto 1em; }
+  #sj-story .sj-outro-rule { height: 1px; margin-bottom: 2.6em; background: rgba(60, 48, 52, 0.16); }
+  #sj-story .sj-outro-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2em;
+  }
+  /* The couple's monogram (the same file as the RSVP card's), used as a mask
+     so it takes the colour of the closing text. */
+  #sj-story .sj-outro-mark {
+    flex: none;
+    width: 4.6em;
+    height: 5.65em;
+    -webkit-mask: url("/_wedding/logo-mark.png") center / contain no-repeat;
+    mask: url("/_wedding/logo-mark.png") center / contain no-repeat;
+  }
+  #sj-story .sj-outro-text p { margin: 0 0 0.3em; line-height: 1.35; text-align: left; }
+  #sj-story .sj-outro-text p:last-child { margin-bottom: 0; }
+  @media (max-width: 600px) {
+    #sj-story .sj-outro-row { flex-direction: column; gap: 1.4em; }
+    #sj-story .sj-outro-text p { text-align: center; }
+  }
 
   #sj-story .sj-story-ornament { display: block; width: 5em; height: auto; margin: 0.5em auto 0; }
 
@@ -397,11 +419,11 @@ const script = (photos: Record<string, string[]>) => `
     }
 
     /* Canva adds a section's images a few seconds after its text. Wait for
-       them - the background, and a photo for every event without photos in
-       the repo - but not forever: a design may simply not have them. */
+       them - the background, and every event's photo, which opens its
+       carousel - but not forever: a design may simply not have them. */
     var complete = !!background;
     for (var w = 0; w < events.length; w++) {
-      if (!events[w].photo && !PHOTOS[keyOf(events[w].title.text)]) complete = false;
+      if (!events[w].photo) complete = false;
     }
     if (!complete) {
       if (!firstRead) firstRead = Date.now();
@@ -432,7 +454,8 @@ const script = (photos: Record<string, string[]>) => `
   }
 
   function buildCard(event, index) {
-    var photos = PHOTOS[keyOf(event.title.text)] || (event.photo ? [event.photo] : []);
+    /* The event's photo in Canva first, then the extra ones from the repo. */
+    var photos = (event.photo ? [event.photo] : []).concat(PHOTOS[keyOf(event.title.text)] || []);
     var card = el("article", "sj-card sj-reveal" + (index % 2 ? " sj-card--flip" : "") + (photos.length ? "" : " sj-card--text"));
 
     if (photos.length) {
@@ -503,25 +526,38 @@ const script = (photos: Record<string, string[]>) => `
       inner.appendChild(quotes);
     }
     for (var e = 0; e < content.events.length; e++) inner.appendChild(buildCard(content.events[e], e));
-    /* The closing message after the stories, centred, in Canva's own type.
-       Sized against itself, not the story text (in Canva it is much smaller,
-       which came out at 8px here): its biggest line a little larger than the
-       story text, the rest in proportion, none below a readable size. */
+    /* The closing message after the stories, laid out as in the Canva
+       design: a hairline across, then the couple's monogram with the lines
+       beside it. The text is Canva's own; the line and monogram are not text,
+       so they are drawn here. Sized against itself, not the story text (in
+       Canva it is much smaller, which came out at 8px here): its biggest line
+       a little larger than the story text, the rest in proportion. */
     if (content.outro.length) {
       var outro = el("div", "sj-outro");
+      outro.appendChild(el("div", "sj-outro-rule"));
+      var row = el("div", "sj-outro-row");
+      var mark = el("span", "sj-outro-mark");
+      mark.setAttribute("aria-hidden", "true");
+      mark.style.backgroundColor = content.outro[0].look.color;
+      row.appendChild(mark);
+      var lines = el("div", "sj-outro-text");
       var largest = 0;
       for (var z = 0; z < content.outro.length; z++) largest = Math.max(largest, content.outro[z].size);
       for (var o = 0; o < content.outro.length; o++) {
         var block = content.outro[o];
         var line = text("p", null, block, true);
-        line.style.fontSize = Math.max(0.9, 1.25 * block.size / largest).toFixed(3) + "em";
+        line.style.fontSize = Math.max(0.85, 1.2 * block.size / largest).toFixed(3) + "em";
         if (block.look.spacing) line.style.letterSpacing = (block.look.spacing / block.size).toFixed(3) + "em";
         if (block.look.italic) line.style.fontStyle = "italic";
-        outro.appendChild(line);
+        lines.appendChild(line);
       }
+      row.appendChild(lines);
+      outro.appendChild(row);
       inner.appendChild(outro);
     }
-    if (content.ornament) {
+    /* Canva's lone monogram at the bottom - only when the closing block,
+       which carries the monogram itself, is not there. */
+    if (content.ornament && !content.outro.length) {
       var orn = el("img", "sj-story-ornament");
       orn.alt = "";
       orn.src = content.ornament;
