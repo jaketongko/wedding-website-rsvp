@@ -216,6 +216,9 @@ const STYLES = `
   }
   #sj-story .sj-card-body p.sj-card-text:last-child { margin-bottom: 0; }
 
+  #sj-story .sj-outro { max-width: 46em; margin: 3.5em auto 1em; text-align: center; }
+  #sj-story .sj-outro p { margin: 0 0 0.55em; line-height: 1.5; }
+
   #sj-story .sj-story-ornament { display: block; width: 5em; height: auto; margin: 0.5em auto 0; }
 
   /* Each card rises in as it scrolls into view, as Canva's own elements did. */
@@ -310,7 +313,7 @@ const script = (photos: Record<string, string[]>) => `
   function look(el) {
     var span = el.querySelector("span") || el;
     var cs = getComputedStyle(span);
-    return { font: cs.fontFamily, color: cs.color, upper: cs.textTransform === "uppercase", italic: cs.fontStyle === "italic", size: parseFloat(cs.fontSize) };
+    return { font: cs.fontFamily, color: cs.color, upper: cs.textTransform === "uppercase", italic: cs.fontStyle === "italic", size: parseFloat(cs.fontSize), spacing: parseFloat(cs.letterSpacing) || 0 };
   }
 
   /**
@@ -355,13 +358,26 @@ const script = (photos: Record<string, string[]>) => `
     function isDate(i) {
       return i >= 0 && titles.indexOf(i) === -1 && rest[i].text.length <= 80;
     }
-    var events = [];
+    function sameStyle(a, b) {
+      return a.look.font === b.look.font && a.look.upper === b.look.upper && Math.abs(a.size - b.size) < 1;
+    }
+    var events = [], outro = [];
     for (var e = 0; e < titles.length; e++) {
       var at = titles[e];
       var next = e + 1 < titles.length ? titles[e + 1] : rest.length;
       var stop = e + 1 < titles.length && isDate(next - 1) && next - 1 > at ? next - 1 : next;
       var body = [], length = 0;
-      for (var k = at + 1; k < stop; k++) { body.push(rest[k]); length += rest[k].text.length; }
+      for (var k = at + 1; k < stop; k++) {
+        /* The story ends where the text style changes: after the last event,
+           that is the closing message (it was swallowed into THE QUESTION
+           once the couple added one). */
+        if (body.length && !sameStyle(body[0], rest[k])) {
+          if (e === titles.length - 1) outro = rest.slice(k);
+          break;
+        }
+        body.push(rest[k]);
+        length += rest[k].text.length;
+      }
       /* A story has a few sentences; a heading with a tagline is not one. */
       if (length < 80) return null;
       var dateIdx = at - 1;
@@ -404,7 +420,7 @@ const script = (photos: Record<string, string[]>) => `
 
     var pairs = [];
     for (var q = 0; q < quotes.length; q++) pairs.push({ quote: quotes[q], name: names[q] || null });
-    return { quotes: pairs, events: events, background: background, ornament: ornament };
+    return { quotes: pairs, events: events, outro: outro, background: background, ornament: ornament };
   }
 
   /* ---------- building ours ---------- */
@@ -497,6 +513,24 @@ const script = (photos: Record<string, string[]>) => `
       inner.appendChild(quotes);
     }
     for (var e = 0; e < content.events.length; e++) inner.appendChild(buildCard(content.events[e], e));
+    /* The closing message after the stories, centred, in Canva's own type.
+       Sized against itself, not the story text (in Canva it is much smaller,
+       which came out at 8px here): its biggest line a little larger than the
+       story text, the rest in proportion, none below a readable size. */
+    if (content.outro.length) {
+      var outro = el("div", "sj-outro");
+      var largest = 0;
+      for (var z = 0; z < content.outro.length; z++) largest = Math.max(largest, content.outro[z].size);
+      for (var o = 0; o < content.outro.length; o++) {
+        var block = content.outro[o];
+        var line = text("p", null, block, true);
+        line.style.fontSize = Math.max(0.9, 1.25 * block.size / largest).toFixed(3) + "em";
+        if (block.look.spacing) line.style.letterSpacing = (block.look.spacing / block.size).toFixed(3) + "em";
+        if (block.look.italic) line.style.fontStyle = "italic";
+        outro.appendChild(line);
+      }
+      inner.appendChild(outro);
+    }
     if (content.ornament) {
       var orn = el("img", "sj-story-ornament");
       orn.alt = "";
@@ -618,15 +652,23 @@ const script = (photos: Record<string, string[]>) => `
         chain.push(p);
         shown *= Number(getComputedStyle(p).opacity);
       }
-      if (shown >= 1) continue; // Canva has already shown it
+      /* Canva sometimes re-draws the hero a moment after we tagged it, with
+         the new lines already shown. Mid-animation, the new copies carry on
+         from the same point (a negative delay); otherwise a line Canva has
+         already shown is left alone. */
+      var elapsed = riseStart ? Date.now() - riseStart : 0;
+      var midway = riseStart && elapsed < 2500;
+      if (shown >= 1 && !midway) continue;
+      if (!riseStart) { riseStart = Date.now(); elapsed = 0; }
       /* Every wrapper, not just the see-through ones: Canva starts its fade
          on another of them a moment later. Its own layout transforms stay. */
       for (var c = 0; c < chain.length; c++) chain[c].classList.add("sj-canva-fade-off");
-      el.style.animationDelay = 250 + n * 200 + "ms";
+      el.style.animationDelay = 250 + n * 200 - elapsed + "ms";
       el.classList.add("sj-rise");
     }
   }
   var riseCount = 0, riseSince = 0;
+  var riseStart = 0; // when this visit's opening lines started rising
 
   /* ---------- mounting ---------- */
 
@@ -690,7 +732,7 @@ const script = (photos: Record<string, string[]>) => `
    */
   function sync() {
     if (!document.body) return;
-    if (!onRoute()) { if (root || canva) unmount(); return; }
+    if (!onRoute()) { riseStart = 0; if (root || canva) unmount(); return; }
     riseHero();
 
     var section = findStory();
