@@ -220,6 +220,13 @@ const STYLES = `
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-wrap: balance;
+    /* Rises into place as the page opens. "both" holds it hidden through the
+       delay, so it never flashes in at full strength first. */
+    animation: sj-hero-rise 1400ms cubic-bezier(0.22, 0.68, 0.24, 1) 250ms both;
+  }
+  @keyframes sj-hero-rise {
+    from { opacity: 0; transform: translateY(0.5em); }
+    to { opacity: 1; transform: none; }
   }
   #sj-hero .sj-hero-rule {
     position: relative;
@@ -347,6 +354,9 @@ const STYLES = `
     #sj-hero .sj-hero-slide, #sj-hero .sj-hero-slide img { transition: opacity 400ms ease; }
     #sj-hero .sj-hero-slide img { transform: none; }
     #sj-hero .sj-hero-scroll svg { animation: none; }
+    /* A plain fade: no movement. */
+    #sj-hero .sj-hero-names { animation-name: sj-hero-fade; }
+    @keyframes sj-hero-fade { from { opacity: 0; } to { opacity: 1; } }
   }
 `;
 
