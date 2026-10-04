@@ -1,8 +1,9 @@
 /**
- * The Our Story page's story section, re-set as rounded blush-pink cards: a
- * photo carousel on one side (arrows, dots, swipe) and the event's date,
- * title and story on the other, alternating sides on desktop and stacked on
- * a phone. The two quotes above the stories are carried over.
+ * The Our Story page's story section, re-set as minimal rounded cards with a
+ * touch of lavender: a photo carousel on one side (arrows, dots, swipe) and
+ * the event's date, title and story on the other, alternating sides on
+ * desktop and stacked on a phone. The two quotes above the stories share one
+ * card of the same look.
  *
  * The approach, as for the main page's slideshow: leave Canva's layout alone
  * and put a section of our own in front of it.
@@ -36,11 +37,6 @@ const chevron = (d: string) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ` +
   `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
 
-/** The four-point sparkle above each title. */
-const SPARKLE =
-  `<svg class="sj-card-spark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">` +
-  `<path d="M12 1.5c.5 5.4 3.8 9.4 10.5 10.5C15.8 13.1 12.5 17 12 22.5 11.5 17 8.2 13.1 1.5 12 8.2 10.9 11.5 6.9 12 1.5z"/></svg>`;
-
 /**
  * Sized in em from a root font-size the script sets: 16px divided by Canva's
  * page scale (it shrinks the page with a transform on narrow phones). Never
@@ -61,15 +57,26 @@ const STYLES = `
   #sj-story * { box-sizing: border-box; }
   #sj-story .sj-story-inner { max-width: 68em; margin: 0 auto; }
 
+  /* One look for the quote box and the story cards: minimal, with a touch of
+     the site's lavender - a near-white fill, a hairline edge, a soft shadow. */
+  #sj-story .sj-quotes,
+  #sj-story .sj-card {
+    border: 1px solid rgba(164, 127, 196, 0.2);
+    border-radius: 2.1em;
+    background: rgba(251, 249, 253, 0.95);
+    box-shadow: 0 1em 2.6em rgba(110, 80, 140, 0.07);
+  }
+
   /* ---------- the quotes ---------- */
   #sj-story .sj-quotes {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 2em 3.5em;
-    max-width: 62em;
-    margin: 0 auto 3.5em;
+    margin: 0 auto 3em;
+    padding: 2.4em 0;
   }
-  #sj-story .sj-quote { margin: 0; }
+  #sj-story .sj-quote { margin: 0; padding: 0 3em; }
+  /* A hairline between the two. */
+  #sj-story .sj-quote + .sj-quote { border-left: 1px solid rgba(164, 127, 196, 0.22); }
   #sj-story .sj-quote blockquote {
     margin: 0 0 0.6em;
     font-size: 1.75em;
@@ -88,15 +95,8 @@ const STYLES = `
     grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
     margin: 0 auto 3em;
     overflow: hidden;
-    border: 1px solid rgba(233, 176, 190, 0.38);
-    border-radius: 2.1em;
-    background: linear-gradient(90deg, #fdebee 0%, #fff6f5 44%, #fffbfa 100%);
-    box-shadow: 0 1.5em 3.6em rgba(201, 134, 150, 0.13), 0 0.15em 0.4em rgba(201, 134, 150, 0.06);
   }
-  #sj-story .sj-card--flip {
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    background: linear-gradient(270deg, #fdebee 0%, #fff6f5 44%, #fffbfa 100%);
-  }
+  #sj-story .sj-card--flip { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); }
   #sj-story .sj-card--flip .sj-card-media { order: 2; }
   #sj-story .sj-card--text { grid-template-columns: 1fr; }
 
@@ -106,7 +106,7 @@ const STYLES = `
     aspect-ratio: 4 / 5;
     overflow: hidden;
     border-radius: 1.5em;
-    background: #f3dfe3;
+    background: #eee7f5;
     transition: transform 420ms cubic-bezier(0.22, 0.68, 0.24, 1), box-shadow 420ms ease;
     touch-action: pan-y;
   }
@@ -124,7 +124,7 @@ const STYLES = `
   @media (hover: hover) and (pointer: fine) {
     #sj-story .sj-card-media:hover .sj-card-photos {
       transform: translateY(-0.3em) scale(1.015);
-      box-shadow: 0 1.2em 2.2em rgba(150, 90, 105, 0.22);
+      box-shadow: 0 1.2em 2.2em rgba(90, 60, 120, 0.2);
     }
   }
 
@@ -142,8 +142,8 @@ const STYLES = `
     border: 0;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.82);
-    color: #b56a80;
-    box-shadow: 0 0.2em 0.7em rgba(80, 40, 50, 0.18);
+    color: #8a6aa8;
+    box-shadow: 0 0.2em 0.7em rgba(60, 40, 80, 0.16);
     cursor: pointer;
     transition: background-color 180ms ease, transform 180ms ease;
   }
@@ -184,7 +184,7 @@ const STYLES = `
     transition: width 300ms ease, background-color 300ms ease;
   }
   #sj-story .sj-card-dots button[aria-current]::before { width: 1.3em; background: #fff; }
-  #sj-story button:focus-visible { outline: 2px solid #d48a9e; outline-offset: 2px; }
+  #sj-story button:focus-visible { outline: 2px solid #a47fc4; outline-offset: 2px; }
 
   #sj-story .sj-card-body {
     display: flex;
@@ -193,7 +193,6 @@ const STYLES = `
     padding: 2.6em 3.2em 2.8em;
   }
   #sj-story .sj-card--flip .sj-card-body { padding: 2.6em 2.4em 2.8em 3.6em; }
-  #sj-story .sj-card-spark { width: 1.6em; height: 1.6em; margin-bottom: 1em; fill: #eba3b6; }
   #sj-story .sj-card-date {
     margin: 0 0 0.35em;
     font-size: 1.15em;
@@ -230,7 +229,9 @@ const STYLES = `
   /* ---------- phones and small tablets: one column ---------- */
   @media (max-width: 820px) {
     #sj-story { padding: 2.5em 1em 2em; }
-    #sj-story .sj-quotes { grid-template-columns: 1fr; gap: 1.75em; margin-bottom: 2.5em; }
+    #sj-story .sj-quotes { grid-template-columns: 1fr; margin-bottom: 2em; padding: 0.4em 0; border-radius: 1.6em; }
+    #sj-story .sj-quote { padding: 1.5em 1.4em; }
+    #sj-story .sj-quote + .sj-quote { border-left: 0; border-top: 1px solid rgba(164, 127, 196, 0.22); }
     #sj-story .sj-quote blockquote { font-size: 1.45em; }
     #sj-story .sj-quote figcaption { font-size: 0.95em; }
     #sj-story .sj-card,
@@ -238,14 +239,12 @@ const STYLES = `
       grid-template-columns: 1fr;
       margin-bottom: 2em;
       border-radius: 1.6em;
-      background: linear-gradient(180deg, #fdebee 0%, #fff6f5 45%, #fffbfa 100%);
     }
     #sj-story .sj-card--flip .sj-card-media { order: 0; }
     #sj-story .sj-card-media { padding: 0.75em 0.75em 0; }
     #sj-story .sj-card-photos { border-radius: 1.15em; }
     #sj-story .sj-card-body,
     #sj-story .sj-card--flip .sj-card-body { padding: 1.5em 1.4em 1.75em; }
-    #sj-story .sj-card-spark { width: 1.3em; height: 1.3em; margin-bottom: 0.7em; }
     #sj-story .sj-card-title { font-size: 1.85em; }
     #sj-story .sj-card-body p.sj-card-text { font-size: 1.05em; line-height: 1.75; }
   }
@@ -254,10 +253,27 @@ const STYLES = `
     #sj-story .sj-card-arrow { width: 2.2em; height: 2.2em; margin-top: -1.1em; }
   }
 
+  /* ---------- the opening lines ---------- */
+
+  /* "OUR STORY", the title and the place line rise into place one after
+     another, as the names do on the main page (slideshow.ts). The script
+     staggers them with animation-delay. "both" holds each hidden through its
+     delay. Canva's own fade on them is switched off, or the two would run
+     at once. */
+  .sj-rise { animation: sj-story-rise 1400ms cubic-bezier(0.22, 0.68, 0.24, 1) both; }
+  @keyframes sj-story-rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
+  .sj-canva-fade-off { opacity: 1 !important; transition: none !important; animation: none !important; }
+
   @media (prefers-reduced-motion: reduce) {
     #sj-story .sj-card-photos, #sj-story .sj-card-photos img { transition: opacity 300ms ease; }
     #sj-story .sj-card-media:hover .sj-card-photos { transform: none; }
     #sj-story .sj-card.sj-reveal { transform: none; }
+    /* A plain fade: no movement. */
+    .sj-rise { animation-name: sj-story-fade; }
+    @keyframes sj-story-fade { from { opacity: 0; } to { opacity: 1; } }
   }
 `;
 
@@ -268,7 +284,6 @@ const script = (photos: Record<string, string[]>) => `
   var PHOTOS = ${JSON.stringify(photos)};
   var ICON_PREV = ${JSON.stringify(chevron("M15 5 8 12l7 7"))};
   var ICON_NEXT = ${JSON.stringify(chevron("M9 5l7 7-7 7"))};
-  var SPARKLE = ${JSON.stringify(SPARKLE)};
   var FALLBACK_FONT = ${JSON.stringify('Georgia, "Times New Roman", serif')};
 
   var root = null;     // our section
@@ -457,7 +472,6 @@ const script = (photos: Record<string, string[]>) => `
     }
 
     var body = el("div", "sj-card-body");
-    body.appendChild(el("span", null, SPARKLE).firstChild);
     if (event.date) body.appendChild(text("p", "sj-card-date", event.date, true));
     body.appendChild(text("h2", "sj-card-title", event.title, false));
     for (var b = 0; b < event.body.length; b++) body.appendChild(text("p", "sj-card-text", event.body[b], false));
@@ -558,6 +572,62 @@ const script = (photos: Record<string, string[]>) => `
     else if (hit.hasAttribute("data-go")) show(frame, Number(hit.getAttribute("data-go")));
   }, true);
 
+  /* ---------- the opening lines ---------- */
+
+  /**
+   * Tags the hero's text - not its nav - to rise in, top line first. Only
+   * while Canva still has it hidden (it fades it in about 2s after drawing):
+   * if Canva has already shown a line, animating it again would make it blink
+   * out and back, so it is left as it is.
+   */
+  function riseHero() {
+    var sections = document.getElementsByTagName("section");
+    var hero = null;
+    for (var s = 0; s < sections.length; s++) {
+      var parent = sections[s].parentElement;
+      if (parent && parent.getElementsByTagName("section").length > 1) { hero = parent.querySelector("section"); break; }
+    }
+    if (!hero || hero.id === "sj-story") return;
+
+    var links = hero.querySelectorAll('a[href^="#page-"]');
+    var tops = [];
+    for (var l = 0; l < links.length; l++) tops.push(links[l].getBoundingClientRect().top);
+    var lines = [];
+    var ps = hero.querySelectorAll("p");
+    for (var i = 0; i < ps.length; i++) {
+      if (ps[i].hasAttribute("data-sj-rise")) continue;
+      var r = ps[i].getBoundingClientRect();
+      if (!r.width || !(ps[i].innerText || "").trim()) continue;
+      var nav = false;
+      for (var t = 0; t < tops.length; t++) if (Math.abs(r.top - tops[t]) < 8) nav = true;
+      if (!nav) lines.push({ el: ps[i], top: r.top });
+    }
+    if (!lines.length) return;
+    /* Canva draws the lines in stages; tag them together once the set has
+       held still briefly, so the stagger runs top to bottom. */
+    if (lines.length !== riseCount) { riseCount = lines.length; riseSince = Date.now(); }
+    if (Date.now() - riseSince < 150) { window.setTimeout(riseHero, 200); return; }
+    riseCount = 0;
+    lines.sort(function (a, b) { return a.top - b.top; });
+
+    for (var n = 0; n < lines.length; n++) {
+      var el = lines[n].el;
+      el.setAttribute("data-sj-rise", "");
+      var chain = [], shown = 1;
+      for (var p = el.parentElement; p && p !== hero; p = p.parentElement) {
+        chain.push(p);
+        shown *= Number(getComputedStyle(p).opacity);
+      }
+      if (shown >= 1) continue; // Canva has already shown it
+      /* Every wrapper, not just the see-through ones: Canva starts its fade
+         on another of them a moment later. Its own layout transforms stay. */
+      for (var c = 0; c < chain.length; c++) chain[c].classList.add("sj-canva-fade-off");
+      el.style.animationDelay = 250 + n * 200 + "ms";
+      el.classList.add("sj-rise");
+    }
+  }
+  var riseCount = 0, riseSince = 0;
+
   /* ---------- mounting ---------- */
 
   function reveal(section) {
@@ -621,6 +691,7 @@ const script = (photos: Record<string, string[]>) => `
   function sync() {
     if (!document.body) return;
     if (!onRoute()) { if (root || canva) unmount(); return; }
+    riseHero();
 
     var section = findStory();
     if (!section) return;
