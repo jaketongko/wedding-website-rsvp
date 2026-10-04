@@ -258,8 +258,11 @@ const script = (pages: Record<string, string>) => `
       if (s) s.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    history.pushState({}, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate", { state: {} }));
+    /* With a "key", as Canva's own links push their entries: its router
+       ignores an entry without one. */
+    var state = { key: Math.random().toString(36).slice(2, 8) };
+    history.pushState(state, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate", { state: state }));
   }
 
   function sync() {

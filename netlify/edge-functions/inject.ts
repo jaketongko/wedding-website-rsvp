@@ -5,7 +5,7 @@ import { renderMenu } from "../lib/menu.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
-import { findPages, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
+import { findPages, findSections, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
 import { findStoryHero, renderStory, renderStoryPreload } from "../lib/story.ts";
 
 /**
@@ -144,14 +144,15 @@ export default async function inject(request: Request, _context: Context): Promi
   const slides = findSlides(html);
   const pages = findPages(html);
   const storyHero = findStoryHero(html);
+  const sections = findSections(html);
   const injected =
     renderPlayer(nonce) +
     renderRsvp(nonce) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +
-    renderSlideshow(nonce, slides, pages) +
-    renderStory(nonce, storyHero, pages) +
+    renderSlideshow(nonce, slides, pages, sections) +
+    renderStory(nonce, storyHero, pages, sections) +
     renderMenu(nonce, pages);
 
   // In <head>, so the first photo downloads with the HTML rather than seconds

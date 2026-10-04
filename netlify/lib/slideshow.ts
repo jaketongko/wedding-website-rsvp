@@ -75,6 +75,30 @@ export function findPages(html: string): Record<string, string> {
   return Object.fromEntries(pages.map((m, i) => [String(i), m[2]]));
 }
 
+/**
+ * Each page's Canva section ids, in order: { "our-story": ["PB2Nb...", ...] }.
+ * Canva gives each <section> its id from the page data (since 2026-10-04):
+ *
+ *   page content  "a":"<page key>", ... "t":[{"A?":"i","a":"PB2NbSjy2p1y4vks", ...
+ *
+ * While Canva fades from one page to the next, both are in the document, so
+ * "the first section on the page" can be the old page's. The scripts ask for
+ * the current page's sections by id instead.
+ */
+export function findSections(html: string): Record<string, string[]> {
+  const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)]
+    .map((m) => ({ slug: m[2], at: html.indexOf(`"a":"${m[1]}"`) }))
+    .filter((p) => p.at !== -1)
+    .sort((a, b) => a.at - b.at);
+  const sections: Record<string, string[]> = {};
+  pages.forEach((page, i) => {
+    const block = html.slice(page.at, pages[i + 1]?.at ?? html.length);
+    const ids = [...block.matchAll(/\{"A\?":"i","a":"([A-Za-z0-9_-]+)"/g)].map((m) => m[1]);
+    if (ids.length) sections[page.slug] = ids;
+  });
+  return sections;
+}
+
 export function findSlides(html: string): Slide[] {
   try {
     const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)]
@@ -405,11 +429,12 @@ const STYLES = `
 `;
 
 /** ES5 on purpose, like the other injected scripts: no build step transpiles it. */
-const script = (slides: Slide[], pages: Record<string, string>) => `
+const script = (slides: Slide[], pages: Record<string, string>, sections: Record<string, string[]>) => `
 (function () {
   var ROUTE = ${JSON.stringify(ROUTE_PREFIX)};
   var SLIDES = ${JSON.stringify(slides)};
   var PAGES = ${JSON.stringify(pages)};
+  var SECTIONS = ${JSON.stringify(sections)};
   var INTERVAL = 5000;
   var ICON_PREV = ${JSON.stringify(arrow("M19 12H5M11 6l-6 6 6 6"))};
   var ICON_NEXT = ${JSON.stringify(arrow("M5 12h14M13 6l6 6-6 6"))};
@@ -442,7 +467,17 @@ const script = (slides: Slide[], pages: Record<string, string>) => `
 
   /* The first section of the page: the first <section> whose parent stacks
      several of them. Ours is skipped, since it is the one in front. */
+  /* The page being shown, by its Canva section ids (null if unknown). */
+  function pageSections() {
+    return SECTIONS[location.pathname.replace(/^\\/+|\\/+$/g, "")] || null;
+  }
+
   function canvaHero() {
+    /* By id when Canva's page data lists it: during a page change the old
+       page is still in the document, and its first section is not ours to
+       read. Null until Canva has drawn this page. */
+    var ids = pageSections();
+    if (ids && ids.length) return document.getElementById(ids[0]);
     var sections = document.getElementsByTagName("section");
     for (var i = 0; i < sections.length; i++) {
       var s = sections[i];
@@ -728,8 +763,12 @@ const script = (slides: Slide[], pages: Record<string, string>) => `
       if (scroller) scroller.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
       return;
     }
-    history.pushState({}, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate", { state: {} }));
+    /* With a "key", as Canva's own links push their entries: its router
+       ignores an entry without one (seen 2026-10-04 - the address changed but
+       the page did not). */
+    var state = { key: Math.random().toString(36).slice(2, 8) };
+    history.pushState(state, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate", { state: state }));
   }
 
   function act(button) {
@@ -807,16 +846,62 @@ const script = (slides: Slide[], pages: Record<string, string>) => `
   }
 
   /**
+   * Leaving the page. Nothing is restored while Canva fades the old page out
+   * - un-hiding its hero there flashed the original design at its original
+   * size. Ours stays until Canva removes that page, then goes.
+   */
+  var leaving = null;
+  function leave() {
+    window.clearTimeout(timer);
+    if (root && hero && hero.isConnected) leaving = { root: root, hero: hero };
+    else if (root && root.parentNode) root.parentNode.removeChild(root);
+    root = null;
+    hero = null;
+  }
+  /* Whether a node can be seen at all: in the document, laid out, and with
+     nothing above it hidden or faded to nothing. */
+  function onScreen(node) {
+    if (!node || !node.isConnected) return false;
+    var r = node.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    for (var n = node; n && n !== document.documentElement; n = n.parentElement) {
+      var cs = getComputedStyle(n);
+      if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) < 0.02) return false;
+    }
+    return true;
+  }
+  function settleLeaving() {
+    if (!leaving) return;
+    var gone = !leaving.hero.isConnected;
+    /* Still fading out, or still showing: leave it exactly as it is. */
+    if (!gone && onScreen(leaving.root)) return;
+    if (leaving.root.parentNode) leaving.root.parentNode.removeChild(leaving.root);
+    /* Canva kept the old page, hidden: give it its own hero back, unseen, for
+       when the guest returns. */
+    if (!gone) leaving.hero.style.display = "";
+    leaving = null;
+  }
+
+  /**
    * Canva re-renders and routes client-side, so this runs often and assumes
    * nothing survived: it re-reads a replaced hero, re-inserts a detached
    * section, and takes everything down off the route.
    */
   function sync() {
     if (!document.body) return;
-    if (!onRoute() || !SLIDES.length) { if (root || hero) unmount(); return; }
+    settleLeaving();
+    if (!onRoute() || !SLIDES.length) { if (root || hero) leave(); return; }
 
     var section = canvaHero();
     if (!section) return;
+
+    /* Back on a page that never went away: take our slideshow back as it is. */
+    if (leaving && leaving.hero === section) {
+      root = leaving.root;
+      hero = leaving.hero;
+      leaving = null;
+      schedule();
+    }
 
     if (section !== hero) {
       /* A new hero (first visit, or Canva re-rendered the page): read it while
@@ -864,7 +949,12 @@ const script = (slides: Slide[], pages: Record<string, string>) => `
 })();
 `;
 
-export function renderSlideshow(nonce: string | null, slides: Slide[], pages: Record<string, string>): string {
+export function renderSlideshow(
+  nonce: string | null,
+  slides: Slide[],
+  pages: Record<string, string>,
+  sections: Record<string, string[]>,
+): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
-  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(slides, pages)}</script>\n`;
+  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(slides, pages, sections)}</script>\n`;
 }

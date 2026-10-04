@@ -42,8 +42,12 @@ const chevron = (d: string) =>
  * Sized in em from a root font-size the script sets: 16px divided by Canva's
  * page scale (it shrinks the page with a transform on narrow phones). Never
  * rem - Canva sets `html { font-size: 10px }`.
+ *
+ * `heroSelector` picks out Canva's opening section on this route, by its id
+ * when the page data names it (see findSections), so the rule can never touch
+ * the page being faded out during a page change.
  */
-const STYLES = `
+const styles = (heroSelector: string) => `
   #sj-story {
     position: relative;
     box-sizing: border-box;
@@ -275,7 +279,7 @@ const STYLES = `
      invisible at full-screen height, so everything below is already where it
      will end up: swapping in ours then moves nothing. (Stretching Canva's
      section after it drew is what made the old hero jump.) */
-  html.sj-shero-route section:not([id^="sj-"]):first-of-type {
+  ${heroSelector} {
     visibility: hidden !important;
     min-height: 100vh;
     min-height: 100svh;
@@ -401,12 +405,18 @@ const STYLES = `
 `;
 
 /** ES5 on purpose, like the other injected scripts. */
-const script = (photos: Record<string, string[]>, heroImg: string | null, pages: Record<string, string>) => `
+const script = (
+  photos: Record<string, string[]>,
+  heroImg: string | null,
+  pages: Record<string, string>,
+  sections: Record<string, string[]>,
+) => `
 (function () {
   var ROUTE = ${JSON.stringify(ROUTE_PREFIX)};
   var PHOTOS = ${JSON.stringify(photos)};
   var HERO_IMG = ${JSON.stringify(heroImg)};
   var PAGES = ${JSON.stringify(pages)};
+  var SECTIONS = ${JSON.stringify(sections)};
   var ICON_PREV = ${JSON.stringify(chevron("M15 5 8 12l7 7"))};
   var ICON_NEXT = ${JSON.stringify(chevron("M9 5l7 7-7 7"))};
   var FALLBACK_FONT = ${JSON.stringify('Georgia, "Times New Roman", serif')};
@@ -762,7 +772,17 @@ const script = (photos: Record<string, string[]>, heroImg: string | null, pages:
     return (section.id || "").indexOf("sj-") === 0;
   }
 
+  /* The page being shown, by its Canva section ids (null if unknown). */
+  function pageSections() {
+    return SECTIONS[location.pathname.replace(/^\\/+|\\/+$/g, "")] || null;
+  }
+
   function canvaHero() {
+    /* By id when Canva's page data lists it: during a page change the old
+       page is still in the document - reading its first section put the
+       main page's names on this one. Null until Canva has drawn this page. */
+    var ids = pageSections();
+    if (ids && ids.length) return document.getElementById(ids[0]);
     var sections = document.getElementsByTagName("section");
     for (var i = 0; i < sections.length; i++) {
       if (ours(sections[i])) continue;
@@ -988,8 +1008,11 @@ const script = (photos: Record<string, string[]>, heroImg: string | null, pages:
       if (sc) sc.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    history.pushState({}, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate", { state: {} }));
+    /* With a "key", as Canva's own links push their entries: its router
+       ignores an entry without one. */
+    var state = { key: Math.random().toString(36).slice(2, 8) };
+    history.pushState(state, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate", { state: state }));
   }, true);
 
   function scrollerOf(node) {
@@ -1034,18 +1057,57 @@ const script = (photos: Record<string, string[]>, heroImg: string | null, pages:
     if (root.style.fontSize !== font) root.style.fontSize = font;
   }
 
-  function unmount() {
-    if (observer) observer.disconnect();
-    if (root && root.parentNode) root.parentNode.removeChild(root);
-    if (canva) canva.style.display = "";
-    root = null;
-    canva = null;
-    firstRead = 0;
+  /**
+   * Leaving the page. Nothing is restored while Canva fades the old page out
+   * - un-hiding its sections there flashed the original design. Ours stay
+   * until Canva removes that page, then go.
+   */
+  var leftBehind = [];
+  function leaveBehind(node, anchor) {
+    if (node && anchor && anchor.isConnected) leftBehind.push({ node: node, anchor: anchor });
+    else if (node && node.parentNode) node.parentNode.removeChild(node);
+  }
+  /* Whether a node can be seen at all: in the document, laid out, and with
+     nothing above it hidden or faded to nothing. */
+  function onScreen(node) {
+    if (!node || !node.isConnected) return false;
+    var r = node.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    for (var n = node; n && n !== document.documentElement; n = n.parentElement) {
+      var cs = getComputedStyle(n);
+      if (cs.display === "none" || cs.visibility === "hidden" || Number(cs.opacity) < 0.02) return false;
+    }
+    return true;
+  }
+  /* "force": the guest is back on that very page - hand Canva's section back
+     at once so ours can be built on it again. */
+  function settleLeftBehind(force) {
+    for (var i = leftBehind.length - 1; i >= 0; i--) {
+      var l = leftBehind[i];
+      var gone = !l.anchor.isConnected;
+      /* Still fading out, or still showing: leave it exactly as it is. */
+      if (!gone && !force && onScreen(l.node)) continue;
+      if (l.node.parentNode) l.node.parentNode.removeChild(l.node);
+      /* Canva kept the old page, hidden: give it its own section back, unseen. */
+      if (!gone) {
+        l.anchor.classList.remove("sj-shero-reading");
+        l.anchor.style.display = "";
+      }
+      leftBehind.splice(i, 1);
+    }
   }
 
   /* Canva's story section: the first of its sections that reads as one. */
   function findStory() {
     if (canva && canva.isConnected) return canva;
+    var ids = pageSections();
+    if (ids && ids.length > 1) {
+      for (var k = 1; k < ids.length; k++) {
+        var candidate = document.getElementById(ids[k]);
+        if (candidate && read(candidate)) return candidate;
+      }
+      return null;
+    }
     var sections = document.getElementsByTagName("section");
     for (var i = 0; i < sections.length; i++) {
       if (ours(sections[i])) continue;
@@ -1066,11 +1128,30 @@ const script = (photos: Record<string, string[]>, heroImg: string | null, pages:
   function sync() {
     if (!document.body) return;
     var here = onRoute();
+    /* Back on a page whose sections we left hidden: hand them back first. */
+    var mine = false;
+    for (var lb = 0; lb < leftBehind.length; lb++) {
+      if (here && (leftBehind[lb].anchor === canvaHero() || (pageSections() || []).indexOf(leftBehind[lb].anchor.id) !== -1)) mine = true;
+    }
+    settleLeftBehind(mine);
     document.documentElement.classList.toggle("sj-shero-route", here && !heroFailed);
     if (!here) {
       heroFailed = false;
-      if (shero || heroSrc) unmountHero();
-      if (root || canva) unmount();
+      if (shero || heroSrc) {
+        leaveBehind(shero, heroSrc);
+        shero = null;
+        heroSrc = null;
+        heroCopy = null;
+        heroCount = -1;
+        heroFirst = 0;
+      }
+      if (root || canva) {
+        if (observer) observer.disconnect();
+        leaveBehind(root, canva);
+        root = null;
+        canva = null;
+        firstRead = 0;
+      }
       return;
     }
     syncHero();
@@ -1158,7 +1239,22 @@ export function renderStoryPreload(heroImg: string | null, pathname: string): st
   return `<link rel="preload" as="image" href="${heroImg}" fetchpriority="high">`;
 }
 
-export function renderStory(nonce: string | null, heroImg: string | null, pages: Record<string, string>): string {
+export function renderStory(
+  nonce: string | null,
+  heroImg: string | null,
+  pages: Record<string, string>,
+  sections: Record<string, string[]>,
+): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
-  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(STORY_PHOTOS, heroImg, pages)}</script>\n`;
+  // Canva's opening section on every page this script handles, by id; the
+  // old "first section" rule only if the page data names none.
+  const slug = ROUTE_PREFIX.slice(1);
+  const heroIds = Object.keys(sections)
+    .filter((s) => s.startsWith(slug))
+    .map((s) => sections[s][0])
+    .filter((id) => /^[A-Za-z][A-Za-z0-9_-]*$/.test(id));
+  const heroSelector = heroIds.length
+    ? heroIds.map((id) => `html.sj-shero-route #${id}`).join(", ")
+    : `html.sj-shero-route section:not([id^="sj-"]):first-of-type`;
+  return `\n<style${nonceAttr}>${styles(heroSelector)}</style>\n<script${nonceAttr}>${script(STORY_PHOTOS, heroImg, pages, sections)}</script>\n`;
 }
