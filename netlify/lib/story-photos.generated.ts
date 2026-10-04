@@ -10,6 +10,7 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/thequestion/8bb19d853071.jpg"
   ],
   "usalongtheway": [
+    "/_wedding/our-story/usalongtheway/b9d1b5c1980a.jpg",
     "/_wedding/our-story/usalongtheway/621a83b13f40.jpg"
   ]
 };
