@@ -451,12 +451,14 @@ const script = (slides: Slide[]) => `
     rest.sort(function (a, b) { return a.top - b.top; });
     nav.sort(function (a, b) { return a.left - b.left; });
     /* Read by position, not size - the venue's script face is bigger than the
-       names. The date is the line with a year; the names sit above it, the
-       venue below. */
+       names. The date is the first line with a digit in it, whatever its
+       format ("7 FEBRUARY 2027" became "02 . 07 . 27" in Canva, and a
+       four-digit-year test silently turned the slideshow off); the names sit
+       above it, the venue below. */
     var names = [], date = null, venue = null;
     for (var j = 0; j < rest.length; j++) {
       var t = rest[j];
-      if (!date && /\\d{4}/.test(t.text)) date = t;
+      if (!date && /\\d/.test(t.text)) date = t;
       else if (!date) names.push(t);
       else if (!venue) venue = t;
     }
