@@ -9,7 +9,7 @@
  * and put a section of our own in front of it.
  *
  *   section parent        <- Canva's sections, in normal flow
- *     section (hero)      <- untouched
+ *     section (hero)      <- replaced by the full-screen opening (opening.ts)
  *     section#sj-story    <- ours
  *     section (hidden)    <- Canva's story section: display:none
  *
@@ -42,12 +42,8 @@ const chevron = (d: string) =>
  * Sized in em from a root font-size the script sets: 16px divided by Canva's
  * page scale (it shrinks the page with a transform on narrow phones). Never
  * rem - Canva sets `html { font-size: 10px }`.
- *
- * `heroSelector` picks out Canva's opening section on this route, by its id
- * when the page data names it (see findSections), so the rule can never touch
- * the page being faded out during a page change.
  */
-const styles = (heroSelector: string) => `
+const STYLES = `
   #sj-story {
     position: relative;
     box-sizing: border-box;
@@ -273,149 +269,17 @@ const styles = (heroSelector: string) => `
     #sj-story .sj-card-arrow { width: 2.2em; height: 2.2em; margin-top: -1.1em; }
   }
 
-  /* ---------- the full-screen opening ---------- */
-
-  /* From the first moment on this route, Canva's opening section is held
-     invisible at full-screen height, so everything below is already where it
-     will end up: swapping in ours then moves nothing. (Stretching Canva's
-     section after it drew is what made the old hero jump.) */
-  ${heroSelector} {
-    visibility: hidden !important;
-    min-height: 100vh;
-    min-height: 100svh;
-  }
-  /* Read, then hidden: out of the flow while its text is being read. */
-  section.sj-shero-reading {
-    position: absolute !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-
-  #sj-shero {
-    position: relative;
-    box-sizing: border-box;
-    overflow: hidden;
-    width: 100%;
-    height: 100vh;
-    height: 100svh;
-    background: #2b2522;
-    color: #fff;
-    /* Its own base size: Canva's root is 10px, which shrank everything. */
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-  }
-  #sj-shero * { box-sizing: border-box; }
-  #sj-shero .sj-shero-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: 50% 45%;
-    opacity: 0;
-    transition: opacity 700ms ease;
-  }
-  #sj-shero .sj-shero-img.is-loaded { opacity: 1; }
-  /* Keeps white text legible: darker at the top for the nav and at the
-     bottom for the title. */
-  #sj-shero .sj-shero-shade {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(180deg, rgba(20, 14, 16, 0.4) 0%, rgba(20, 14, 16, 0) 25%,
-        rgba(20, 14, 16, 0) 50%, rgba(20, 14, 16, 0.55) 100%),
-      rgba(20, 14, 16, 0.12);
-  }
-  #sj-shero .sj-shero-nav {
-    position: absolute;
-    z-index: 2;
-    top: 6em;
-    left: 0;
-    right: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.6em 2.2em;
-    padding: 0 1.25em;
-  }
-  #sj-shero .sj-shero-nav > * {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-    font-size: 0.75em;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
-    cursor: pointer;
-    transition: opacity 220ms ease;
-  }
-  #sj-shero .sj-shero-nav > span { cursor: default; }
-  @media (hover: hover) and (pointer: fine) {
-    #sj-shero .sj-shero-nav > button:hover { opacity: 0.55; }
-  }
-  #sj-shero .sj-shero-copy {
-    position: absolute;
-    z-index: 2;
-    left: 50%;
-    bottom: 11%;
-    width: min(92%, 60em);
-    transform: translateX(-50%);
-    text-align: center;
-    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.3);
-  }
-  /* Each line keeps its size from Canva, scaled down on narrow screens. */
-  #sj-shero .sj-shero-copy p {
-    margin: 0 0 0.35em;
-    line-height: 1.15;
-    text-wrap: balance;
-    font-size: max(0.8em, calc(var(--sj-size) * var(--sj-scale, 1)));
-  }
-  #sj-shero .sj-shero-copy p:last-child { margin-bottom: 0; }
-  @media (max-width: 1000px) { #sj-shero { --sj-scale: 0.8; } }
-  @media (max-width: 600px) {
-    #sj-shero { --sj-scale: 0.62; }
-    #sj-shero .sj-shero-copy { bottom: 15%; }
-  }
-  /* Phones: the menu button (menu.ts) stands in for the nav row. */
-  @media ${MOBILE} {
-    #sj-shero .sj-shero-nav { display: none; }
-  }
-
-  /* The lines rise into place one after another, as the names do on the
-     main page (slideshow.ts). "both" holds each hidden through its delay. */
-  .sj-rise { animation: sj-story-rise 1400ms cubic-bezier(0.22, 0.68, 0.24, 1) both; }
-  @keyframes sj-story-rise {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: none; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     #sj-story .sj-card-photos img { transition: opacity 300ms ease; }
     #sj-story .sj-card.sj-reveal { transform: none; }
-    /* A plain fade: no movement. */
-    .sj-rise { animation-name: sj-story-fade; }
-    @keyframes sj-story-fade { from { opacity: 0; } to { opacity: 1; } }
   }
 `;
 
 /** ES5 on purpose, like the other injected scripts. */
-const script = (
-  photos: Record<string, string[]>,
-  heroImg: string | null,
-  pages: Record<string, string>,
-  sections: Record<string, string[]>,
-) => `
+const script = (photos: Record<string, string[]>, sections: Record<string, string[]>) => `
 (function () {
   var ROUTE = ${JSON.stringify(ROUTE_PREFIX)};
   var PHOTOS = ${JSON.stringify(photos)};
-  var HERO_IMG = ${JSON.stringify(heroImg)};
-  var PAGES = ${JSON.stringify(pages)};
   var SECTIONS = ${JSON.stringify(sections)};
   var ICON_PREV = ${JSON.stringify(chevron("M15 5 8 12l7 7"))};
   var ICON_NEXT = ${JSON.stringify(chevron("M9 5l7 7-7 7"))};
@@ -752,19 +616,7 @@ const script = (
     else if (hit.hasAttribute("data-go")) show(frame, Number(hit.getAttribute("data-go")));
   }, true);
 
-  /* ---------- the full-screen opening ---------- */
-
-  /*
-   * Canva's opening section is replaced by one of ours, one screen tall: its
-   * photo filling the screen, the nav, and its lines rising in. The CSS holds
-   * Canva's section invisible at that same height from the first moment on
-   * this route, so the swap moves nothing below it.
-   */
-  var shero = null;     // our opening section
-  var heroSrc = null;   // Canva's, hidden behind ours
-  var heroCopy = null;  // its nav and lines, read once per visit
-  var heroCount = -1, heroSince = 0, heroFirst = 0, heroFailed = false;
-  var HERO_GIVE_UP = 8000;
+  /* ---------- Canva's sections ---------- */
 
   /* Our own sections (#sj-story, #sj-shero, #sj-hero). By name: Canva gives
      its sections ids too (since 2026-10-04), so "has an id" means nothing. */
@@ -794,237 +646,6 @@ const script = (
     }
     return null;
   }
-
-  /* A line's words, with Canva's <br>s as spaces. Not innerText: the section
-     is invisible while being read, and innerText then falls back to text
-     without the breaks ("HOW IT ALLBEGAN"). */
-  function textOf(node) {
-    var copy = node.cloneNode(true);
-    var breaks = copy.getElementsByTagName("br");
-    while (breaks.length) breaks[0].parentNode.replaceChild(document.createTextNode(" "), breaks[0]);
-    return clean(copy.textContent || "");
-  }
-
-  /* "#page-2" -> "/details", from Canva's page numbers; null if unknown. */
-  function pathFor(href) {
-    var m = /^#page-(\\d+)$/.exec(href || "");
-    var slug = m ? PAGES[m[1]] : null;
-    return slug == null ? null : "/" + slug;
-  }
-
-  /**
-   * The nav (text level with one of Canva's page links) and the other lines,
-   * each with its look, in reading order. Null until Canva has drawn the
-   * text styled - it lays it out in stages, first in one size.
-   */
-  function readHero(section) {
-    var links = section.querySelectorAll('a[href^="#page-"]');
-    var tops = [];
-    for (var l = 0; l < links.length; l++) {
-      var lr = links[l].getBoundingClientRect();
-      if (!lr.width) return null;
-      tops.push(lr.top);
-    }
-    var nav = [], lines = [];
-    var ps = section.querySelectorAll("p");
-    for (var i = 0; i < ps.length; i++) {
-      var words = textOf(ps[i]);
-      var r = ps[i].getBoundingClientRect();
-      if (!words || !r.width) continue;
-      var item = { text: words, top: r.top, left: r.left, look: look(ps[i]) };
-      var isNav = false;
-      for (var t = 0; t < tops.length; t++) if (Math.abs(r.top - tops[t]) < 8) isNav = true;
-      if (isNav) {
-        var a = ps[i].closest("a") || ps[i].querySelector("a");
-        item.href = a ? a.getAttribute("href") : null;
-        nav.push(item);
-      } else {
-        lines.push(item);
-      }
-    }
-    if (lines.length < 2) return null;
-    var big = 0, small = Infinity;
-    for (var s = 0; s < lines.length; s++) {
-      big = Math.max(big, lines[s].look.size);
-      small = Math.min(small, lines[s].look.size);
-    }
-    if (big < small * 1.6) return null;
-    lines.sort(function (a, b) { return a.top - b.top; });
-    nav.sort(function (a, b) { return Math.abs(a.top - b.top) < 8 ? a.left - b.left : a.top - b.top; });
-    return { nav: nav, lines: lines };
-  }
-
-  /* The photo: from Canva's page data (preloaded with the page), else the
-     biggest image Canva has drawn in its section. */
-  function heroImage(section) {
-    if (HERO_IMG) return HERO_IMG;
-    var best = null, area = 0;
-    var imgs = section.getElementsByTagName("img");
-    for (var i = 0; i < imgs.length; i++) {
-      var r = imgs[i].getBoundingClientRect();
-      if (r.width * r.height > area && (imgs[i].currentSrc || imgs[i].src)) { area = r.width * r.height; best = imgs[i]; }
-    }
-    return best ? best.currentSrc || best.src : null;
-  }
-
-  function buildHero() {
-    var s = el("section");
-    s.id = "sj-shero";
-    s.setAttribute("aria-label", "Our story");
-    s.appendChild(el("div", "sj-shero-shade"));
-    return s;
-  }
-
-  function addHeroImage(src) {
-    var img = el("img", "sj-shero-img");
-    img.alt = "";
-    img.decoding = "async";
-    img.setAttribute("fetchpriority", "high");
-    img.onload = function () { this.classList.add("is-loaded"); };
-    img.src = src;
-    if (img.complete && img.naturalWidth) img.classList.add("is-loaded");
-    shero.insertBefore(img, shero.firstChild);
-  }
-
-  function fillHero() {
-    if (heroCopy.nav.length) {
-      var nav = el("nav", "sj-shero-nav");
-      nav.setAttribute("aria-label", "Pages");
-      for (var k = 0; k < heroCopy.nav.length; k++) {
-        var item = heroCopy.nav[k];
-        var node = el(item.href ? "button" : "span");
-        node.textContent = item.text;
-        node.style.fontFamily = item.look.font + ", " + FALLBACK_FONT;
-        if (item.href) {
-          node.type = "button";
-          node.setAttribute("data-href", item.href);
-        }
-        if (!item.href || pathFor(item.href) === location.pathname) node.setAttribute("aria-current", "page");
-        nav.appendChild(node);
-      }
-      shero.appendChild(nav);
-    }
-    var copy = el("div", "sj-shero-copy");
-    for (var n = 0; n < heroCopy.lines.length; n++) {
-      var src = heroCopy.lines[n];
-      var line = el("p", "sj-rise");
-      line.textContent = src.text;
-      line.style.fontFamily = src.look.font + ", " + FALLBACK_FONT;
-      line.style.setProperty("--sj-size", (src.look.size / 16).toFixed(3) + "em");
-      if (src.look.upper) line.style.textTransform = "uppercase";
-      if (src.look.italic) line.style.fontStyle = "italic";
-      if (src.look.spacing) line.style.letterSpacing = (src.look.spacing / src.look.size).toFixed(3) + "em";
-      line.style.animationDelay = 250 + n * 200 + "ms";
-      copy.appendChild(line);
-    }
-    shero.appendChild(copy);
-    /* The phone menu (menu.ts) reads its links from here: Canva's own nav is
-       inside the hidden section. */
-    var shared = [];
-    for (var j = 0; j < heroCopy.nav.length; j++) {
-      shared.push({ text: heroCopy.nav[j].text, href: heroCopy.nav[j].href, font: heroCopy.nav[j].look.font });
-    }
-    window.__sjHeroNav = shared;
-  }
-
-  function unmountHero() {
-    if (shero && shero.parentNode) shero.parentNode.removeChild(shero);
-    if (heroSrc) {
-      heroSrc.classList.remove("sj-shero-reading");
-      heroSrc.style.display = "";
-    }
-    shero = null;
-    heroSrc = null;
-    heroCopy = null;
-    heroCount = -1;
-    heroFirst = 0;
-  }
-
-  function syncHero() {
-    if (heroFailed) return;
-    var section = heroSrc && heroSrc.isConnected ? heroSrc : canvaHero();
-    if (!section) return;
-    if (section !== heroSrc) {
-      if (heroSrc) { heroSrc.classList.remove("sj-shero-reading"); heroSrc.style.display = ""; }
-      heroSrc = section;
-    }
-    if (!heroFirst) heroFirst = Date.now();
-    if (!shero) shero = buildHero();
-    if (shero.nextElementSibling !== heroSrc) heroSrc.parentNode.insertBefore(shero, heroSrc);
-
-    if (!heroCopy) {
-      /* Out of the flow (ours holds the place) but still laid out, so its
-         text can be read. */
-      heroSrc.classList.add("sj-shero-reading");
-      if (!shero.querySelector(".sj-shero-img")) {
-        var src = heroImage(heroSrc);
-        if (src) addHeroImage(src);
-      }
-      var got = readHero(heroSrc);
-      /* Canva draws the lines in stages: take them once the set has held
-         still briefly, so nothing is missed. */
-      if (got) {
-        var count = got.nav.length * 100 + got.lines.length;
-        if (count !== heroCount) { heroCount = count; heroSince = Date.now(); }
-        if (Date.now() - heroSince < 150) { got = null; window.setTimeout(syncHero, 200); }
-      }
-      if (!got) {
-        /* Never leave a blank screen: if Canva's section cannot be read,
-           give it back. */
-        if (Date.now() - heroFirst > HERO_GIVE_UP) {
-          heroFailed = true;
-          unmountHero();
-          document.documentElement.classList.remove("sj-shero-route");
-        }
-        return;
-      }
-      heroCopy = got;
-      fillHero();
-    }
-    heroSrc.classList.remove("sj-shero-reading");
-    if (heroSrc.style.display !== "none") heroSrc.style.display = "none";
-  }
-
-  /* Nav clicks: by position, not event.target (Canva swaps the element
-     under the pointer between pointerdown and mouseup), through Canva's own
-     router so the music carries on. The current page scrolls to the top. */
-  document.addEventListener("click", function (e) {
-    if (!shero || !shero.isConnected) return;
-    var over = e.detail !== 0 && document.elementFromPoint(e.clientX, e.clientY);
-    if (over && over.closest && over.closest("#sj-menu, #bgm-toggle")) return;
-    var buttons = shero.querySelectorAll(".sj-shero-nav button"), hit = null;
-    for (var i = 0; i < buttons.length; i++) {
-      var r = buttons[i].getBoundingClientRect();
-      if (r.width && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) hit = buttons[i];
-    }
-    if (!hit && e.detail === 0 && shero.contains(e.target)) hit = e.target.closest && e.target.closest(".sj-shero-nav button");
-    if (!hit) return;
-    e.preventDefault();
-    e.stopPropagation();
-    var path = pathFor(hit.getAttribute("data-href"));
-    if (path === null) return;
-    if (path === location.pathname) {
-      var sc = scrollerOf(shero);
-      if (sc) sc.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    /* With a "key", as Canva's own links push their entries: its router
-       ignores an entry without one. */
-    var state = { key: Math.random().toString(36).slice(2, 8) };
-    history.pushState(state, "", path);
-    window.dispatchEvent(new PopStateEvent("popstate", { state: state }));
-  }, true);
-
-  function scrollerOf(node) {
-    for (var p = node.parentElement; p && p !== document.body; p = p.parentElement) {
-      var oy = getComputedStyle(p).overflowY;
-      if ((oy === "scroll" || oy === "auto") && p.clientHeight) return p;
-    }
-    return null;
-  }
-
-  /* Set at once, before Canva draws anything, so its section never shows. */
-  document.documentElement.classList.toggle("sj-shero-route", onRoute());
 
   /* ---------- mounting ---------- */
 
@@ -1089,10 +710,7 @@ const script = (
       if (!gone && !force && onScreen(l.node)) continue;
       if (l.node.parentNode) l.node.parentNode.removeChild(l.node);
       /* Canva kept the old page, hidden: give it its own section back, unseen. */
-      if (!gone) {
-        l.anchor.classList.remove("sj-shero-reading");
-        l.anchor.style.display = "";
-      }
+      if (!gone) l.anchor.style.display = "";
       leftBehind.splice(i, 1);
     }
   }
@@ -1134,17 +752,7 @@ const script = (
       if (here && (leftBehind[lb].anchor === canvaHero() || (pageSections() || []).indexOf(leftBehind[lb].anchor.id) !== -1)) mine = true;
     }
     settleLeftBehind(mine);
-    document.documentElement.classList.toggle("sj-shero-route", here && !heroFailed);
     if (!here) {
-      heroFailed = false;
-      if (shero || heroSrc) {
-        leaveBehind(shero, heroSrc);
-        shero = null;
-        heroSrc = null;
-        heroCopy = null;
-        heroCount = -1;
-        heroFirst = 0;
-      }
       if (root || canva) {
         if (observer) observer.disconnect();
         leaveBehind(root, canva);
@@ -1154,7 +762,6 @@ const script = (
       }
       return;
     }
-    syncHero();
 
     var section = findStory();
     if (!section) return;
@@ -1193,68 +800,7 @@ const script = (
 })();
 `;
 
-/**
- * The Our Story page's opening photo, read from Canva's page data on every
- * request (the couple swaps it in Canva; its hash changes each publish):
- *
- *   page index    {"K":"PB1h8M...","L":"our-story", ...}
- *   page content  "a":"PB1h8M..." ... its first image fill,
- *                 "a":{"B":{"A":{"A?":"d","A":"<upload>","B":1},"I":{"A?":"d","A":"<edited>"...
- *                 ("I" is the edited copy Canva actually shows)
- *   media table   one entry per size; the widest is used
- *
- * Null if it cannot be found: the script then takes the photo Canva draws.
- */
-export function findStoryHero(html: string): string | null {
-  try {
-    const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)];
-    const slug = ROUTE_PREFIX.slice(1);
-    const page = pages.find((m) => m[2] === slug) ?? pages.find((m) => m[2].startsWith(slug));
-    if (!page) return null;
-    const start = html.indexOf(`"a":"${page[1]}"`);
-    if (start === -1) return null;
-    const ref = /"a":\{"B":\{"A":\{"A\?":"d","A":"([A-Za-z0-9_-]+)","B":\d+\}(?:,"I":\{"A\?":"d","A":"([A-Za-z0-9_-]+)")?/
-      .exec(html.slice(start, start + 20000));
-    if (!ref) return null;
-    const id = ref[2] ?? ref[1];
-    const entry = new RegExp(
-      `\\{"type":"RASTER","id":"${id}","version":\\d+,"files":\\[\\{"url":"(_assets/media/[0-9a-f]+\\.(?:png|jpe?g|webp))","urlDenied":false,"width":(\\d+)`,
-      "g",
-    );
-    let best: { url: string; width: number } | null = null;
-    for (const m of html.matchAll(entry)) {
-      const width = Number(m[2]);
-      if (!best || width > best.width) best = { url: "/" + m[1], width };
-    }
-    return best ? best.url : null;
-  } catch (error) {
-    console.warn("[story] could not find the opening photo:", error);
-    return null;
-  }
-}
-
-/** Starts the opening photo downloading with the HTML on a direct visit. */
-export function renderStoryPreload(heroImg: string | null, pathname: string): string {
-  if (!heroImg || !pathname.startsWith(ROUTE_PREFIX)) return "";
-  return `<link rel="preload" as="image" href="${heroImg}" fetchpriority="high">`;
-}
-
-export function renderStory(
-  nonce: string | null,
-  heroImg: string | null,
-  pages: Record<string, string>,
-  sections: Record<string, string[]>,
-): string {
+export function renderStory(nonce: string | null, sections: Record<string, string[]>): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
-  // Canva's opening section on every page this script handles, by id; the
-  // old "first section" rule only if the page data names none.
-  const slug = ROUTE_PREFIX.slice(1);
-  const heroIds = Object.keys(sections)
-    .filter((s) => s.startsWith(slug))
-    .map((s) => sections[s][0])
-    .filter((id) => /^[A-Za-z][A-Za-z0-9_-]*$/.test(id));
-  const heroSelector = heroIds.length
-    ? heroIds.map((id) => `html.sj-shero-route #${id}`).join(", ")
-    : `html.sj-shero-route section:not([id^="sj-"]):first-of-type`;
-  return `\n<style${nonceAttr}>${styles(heroSelector)}</style>\n<script${nonceAttr}>${script(STORY_PHOTOS, heroImg, pages, sections)}</script>\n`;
+  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(STORY_PHOTOS, sections)}</script>\n`;
 }

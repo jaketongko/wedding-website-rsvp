@@ -2,11 +2,12 @@ import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderGallery } from "../lib/gallery.ts";
 import { renderMenu } from "../lib/menu.ts";
+import { findOpeningPhotos, renderOpening, renderOpeningPreload } from "../lib/opening.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
 import { findPages, findSections, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
-import { findStoryHero, renderStory, renderStoryPreload } from "../lib/story.ts";
+import { renderStory } from "../lib/story.ts";
 
 /**
  * Reverse-proxies the published Canva invitation and injects a background-music
@@ -143,8 +144,8 @@ export default async function inject(request: Request, _context: Context): Promi
   // read here even when the guest lands on the cover.
   const slides = findSlides(html);
   const pages = findPages(html);
-  const storyHero = findStoryHero(html);
   const sections = findSections(html);
+  const openingPhotos = findOpeningPhotos(html);
   const injected =
     renderPlayer(nonce) +
     renderRsvp(nonce) +
@@ -152,13 +153,14 @@ export default async function inject(request: Request, _context: Context): Promi
     renderPetals(nonce) +
     renderGallery(nonce) +
     renderSlideshow(nonce, slides, pages, sections) +
-    renderStory(nonce, storyHero, pages, sections) +
+    renderOpening(nonce, openingPhotos, pages, sections) +
+    renderStory(nonce, sections) +
     renderMenu(nonce, pages);
 
   // In <head>, so the first photo downloads with the HTML rather than seconds
   // later, when Canva's JS gets round to rendering the page.
   const preload =
-    renderSlideshowPreload(slides, incoming.pathname) + renderStoryPreload(storyHero, incoming.pathname);
+    renderSlideshowPreload(slides, incoming.pathname) + renderOpeningPreload(openingPhotos, incoming.pathname);
   const page = preload ? insertBeforeHeadClose(html, preload) : html;
 
   return new Response(insertBeforeBodyClose(page, injected), {
