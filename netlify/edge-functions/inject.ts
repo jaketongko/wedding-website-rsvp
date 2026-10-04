@@ -148,7 +148,7 @@ export default async function inject(request: Request, _context: Context): Promi
   const openingPhotos = findOpeningPhotos(html);
   const injected =
     renderPlayer(nonce) +
-    renderRsvp(nonce) +
+    renderRsvp(nonce, pages, sections) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +
@@ -180,9 +180,8 @@ export const config: Config = {
 /**
  * Standalone RSVP form for design work.
  *
- * The stub iframe carries the widget marker in its src, so the injected script
- * finds and replaces it through exactly the same path it uses on the real page.
- * `about:blank#` means it matches without issuing a request.
+ * There is no Canva section to read here, so the script builds the page with
+ * plain defaults (no nav, no envelope).
  */
 function renderRsvpPreview(): string {
   return `<!doctype html>
@@ -192,20 +191,10 @@ function renderRsvpPreview(): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RSVP preview</title>
 <style>
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #efe7e4;
-  }
-  /* The real panel is fixed and viewport-centred, so the stub just needs to exist. */
-  iframe { border: 0; width: 1px; height: 1px; }
+  body { margin: 0; background: #f6f3f7; }
 </style>
 </head>
 <body>
-<iframe src="about:blank#_website-element-widget" title="RSVP widget stub"></iframe>
 ${renderRsvp(null)}
 </body>
 </html>`;

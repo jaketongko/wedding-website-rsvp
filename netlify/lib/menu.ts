@@ -275,11 +275,11 @@ const script = (pages: Record<string, string>) => `
       return;
     }
 
-    /* The main page's slideshow and Our Story's full-screen opening hide
+    /* The main page's slideshow, the full-screen openings and the RSVP page hide
        Canva's first section, so they share the nav they read there. */
     var items = null;
-    var ownHero = document.getElementById("sj-hero") || document.getElementById("sj-shero");
-    if (ownHero && ownHero.querySelector(".sj-hero-nav, .sj-shero-nav") && window.__sjHeroNav) items = window.__sjHeroNav;
+    var ownHero = document.getElementById("sj-hero") || document.getElementById("sj-shero") || document.getElementById("sj-rsvp-page");
+    if (ownHero && ownHero.querySelector(".sj-hero-nav, .sj-shero-nav, .sjr-nav") && window.__sjHeroNav) items = window.__sjHeroNav;
     else {
       var section = firstSection();
       if (section) items = readNav(section);

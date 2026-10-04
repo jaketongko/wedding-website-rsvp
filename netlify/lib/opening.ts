@@ -202,7 +202,7 @@ const styles = (heroSelector: string) => `
 
   /* The lines rise into place one after another, as the names do on the
      main page (slideshow.ts). "both" holds each hidden through its delay. */
-  #sj-shero .sj-rise { animation: sj-shero-rise 1400ms cubic-bezier(0.22, 0.68, 0.24, 1) both; }
+  #sj-shero .sj-rise { animation: sj-shero-rise 1000ms cubic-bezier(0.22, 0.68, 0.24, 1) both; }
   @keyframes sj-shero-rise {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: none; }
@@ -231,6 +231,7 @@ const script = (
   var shero = null;     // our opening section
   var heroSrc = null;   // Canva's, hidden behind ours
   var heroCopy = null;  // its nav and lines, read once per visit
+  var confirmed = false; // Canva's live text has been read this visit
   var heroCount = -1, heroSince = 0, heroFirst = 0, failed = false;
 
   function slug() {
@@ -314,16 +315,8 @@ const script = (
       if (!lr.width) return null;
       tops.push(lr.top);
     }
-    /* Canva fades its text in once it is laid out; before that the nav can
-       still be on its way to its place (Gallery's ends near the bottom). Read
-       once it has arrived - or after 4s, whatever the state. */
-    if (links.length && Date.now() - heroFirst < 4000) {
-      for (var o = 0; o < links.length; o++) {
-        var shown = 1;
-        for (var n = links[o]; n && n !== section; n = n.parentElement) shown *= Number(getComputedStyle(n).opacity);
-        if (shown < 0.99) return null;
-      }
-    }
+    /* Read as soon as Canva has laid the text out. (Waiting for Canva's own
+       fade-in to finish as well cost ~0.7s on every visit.) */
     var nav = [], pieces = [];
     var ps = section.querySelectorAll("p");
     for (var i = 0; i < ps.length; i++) {
@@ -404,8 +397,12 @@ const script = (
     if (src.look.italic) node.style.fontStyle = "italic";
   }
 
-  function fillHero() {
-    if (heroCopy.navBottom) shero.classList.add("sj-shero--nav-bottom");
+  /* Fills our section with heroCopy. Again later (animate false) if Canva's
+     live text turns out to differ from the copy remembered from last time. */
+  function fillHero(animate) {
+    var old = shero.querySelectorAll(".sj-shero-nav, .sj-shero-copy");
+    for (var x = 0; x < old.length; x++) old[x].parentNode.removeChild(old[x]);
+    shero.classList.toggle("sj-shero--nav-bottom", !!heroCopy.navBottom);
     if (heroCopy.nav.length) {
       var nav = el("nav", "sj-shero-nav");
       nav.setAttribute("aria-label", "Pages");
@@ -426,7 +423,7 @@ const script = (
     if (heroCopy.rows.length) {
       var copy = el("div", "sj-shero-copy");
       for (var n = 0; n < heroCopy.rows.length; n++) {
-        var line = el("p", "sj-rise");
+        var line = el("p", animate ? "sj-rise" : null);
         for (var m = 0; m < heroCopy.rows[n].length; m++) {
           var src = heroCopy.rows[n][m];
           var piece = el("span");
@@ -436,7 +433,7 @@ const script = (
           if (src.look.spacing) piece.style.letterSpacing = (src.look.spacing / src.look.size).toFixed(3) + "em";
           line.appendChild(piece);
         }
-        line.style.animationDelay = 250 + n * 200 + "ms";
+        if (animate) line.style.animationDelay = 60 + n * 160 + "ms";
         copy.appendChild(line);
       }
       shero.appendChild(copy);
@@ -487,8 +484,43 @@ const script = (
     shero = null;
     heroSrc = null;
     heroCopy = null;
+    confirmed = false;
     heroCount = -1;
     heroFirst = 0;
+  }
+
+  /* ---------- remembered copies ---------- */
+
+  /* What is shown, without positions: equal signatures mean nothing to
+     change. */
+  function signature(c) {
+    var parts = [c.navBottom ? "b" : "t"];
+    for (var i = 0; i < c.nav.length; i++) parts.push(c.nav[i].text, c.nav[i].href, c.nav[i].look.font);
+    for (var r = 0; r < c.rows.length; r++) {
+      for (var p = 0; p < c.rows[r].length; p++) {
+        var it = c.rows[r][p];
+        parts.push(r, it.text, it.look.font, it.look.size, it.look.upper, it.look.italic, it.look.spacing);
+      }
+    }
+    return JSON.stringify(parts);
+  }
+
+  /* Per page, in this browser only. Storage can be missing or full (private
+     browsing): then every visit simply waits for Canva, as before. */
+  var STORE = "sj-opening:";
+  function recall() {
+    try {
+      var raw = window.localStorage.getItem(STORE + slug());
+      var c = raw && JSON.parse(raw);
+      return c && c.nav && c.rows ? c : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function remember(c) {
+    try {
+      window.localStorage.setItem(STORE + slug(), JSON.stringify({ nav: c.nav, rows: c.rows, navBottom: c.navBottom }));
+    } catch (e) { /* no storage: fine */ }
   }
 
   function giveBack() {
@@ -514,7 +546,7 @@ const script = (
     if (!shero) shero = buildHero();
     if (shero.nextElementSibling !== heroSrc) heroSrc.parentNode.insertBefore(shero, heroSrc);
 
-    if (!heroCopy) {
+    if (!confirmed) {
       /* Out of the flow (ours holds the place) but still laid out, so its
          text can be read. */
       heroSrc.classList.add("sj-shero-reading");
@@ -522,28 +554,45 @@ const script = (
         var src = heroImage(heroSrc);
         if (src) addHeroImage(src);
       }
+      /* The title and nav remembered from this guest's last visit: shown at
+         once, with the photo, instead of waiting for Canva's text. */
+      if (!heroCopy) {
+        var remembered = recall();
+        if (remembered) { heroCopy = remembered; fillHero(true); }
+      }
       var got = readHero(heroSrc);
       /* Canva draws the text in stages: take it once it has held still - a
          little longer for a page that is only a nav, which has no sizes to
          compare. */
       if (got) {
         var count = got.nav.length * 100 + got.rows.length;
-        var hold = got.rows.length ? 150 : 600;
+        var hold = got.rows.length ? 100 : 300;
         if (count !== heroCount) { heroCount = count; heroSince = Date.now(); }
-        if (Date.now() - heroSince < hold) { got = null; window.setTimeout(syncHero, 200); }
+        if (Date.now() - heroSince < hold) { got = null; window.setTimeout(syncHero, 110); }
       }
       if (!got) {
-        /* Never leave a blank screen: if Canva's section cannot be read,
-           give it back. */
         if (Date.now() - heroFirst > GIVE_UP) {
-          failed = true;
-          giveBack();
-          document.documentElement.classList.remove("sj-shero-route");
+          if (heroCopy) {
+            /* Canva's text never became readable: keep the remembered one. */
+            confirmed = true;
+          } else {
+            /* Never leave a blank screen: give Canva's section back. */
+            failed = true;
+            giveBack();
+            document.documentElement.classList.remove("sj-shero-route");
+            return;
+          }
+        } else {
+          return;
         }
-        return;
+      } else {
+        /* Canva's live text wins: if the couple edited it since last time,
+           the remembered copy is swapped out quietly (no second rise). */
+        if (!heroCopy) { heroCopy = got; fillHero(true); }
+        else if (signature(got) !== signature(heroCopy)) { heroCopy = got; fillHero(false); }
+        remember(got);
+        confirmed = true;
       }
-      heroCopy = got;
-      fillHero();
     }
     /* Canva adds its photo a moment after its text: take it when it comes. */
     if (!shero.querySelector(".sj-shero-img")) {

@@ -148,14 +148,8 @@ for this site:
 npx netlify api updateSite --data '{"site_id":"78a72add-74f1-473e-828b-459ad302ae77","body":{"processing_settings":{"html":{"pretty_urls":true},"ignore_html_forms":false}}}'
 ```
 
-**The form re-mounts itself forever.** Canva's renderer is slow — on a throttled browser the
-widget took ~100 seconds to appear — and it detaches injected nodes on every re-render. The
-observer therefore has **no timeout** and re-swaps a lost form. An earlier 30-second window would
-have dropped the form entirely on a slow phone.
-
-**There is a fallback.** If no widget appears within 12 seconds, a floating RSVP button opens the
-same form in a modal, so there is always a way to respond even if Canva renders nothing or changes
-the widget URL. It removes itself if the real widget turns up later.
+**There is a fallback.** If Canva has not drawn the RSVP page within 12 seconds, a floating RSVP
+button opens the same form in a modal, so there is always a way to respond.
 
 ### Changing the fields
 
@@ -166,52 +160,30 @@ registration), then redeploy. Current fields:
 |---|---|---|
 | `name` | yes | Full name |
 | `attending` | yes | `yes` / `no` |
-| `dietary` | yes, when attending | Hidden and not enforced for a decline |
+| `dietary` | yes, when attending | Not enforced for a decline |
+| `song` | no | "What song will get you on the dance floor?" |
 | `message` | no | |
 | `bot-field` | — | Honeypot, ignored |
 
-### Layout rules worth keeping
+### The page
 
-**The panel is `position: fixed` and mounted on `<body>`, not where the widget sat.** Canva
-transforms its layout containers, and a transformed ancestor makes `fixed` resolve against that
-ancestor instead of the viewport. Leaving the panel in place mis-positions and mis-sizes it. The
-widget is swapped for an inert placeholder of the same size so Canva's layout is undisturbed.
+`rsvp.ts` builds the whole RSVP page as one section of ours (`#sj-rsvp-page`), in lavender:
 
-**Nothing may stick out past the card.** The floral sprays sit flush in the top-right and
-bottom-left corners with no negative insets and no `translate`. Both negative insets *and*
-transforms count as scrollable overflow, which reintroduces the scrollbar and lets the card get
-nudged when a field takes focus. The card is `overflow: hidden`; the scroller is `.sj-card-inner`.
+- the nav (desktop; the phone menu stands in on phones, fed by `window.__sjHeroNav`);
+- "Please RSVP" on the left, the envelope in a rounded card on the right;
+- a "Kindly reply by" card (`REPLY_BY`);
+- four reminder cards (`REMINDERS`: save the date, let us know, dress code, the venue);
+- the form.
 
-Those two corners are chosen because the heading occupies top-left and Submit sits bottom-right.
+**What comes from Canva:** the nav, the "Please" / "RSVP" title (its two largest lines, with their
+fonts and colours), the envelope (every image that is not the page background, cropped the way
+Canva crops it) and the paper background. Canva's section is hidden by id from the first moment on
+the route, read once its text and images have settled, then set to `display: none`. Edit those in
+Canva as usual. **What is ours:** the tagline, the reply-by date, the reminders and the form
+wording; edit them in `rsvp.ts`. The reminders repeat the Details page, so update them together.
 
-**Never grow `<body>` or `<html>` to make room for the card.** Canva scrolls the page inside its own
-container (`overflow-y: scroll`), not the document, so the document is always exactly one viewport
-tall. An earlier version saw that as "page too short", set `body { min-height }`, and made the
-document scroll too: two scrollbars side by side. `ensureVisible` now only grows the page when no
-ancestor scrolls, and its un-clip loop stops at a scroll container so it cannot disable Canva's.
-
-### The details card
-
-A second card beside the form shows the title, date, location and attire. Its wording lives in
-`INFO_TITLE` / `INFO_ITEMS` in `rsvp.ts` and was **copied from the Canva Details page**; when the
-couple edits that page, update these too.
-
-When both cards fit side by side (the details card at least 280px wide, roughly windows 850px and
-wider), the form is shifted (`left` on `#sj-rsvp`) so the pair is centred on the page. Otherwise the
-details card is hidden and the form stays exactly where Canva placed it. It is deliberately **never stacked below the form**: Canva gives
-each page a fixed height inside `overflow: hidden` frames, so anything past the bottom is cut off
-and cannot be scrolled to (measured on a phone). Showing it on phones needs a taller RSVP page in
-Canva first.
-
-The monogram above the details is `public/_wedding/logo-mark.png`: the original logo cropped to its
-edges and resized to 390x480 (59 KB, from a 6250px, 2.7 MB original), shown at 98x120, so the
-file still covers 3x screens. It is used only as a CSS
-mask, so its colour comes from `--sj-accent` in `rsvp.ts`, not from the file. `/_wedding/*` is cached
-`immutable` for a week, so a replacement logo must use a new filename.
-
-Canva repositions the form *after* the resize event, so the card is re-placed 200ms and 1s after
-each resize and whenever the form's box changes. Automated tabs report `document.hidden` and Chrome
-pauses their timers and Canva's layout code, so test resizing with fresh loads at each width.
+Text is sized in `em` from a 16px base on the section (Canva's root is 10px). The envelope art is
+capped at `ART_MAX` (24em) tall: Canva's phone layout of it is a tall stem.
 
 ### The font
 
@@ -221,24 +193,14 @@ points `@font-face` at the `.woff` files Canva already serves for the design
 data (search the page HTML for `"C":"The Seasons"`). If the couple removes the font from the Canva
 design, those files go away and the form falls back to Georgia; re-read the hashes if that happens.
 
-**Font sizes are in px, spacing stays in rem.** Canva sets `html { font-size: 10px }`, so every
-`rem` in the form is 62.5% of what it would be elsewhere. Text is sized in px so it reads the same
-everywhere. Inputs are 16px, the minimum that stops iOS zooming on focus. Spacing was deliberately left in rem:
-scaling it too would make the cards about 60% taller, and Canva cuts off anything past its fixed
-page height. With px text the cards are about 730px tall and still end ~125px above the cutoff
-(checked at 390, 1366x768 and 2000px). Measure on a real Canva page; `/_preview-rsvp` has a 16px
-root and shows spacing larger than it really is.
-
 Interpolate the font stack into the CSS raw. An earlier `JSON.stringify` wrapped the whole stack in
 one pair of quotes, which CSS reads as a single nonexistent family, and every guest saw the browser
 default font instead.
 
 ### Previewing the design
 
-Canva's renderer can take over a minute, which makes styling the form painful. Open
-**`/_preview-rsvp`** for the form on its own, rendered through exactly the same code path (a stub
-iframe carries the widget marker so the normal swap runs). It is `noindex` and linked from
-nowhere.
+Canva's renderer can take over a minute. **`/_preview-rsvp`** shows the page on its own with plain
+defaults (no nav, no envelope). It is `noindex` and linked from nowhere.
 
 ## How it works
 
@@ -246,7 +208,7 @@ nowhere.
 |---|---|
 | `netlify/edge-functions/inject.ts` | Proxies to Canva, rewrites HTML, handles headers |
 | `netlify/lib/player.ts` | The injected audio element and mute toggle |
-| `netlify/lib/rsvp.ts` | The injected RSVP form that replaces Canva's blocked widget |
+| `netlify/lib/rsvp.ts` | The RSVP page: envelope, reply-by date, reminders and the form (replaces Canva's blocked widget) |
 | `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
 | `netlify/lib/petals.ts` | Lavender petals drifting over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
