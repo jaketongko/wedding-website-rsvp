@@ -26,6 +26,8 @@
  * there is the page nav, which is centred and starts at y=82 even at 390px
  * wide, so a 48px button at 16px from the corner clears it, bob and shadow
  * included. The label and badge use the RSVP card's accent (rsvp.ts).
+ * On phones it sits lower-left instead (2026-10-04, at the couple's request),
+ * so the main page's menu button can have the top-right corner.
  *
  * Canva scrolls an inner, full-width element, so on desktops with classic
  * scrollbars the scrollbar sits inside the viewport, under a right-anchored
@@ -35,6 +37,10 @@
  *
  * Pixels, not rem: Canva sets the root font-size to 10px, so 1rem is 10px here.
  */
+
+/** "Mobile" for the injected UI: a phone upright, or on its side. */
+export const MOBILE = "(max-width: 600px), (max-height: 520px)";
+
 const STYLES = `
   #bgm-toggle {
     position: fixed;
@@ -133,6 +139,17 @@ const STYLES = `
     stroke-linejoin: round;
   }
   #bgm-toggle .bgm-badge .bgm-speaker { fill: currentColor; fill-opacity: 0.2; }
+
+  /* Phones: lower left, leaving the top right to the main page's menu button.
+     MOBILE is shared with slideshow.ts so the two always switch together. */
+  @media ${MOBILE} {
+    #bgm-toggle {
+      top: auto;
+      right: auto;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      left: max(16px, env(safe-area-inset-left));
+    }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     #bgm-toggle, #bgm-toggle .bgm-badge { transition: none; }

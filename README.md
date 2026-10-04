@@ -250,7 +250,8 @@ nowhere.
 | `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
 | `netlify/lib/petals.ts` | Lavender petals drifting over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
-| `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero |
+| `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero. On phones its nav is a dropdown menu |
+| `netlify/lib/story.ts` | `/our-story`: photos lift on mouse hover; justified paragraphs set ragged-right on phones |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
 | `netlify.toml` | Static publish dir and asset caching |
 

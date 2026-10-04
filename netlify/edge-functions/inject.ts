@@ -4,7 +4,8 @@ import { renderGallery } from "../lib/gallery.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
 import { renderRsvp } from "../lib/rsvp.ts";
-import { findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
+import { findPages, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
+import { renderStory } from "../lib/story.ts";
 
 /**
  * Reverse-proxies the published Canva invitation and injects a background-music
@@ -146,7 +147,8 @@ export default async function inject(request: Request, _context: Context): Promi
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +
-    renderSlideshow(nonce, slides);
+    renderSlideshow(nonce, slides, findPages(html)) +
+    renderStory(nonce);
 
   // In <head>, so the first photo downloads with the HTML rather than seconds
   // later, when Canva's JS gets round to rendering the page.
