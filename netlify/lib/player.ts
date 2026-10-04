@@ -26,8 +26,9 @@
  * there is the page nav, which is centred and starts at y=82 even at 390px
  * wide, so a 48px button at 16px from the corner clears it, bob and shadow
  * included. The label and badge use the RSVP card's accent (rsvp.ts).
- * On phones it sits lower-left instead (2026-10-04, at the couple's request),
- * so the main page's menu button can have the top-right corner.
+ * On phones it sits top-left instead, level with the menu button (menu.ts)
+ * in the top-right (2026-10-04, at the couple's request). It is hidden on
+ * the "/" cover, before the invitation is opened.
  *
  * Canva scrolls an inner, full-width element, so on desktops with classic
  * scrollbars the scrollbar sits inside the viewport, under a right-anchored
@@ -140,16 +141,18 @@ const STYLES = `
   }
   #bgm-toggle .bgm-badge .bgm-speaker { fill: currentColor; fill-opacity: 0.2; }
 
-  /* Phones: lower left, leaving the top right to the main page's menu button.
-     MOBILE is shared with slideshow.ts so the two always switch together. */
+  /* Phones: top left, level with the menu button in the top right (menu.ts).
+     MOBILE is shared with the menu so the two always switch together. */
   @media ${MOBILE} {
     #bgm-toggle {
-      top: auto;
       right: auto;
-      bottom: max(16px, env(safe-area-inset-bottom));
       left: max(16px, env(safe-area-inset-left));
     }
   }
+
+  /* Not on the "You have an invitation" cover: the guest has not opened the
+     invitation yet. The music still starts there; only the button waits. */
+  #bgm-toggle.bgm-toggle--cover { opacity: 0; visibility: hidden; pointer-events: none; }
 
   @media (prefers-reduced-motion: reduce) {
     #bgm-toggle, #bgm-toggle .bgm-badge { transition: none; }
@@ -347,7 +350,16 @@ const SCRIPT = `
       if (nodes[i].parentNode !== document.body) document.body.appendChild(nodes[i]);
     }
     watchBody();
+    paintRoute();
   }
+
+  // Hidden on the cover. Canva routes with pushState, which fires no event,
+  // so the route is also polled.
+  function paintRoute() {
+    toggle.classList.toggle("bgm-toggle--cover", location.pathname === "/");
+  }
+  window.addEventListener("popstate", paintRoute);
+  window.setInterval(paintRoute, 400);
 
   function watchBody() {
     if (!window.MutationObserver || !document.body) return;

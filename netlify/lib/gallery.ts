@@ -475,7 +475,12 @@ const SCRIPT = `
   document.addEventListener("click", function (e) {
     if (!onRoute() || isOpen() || !tiles.length) return;
     /* Our own floating UI sits over the page; let it have its clicks. */
-    if (e.target && e.target.closest && e.target.closest("#bgm-toggle, #sj-gbox, #sj-rsvp")) return;
+    var ours = "#bgm-toggle, #sj-gbox, #sj-rsvp, #sj-menu";
+    if (e.target && e.target.closest && e.target.closest(ours)) return;
+    /* The phone menu floats over the tiles. It is ours, not Canva's, so the
+       top element at the point is reliable even when the target is not. */
+    var over = document.elementFromPoint(e.clientX, e.clientY);
+    if (over && over.closest && over.closest(ours)) return;
     var hit = tileAt(e.clientX, e.clientY);
     if (!hit) return;
     e.preventDefault();

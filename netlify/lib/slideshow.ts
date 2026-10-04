@@ -49,12 +49,30 @@ type Slide = { src: string; w: number; h: number };
  * already the floor for a full-screen photo.
  */
 /**
- * The site's page slugs, in Canva's page order - the order its nav links
- * number them in: `#page-2` is the third entry. Read per request, like the
- * photos, so a renamed page (`/main` -> `/main-2`) is followed.
+ * Canva's nav link numbers to page slugs: `#page-5` -> "gallery". Read per
+ * request, like the photos, so a renamed page (`/main` -> `/main-2`) is
+ * followed.
+ *
+ * The number is each page's own `"P"` field, NOT its place in the page list:
+ * an unlinked extra page (`/our-story-2`, added 2026-10-04) sits in the list
+ * without one, and counting positions sent GALLERY to /rsvp.
+ *
+ *   page index    {"K":"PBTpbt...","L":"gallery", ...}
+ *   page content  "a":"PBTpbt...","B":"GALLERY","R":false,...,"P":"5"
+ *
+ * Falls back to list positions if no page has a number at all.
  */
-export function findPages(html: string): string[] {
-  return [...html.matchAll(/"K":"[A-Za-z0-9_-]+","L":"([a-z0-9-]*)"/g)].map((m) => m[1]);
+export function findPages(html: string): Record<string, string> {
+  const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)];
+  const numbered: Record<string, string> = {};
+  for (const [, key, slug] of pages) {
+    const p = new RegExp(
+      `"a":"${key}","B":"[^"]*"(?:,"[A-Za-z]":(?:false|true|-?[\\d.]+|"[^"]*"|\\{\\}))*,"P":"(\\d+)"`,
+    ).exec(html);
+    if (p) numbered[p[1]] = slug;
+  }
+  if (Object.keys(numbered).length) return numbered;
+  return Object.fromEntries(pages.map((m, i) => [String(i), m[2]]));
 }
 
 export function findSlides(html: string): Slide[] {
@@ -351,8 +369,7 @@ const STYLES = `
     #sj-hero .sj-hero-names { letter-spacing: 0.1em; }
     #sj-hero .sj-hero-date { font-size: 0.85em; letter-spacing: 0.24em; }
     /* Swipe does the work on a phone. The arrows stay, small, level with the
-       dots - mid-height they sat on the names - and high enough to clear the
-       music button, which has the lower-left corner on a phone. */
+       dots - mid-height they sat on the names. */
     #sj-hero .sj-hero-arrow { top: auto; bottom: 4.6em; width: 2.4em; height: 2.4em; margin-top: 0; }
     #sj-hero .sj-hero-prev { left: 1em; }
     #sj-hero .sj-hero-next { right: 1em; }
@@ -368,81 +385,10 @@ const STYLES = `
     #sj-hero .sj-hero-arrow { top: 50%; bottom: auto; margin-top: -1.2em; }
   }
 
-  /* ---------- the phone menu ------------------------------------------ */
-
-  /* On a phone the nav row becomes a dropdown behind a menu button in the top
-     right - the corner the music button gave up (see player.ts). */
-  #sj-hero .sj-hero-menu { display: none; }
+  /* On a phone the nav row gives way to the site-wide menu (menu.ts), which
+     gets its links from window.__sjHeroNav. */
   @media ${MOBILE} {
-    #sj-hero .sj-hero-menu {
-      position: absolute;
-      z-index: 4;
-      top: max(1em, env(safe-area-inset-top));
-      right: max(1em, env(safe-area-inset-right));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      width: 2.75em;
-      height: 2.75em;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.12);
-      -webkit-backdrop-filter: blur(4px);
-      backdrop-filter: blur(4px);
-    }
-    #sj-hero .sj-hero-menu span {
-      display: block;
-      width: 1.125em;
-      height: 1.5px;
-      border-radius: 1px;
-      background: #fff;
-      transition: transform 250ms ease, opacity 200ms ease;
-    }
-    /* The three lines fold into a cross while the menu is open. */
-    #sj-hero.is-menu-open .sj-hero-menu span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-    #sj-hero.is-menu-open .sj-hero-menu span:nth-child(2) { opacity: 0; }
-    #sj-hero.is-menu-open .sj-hero-menu span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-
-    #sj-hero .sj-hero-nav {
-      /* Over the arrows, which share its corner in landscape. */
-      z-index: 5;
-      top: calc(max(1em, env(safe-area-inset-top)) + 3.25em);
-      left: auto;
-      right: max(1em, env(safe-area-inset-right));
-      flex-direction: column;
-      flex-wrap: nowrap;
-      align-items: stretch;
-      gap: 0;
-      min-width: 11.5em;
-      padding: 0.35em 0;
-      background: rgba(28, 20, 24, 0.62);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 0.9em;
-      -webkit-backdrop-filter: blur(10px);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-6px);
-      transition: opacity 200ms ease, transform 200ms ease, visibility 0s linear 200ms;
-    }
-    #sj-hero.is-menu-open .sj-hero-nav {
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      transition: opacity 200ms ease, transform 200ms ease;
-    }
-    /* Still 12px; the padding makes each line a comfortable tap target. */
-    #sj-hero .sj-hero-nav > * {
-      padding: 1em 1.6em;
-      text-align: left;
-      letter-spacing: 0.18em;
-      white-space: nowrap;
-      text-shadow: none;
-    }
-    #sj-hero .sj-hero-nav > * + * { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+    #sj-hero .sj-hero-nav { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -457,7 +403,7 @@ const STYLES = `
 `;
 
 /** ES5 on purpose, like the other injected scripts: no build step transpiles it. */
-const script = (slides: Slide[], pages: string[]) => `
+const script = (slides: Slide[], pages: Record<string, string>) => `
 (function () {
   var ROUTE = ${JSON.stringify(ROUTE_PREFIX)};
   var SLIDES = ${JSON.stringify(slides)};
@@ -628,17 +574,11 @@ const script = (slides: Slide[], pages: string[]) => `
         if (!item.href || pathFor(item.href) === location.pathname) node.setAttribute("aria-current", "page");
         nav.appendChild(node);
       }
-      nav.id = "sj-hero-nav";
       section.appendChild(nav);
-      /* Shown on phones only (CSS); the nav above becomes its dropdown. */
-      var menu = el("button", "sj-hero-menu", "<span></span><span></span><span></span>");
-      menu.type = "button";
-      menu.setAttribute("aria-label", "Menu");
-      menu.setAttribute("aria-controls", "sj-hero-nav");
-      menu.setAttribute("aria-expanded", "false");
-      menu.setAttribute("data-act", "menu");
-      section.appendChild(menu);
     }
+    /* Canva's hero, where its nav lives, is about to be hidden; the phone
+       menu (menu.ts) reads the links from here instead. */
+    window.__sjHeroNav = copy.nav;
 
     var text = el("div", "sj-hero-copy");
     var names = el("h1", "sj-hero-names");
@@ -790,21 +730,8 @@ const script = (slides: Slide[], pages: string[]) => `
     window.dispatchEvent(new PopStateEvent("popstate", { state: {} }));
   }
 
-  function menuOpen() {
-    return !!root && root.classList.contains("is-menu-open");
-  }
-
-  function setMenu(open) {
-    if (!root) return;
-    root.classList.toggle("is-menu-open", open);
-    var button = root.querySelector(".sj-hero-menu");
-    if (button) button.setAttribute("aria-expanded", String(open));
-  }
-
   function act(button) {
     var what = button.getAttribute("data-act");
-    if (what === "menu") { setMenu(!menuOpen()); return; }
-    if (button.getAttribute("data-href")) setMenu(false);
     if (what === "prev") show(index - 1);
     else if (what === "next") show(index + 1);
     else if (what === "dot") show(Number(button.getAttribute("data-index")));
@@ -823,8 +750,6 @@ const script = (slides: Slide[], pages: string[]) => `
     if (!root || !root.isConnected) return null;
     var buttons = root.querySelectorAll("button");
     for (var i = 0; i < buttons.length; i++) {
-      /* A closed dropdown is invisible but keeps its boxes; ignore them. */
-      if (getComputedStyle(buttons[i]).visibility === "hidden") continue;
       var r = buttons[i].getBoundingClientRect();
       if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return buttons[i];
     }
@@ -834,11 +759,14 @@ const script = (slides: Slide[], pages: string[]) => `
   document.addEventListener("click", function (e) {
     if (!onRoute()) return;
     if (e.target && e.target.closest && e.target.closest("#bgm-toggle")) return;
+    /* The phone menu and music button float over the slideshow; a tap on
+       them is theirs. They are ours, not Canva's, so the top element at the
+       point is reliable here. */
+    var over = e.detail !== 0 && document.elementFromPoint(e.clientX, e.clientY);
+    if (over && over.closest && over.closest("#sj-menu, #bgm-toggle")) return;
     var hit = buttonAt(e.clientX, e.clientY);
     /* A keyboard "click" has no position; its target is reliable. */
     if (!hit && e.detail === 0 && root && root.contains(e.target)) hit = e.target.closest("button");
-    /* A tap anywhere outside the open menu closes it. */
-    if (menuOpen() && (!hit || !hit.closest(".sj-hero-nav, .sj-hero-menu"))) setMenu(false);
     if (!hit) return;
     e.preventDefault();
     e.stopPropagation();
@@ -859,7 +787,6 @@ const script = (slides: Slide[], pages: string[]) => `
 
   document.addEventListener("keydown", function (e) {
     if (!root || !root.isConnected || !onRoute()) return;
-    if (e.key === "Escape" && menuOpen()) { setMenu(false); return; }
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     var t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
@@ -935,7 +862,7 @@ const script = (slides: Slide[], pages: string[]) => `
 })();
 `;
 
-export function renderSlideshow(nonce: string | null, slides: Slide[], pages: string[]): string {
+export function renderSlideshow(nonce: string | null, slides: Slide[], pages: Record<string, string>): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
   return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(slides, pages)}</script>\n`;
 }
