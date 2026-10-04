@@ -638,9 +638,13 @@ const script = (photos: Record<string, string[]>) => `
     }
     if (!lines.length) return;
     /* Canva draws the lines in stages; tag them together once the set has
-       held still briefly, so the stagger runs top to bottom. */
-    if (lines.length !== riseCount) { riseCount = lines.length; riseSince = Date.now(); }
-    if (Date.now() - riseSince < 150) { window.setTimeout(riseHero, 200); return; }
+       held still briefly, so the stagger runs top to bottom. Not when Canva
+       re-draws them mid-animation: those copies arrive already shown and must
+       be caught on the very next frame, or they blink. */
+    if (!riseStart) {
+      if (lines.length !== riseCount) { riseCount = lines.length; riseSince = Date.now(); }
+      if (Date.now() - riseSince < 150) { window.setTimeout(riseHero, 200); return; }
+    }
     riseCount = 0;
     lines.sort(function (a, b) { return a.top - b.top; });
 
