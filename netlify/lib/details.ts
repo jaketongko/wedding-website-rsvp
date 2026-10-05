@@ -112,7 +112,7 @@ const STYLES = `
     pointer-events: none !important;
   }
 
-  #sj-details, #sj-faq {
+  #sj-details, #sj-faq, #sj-gift {
     --sjd-ink: #3f3a38;
     --sjd-muted: #6f6763;
     --sjd-accent: #8a6aa8;
@@ -129,16 +129,19 @@ const STYLES = `
     font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  #sj-details * , #sj-faq * { box-sizing: border-box; }
-  #sj-details { padding: 4.5em 1.5em 2.5em; }
-  #sj-faq { padding: 2.5em 1.5em 5em; }
-  #sj-details .sjd-inner { max-width: 62em; margin: 0 auto; }
+  #sj-details * , #sj-faq * , #sj-gift * { box-sizing: border-box; }
+  #sj-details { padding: 4.5em 0 0; }
+  #sj-faq { padding: 4em 1.5em 5em; }
+  #sj-details .sjd-inner { max-width: 62em; margin: 0 auto; padding: 0 1.5em; }
 
-  /* ---------- the intro and the lake, open on the paper ---------- */
-  #sj-details .sjd-intro { text-align: center; margin-bottom: 2.4em; }
-  #sj-details .sjd-intro p { margin: 0; line-height: 1.35; }
-  #sj-details .sjd-intro p + p { margin-top: 0.15em; }
-  #sj-details .sjd-intro .sjd-gap { margin-top: 1em; }
+  /* ---------- the title and the lake, open on the paper ---------- */
+  #sj-details .sjd-intro { text-align: center; margin-bottom: 1.6em; }
+  #sj-details .sjd-intro .sjd-rule { margin: 0.8em auto 0.4em; }
+  #sj-details .sjd-title { margin: 0.05em 0 0.25em; font-size: 5.6em; font-weight: 400; line-height: 1.1; }
+  #sj-details .sjd-date { margin: 0; font-size: 1.3em; letter-spacing: 0.3em; text-transform: uppercase; }
+  #sj-details .sjd-day { margin: 0.35em 0 0; font-size: 0.78em; letter-spacing: 0.34em; text-transform: uppercase; color: var(--sjd-muted); }
+  #sj-details .sjd-greet { margin: 1.1em auto 0; max-width: 30em; font-size: 1.22em; line-height: 1.5; color: var(--sjd-muted); }
+  #sj-details .sjd-greet + .sjd-greet { margin-top: 0; }
   /* The painting's own paper is a shade lighter than the page's: fade its
      edges out so no rectangle shows. */
   #sj-details .sjd-landscape {
@@ -152,15 +155,12 @@ const STYLES = `
     mask-composite: intersect;
   }
 
-  /* ---------- the bubble cards ---------- */
-  #sj-details .sjd-card {
-    margin: 0 auto 2.2em;
-    padding: 2.6em 2.6em 2.8em;
-    background: #fffefd;
-    border: 1px solid var(--sjd-line);
-    border-radius: 2em;
-    box-shadow: 0 1em 2.8em rgba(60, 50, 45, 0.07);
-  }
+  /* ---------- the bands: each category full width, open on the paper; the
+     venue and the reminders on a soft wash, as in the couple's design ---------- */
+  #sj-details .sjd-band { padding: 3.4em 1.5em 3.6em; }
+  #sj-details .sjd-band--wash { background: rgba(226, 214, 200, 0.38); }
+  #sj-details .sjd-band--blush { background: rgba(232, 208, 204, 0.5); }
+  #sj-details .sjd-card { max-width: 62em; margin: 0 auto; }
   #sj-details .sjd-kicker {
     margin: 0;
     font-size: 1em;
@@ -183,9 +183,18 @@ const STYLES = `
   #sj-details .sjd-event p.sjd-say { margin: 0; font-size: 1.12em; line-height: 1.45; color: var(--sjd-muted); }
 
   /* The venue: the photo beside its lines. */
-  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 2.4em; align-items: center; padding: 1.4em; }
-  #sj-details .sjd-venue-photo { display: block; width: 100%; height: auto; border-radius: 1.3em; }
-  #sj-details .sjd-venue-text { padding: 1em 1.4em 1em 0; text-align: center; }
+  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2.4em; align-items: center; }
+  /* Its own paper fades out into the wash. */
+  #sj-details .sjd-venue-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    mask-composite: intersect;
+  }
+  #sj-details .sjd-venue-text { padding: 1em 0; text-align: center; }
   #sj-details .sjd-venue-name { margin: 0 0 0.25em; font-size: 2.6em; font-weight: 400; line-height: 1.1; }
   #sj-details .sjd-venue-place { margin: 0 0 1.1em; font-size: 0.9em; letter-spacing: 0.24em; color: var(--sjd-muted); }
   #sj-details .sjd-venue-about { margin: 0 auto 1.8em; max-width: 22em; font-size: 1.2em; line-height: 1.5; color: var(--sjd-muted); }
@@ -286,7 +295,25 @@ const STYLES = `
   #sj-faq .sjd-a > div { overflow: hidden; }
   #sj-faq .sjd-a p { margin: 0; padding: 0 1.9em 1.6em; font-size: 1.05em; line-height: 1.8; color: #5f5653; }
 
-  /* Each card rises in as it scrolls into view, as Canva's own elements did. */
+  /* ---------- the gift registry: on a blush wash, the QR codes kept exactly
+     as Canva has them (white tiles, so they still scan) ---------- */
+  #sj-gift { padding: 4.2em 1.5em 4.6em; text-align: center; }
+  #sj-gift::before { content: ""; position: absolute; inset: 0; background: rgba(232, 208, 204, 0.5); pointer-events: none; }
+  #sj-gift > * { position: relative; }
+  #sj-gift .sjd-gift-inner { max-width: 44em; margin: 0 auto; }
+  #sj-gift .sjd-rule { display: block; width: 3em; height: 1px; margin: 0 auto 1.6em; background: var(--sjd-gold); }
+  #sj-gift .sjd-gift-title { display: flex; justify-content: center; align-items: flex-end; margin: 0 0 1.4em; font-weight: 400; line-height: 0.95; }
+  #sj-gift .sjd-gift-caps { font-size: 3.2em; letter-spacing: 0.06em; text-transform: uppercase; }
+  #sj-gift .sjd-faq-script { margin: 0 0 -0.32em -0.08em; font-size: 4.6em; line-height: 1; }
+  #sj-gift p { text-wrap: balance; }
+  #sj-gift .sjd-gift-lead { margin: 0 auto 1em; max-width: 30em; font-size: 1.15em; line-height: 1.7; color: var(--sjd-ink); }
+  #sj-gift .sjd-gift-note { margin: 0 auto 1em; max-width: 32em; font-size: 1.1em; line-height: 1.6; font-style: italic; color: var(--sjd-muted); }
+  #sj-gift .sjd-qrs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6em 2.2em; margin: 2em 0 1.8em; padding: 0; list-style: none; }
+  #sj-gift .sjd-qr { margin: 0; padding: 0.8em 0.8em 0.9em; background: #fff; border-radius: 1em; box-shadow: 0 0.5em 1.6em rgba(60, 50, 45, 0.08); }
+  #sj-gift .sjd-qr img { display: block; width: 10.5em; height: 10.5em; object-fit: contain; }
+  #sj-gift .sjd-qr figcaption { margin-top: 0.7em; font-size: 0.82em; letter-spacing: 0.26em; text-transform: uppercase; color: var(--sjd-ink); }
+
+  /* Each band rises in as it scrolls into view, as Canva's own elements did. */
   #sj-details .sjd-card.sjd-reveal { opacity: 0; transform: translateY(1.6em); }
   #sj-details .sjd-card.sjd-reveal.is-in {
     opacity: 1;
@@ -305,11 +332,16 @@ const STYLES = `
 
   /* ---------- phones: one column, icons beside the text ---------- */
   @media (max-width: 640px) {
-    #sj-details { padding: 3em 1em 1.5em; }
-    #sj-faq { padding: 1.5em 1em 3.5em; }
-    #sj-details .sjd-landscape { margin-bottom: 2em; }
-    #sj-details .sjd-card { padding: 1.9em 1.3em 2em; border-radius: 1.6em; margin-bottom: 1.6em; }
+    #sj-details { padding-top: 3em; }
+    #sj-details .sjd-inner { padding: 0 1em; }
+    #sj-faq { padding: 3em 1em 3.5em; }
+    #sj-gift { padding: 3em 1em 3.5em; }
+    #sj-details .sjd-landscape { margin-bottom: 0.5em; }
+    #sj-details .sjd-band { padding: 2.6em 1.1em 2.8em; }
     #sj-details .sjd-rule { margin-bottom: 1.4em; }
+    #sj-details .sjd-title { font-size: 4em; }
+    #sj-details .sjd-date { font-size: 1.1em; }
+    #sj-details .sjd-greet { font-size: 1.1em; }
 
     #sj-details .sjd-events, #sj-details .sjd-things { grid-template-columns: 1fr; row-gap: 0; }
     #sj-details .sjd-event, #sj-details .sjd-thing {
@@ -326,14 +358,13 @@ const STYLES = `
     #sj-details .sjd-thing-icon { grid-row: span 2; margin: 0.1em 0 0; }
     #sj-details .sjd-event p.sjd-say { font-size: 1.05em; }
 
-    #sj-details .sjd-venue { grid-template-columns: 1fr; gap: 1.4em; padding: 0.8em 0.8em 1.8em; }
+    #sj-details .sjd-venue { grid-template-columns: 1fr; gap: 1.2em; }
     #sj-details .sjd-venue-text { padding: 0 0.5em; }
     #sj-details .sjd-venue-name { font-size: 2.1em; }
 
     #sj-details .sjd-dress { grid-template-columns: 1fr; }
     #sj-details .sjd-outfits { order: -1; width: 10em; margin: 0 auto; }
     #sj-details .sjd-script { font-size: 3.2em; }
-    #sj-details .sjd-intro { font-size: 0.8em; }
     #sj-details .sjd-swatches { gap: 1em 0.6em; }
     #sj-details .sjd-swatches li { width: 30%; }
 
@@ -341,6 +372,11 @@ const STYLES = `
     #sj-faq .sjd-faq-script { font-size: 2.5em; }
     #sj-faq .sjd-q-btn { padding: 1.2em 1.25em; font-size: 1.12em; }
     #sj-faq .sjd-a p { padding: 0 1.4em 1.3em; font-size: 1em; }
+    #sj-gift .sjd-gift-caps { font-size: 2.6em; }
+    #sj-gift .sjd-faq-script { font-size: 3.6em; }
+    #sj-gift .sjd-qrs { gap: 1.2em 0.8em; }
+    #sj-gift .sjd-qrs li { width: 44%; }
+    #sj-gift .sjd-qr img { width: 100%; height: auto; }
   }
   @media ${MOBILE} {
     #sj-details .sjd-map { padding: 1em 1.6em; }
@@ -369,6 +405,7 @@ const script = (sections: Record<string, string[]>) => `
 
   var details = null, canvaDetails = null;   // ours, and Canva's it stands in for
   var faq = null, canvaFaq = null;
+  var gift = null, canvaGift = null, giftSince = 0, giftCount = -1, giftCountSince = 0;
   var faqStyled = false, faqSince = 0;
   var firstRead = 0;
   var observer = null;
@@ -649,19 +686,32 @@ const script = (sections: Record<string, string[]>) => `
     if (content.paper) section.style.backgroundImage = 'url("' + content.paper + '")';
     var inner = el("div", "sjd-inner");
 
-    /* The intro, as Canva sets it: its fonts and letter-spacing, sized
-       against its own first line; a new face starts a new paragraph. */
-    if (content.intro.length) {
+    /* The title, as in the couple's design: a small kicker, Canva's first
+       line set large in the script, then the date, the day, and the
+       greeting. Canva's words, our arrangement. */
+    var lines = content.intro;
+    if (lines.length) {
       var intro = el("div", "sjd-intro");
-      var base = content.intro[0].look.size || 24;
-      for (var i = 0; i < content.intro.length; i++) {
-        var b = content.intro[i];
-        var p = line("p", null, b);
-        p.style.fontSize = (1.45 * b.look.size / base).toFixed(3) + "em";
-        if (b.look.spacing) p.style.letterSpacing = (b.look.spacing / b.look.size).toFixed(3) + "em";
-        p.style.color = b.look.color;
-        if (i && (b.look.font !== content.intro[i - 1].look.font || b.top - content.intro[i - 1].bottom > b.look.size)) p.className = "sjd-gap";
-        intro.appendChild(p);
+      intro.appendChild(heading("The Details", fonts));
+      var title = el("h2", "sjd-title");
+      title.textContent = titleCase(lines[0].text);
+      title.style.fontFamily = fonts.script;
+      intro.appendChild(title);
+      var i = 1;
+      /* The date and day share the title's face; the greeting does not. */
+      if (lines[i] && lines[i].look.font === lines[0].look.font) {
+        var date = el("p", "sjd-date"); date.textContent = lines[i].text; date.style.fontFamily = fonts.head;
+        intro.appendChild(date);
+        i++;
+        if (lines[i] && lines[i].look.font === lines[0].look.font && lines[i].text.length <= 12) {
+          var day = el("p", "sjd-day"); day.textContent = lines[i].text;
+          intro.appendChild(day);
+          i++;
+        }
+      }
+      for (; i < lines.length; i++) {
+        var g = el("p", "sjd-greet"); g.textContent = lines[i].text; g.style.fontFamily = fonts.body;
+        intro.appendChild(g);
       }
       inner.appendChild(intro);
     }
@@ -672,12 +722,26 @@ const script = (sections: Record<string, string[]>) => `
       lake.decoding = "async";
       inner.appendChild(lake);
     }
-    inner.appendChild(buildCelebration(fonts));
-    inner.appendChild(buildVenue(content, fonts));
-    inner.appendChild(buildDress(fonts));
-    inner.appendChild(buildThings(fonts));
     section.appendChild(inner);
+    section.appendChild(band(buildCelebration(fonts), ""));
+    section.appendChild(band(buildVenue(content, fonts), "sjd-band--wash"));
+    section.appendChild(band(buildDress(fonts), ""));
+    section.appendChild(band(buildThings(fonts), "sjd-band--blush"));
     return section;
+  }
+
+  function band(content, cls) {
+    var b = el("div", "sjd-band" + (cls ? " " + cls : ""));
+    b.appendChild(content);
+    return b;
+  }
+
+  /* "A DAY TO REMEMBER" -> "A Day to Remember": a script needs lower case. */
+  function titleCase(text) {
+    var small = { a: 1, an: 1, and: 1, the: 1, to: 1, of: 1, "in": 1, on: 1, "for": 1, "with": 1 };
+    return text.toLowerCase().split(" ").map(function (w, i) {
+      return i && small[w] ? w : w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(" ");
   }
 
   function buildFaq(got) {
@@ -708,11 +772,11 @@ const script = (sections: Record<string, string[]>) => `
 
     var list = el("ul", "sjd-faq-list");
     for (var i = 0; i < got.items.length; i++) {
-      var li = el("li", "sjd-q" + (i === 0 ? " is-open" : ""));
+      var li = el("li", "sjd-q");
       var id = "sjd-a-" + i;
       var btn = el("button", "sjd-q-btn");
       btn.type = "button";
-      btn.setAttribute("aria-expanded", i === 0 ? "true" : "false");
+      btn.setAttribute("aria-expanded", "false");
       btn.setAttribute("aria-controls", id);
       var q = el("span"); q.textContent = got.items[i].q;
       btn.appendChild(q);
@@ -732,16 +796,127 @@ const script = (sections: Record<string, string[]>) => `
     return section;
   }
 
+  /**
+   * Canva's gift registry: its heading (the two biggest lines), the QR codes
+   * (square images) with the short label under each, and its paragraphs,
+   * split into those above the codes and those below. Null until drawn.
+   */
+  function readGift(section) {
+    var sr = section.getBoundingClientRect();
+    if (!sr.width) return null;
+    var qrs = [];
+    var imgs = section.getElementsByTagName("img");
+    for (var m = 0; m < imgs.length; m++) {
+      var src = imgs[m].currentSrc || imgs[m].src;
+      var r = imgs[m].getBoundingClientRect();
+      if (!src || r.width < 60 || r.width > sr.width * 0.6) continue;
+      var ratio = r.width / r.height;
+      if (ratio > 0.85 && ratio < 1.18) qrs.push({ src: src, left: r.left, right: r.right, top: r.top, bottom: r.bottom, label: "" });
+    }
+    if (!qrs.length) return null;
+    /* Reading order: rows top to bottom, each row left to right. */
+    qrs.sort(function (a, b) { return Math.abs(a.top - b.top) < 20 ? a.left - b.left : a.top - b.top; });
+
+    var blocks = [];
+    var ps = section.querySelectorAll("p");
+    for (var i = 0; i < ps.length; i++) {
+      var pr = ps[i].getBoundingClientRect();
+      var t = clean(textOf(ps[i]));
+      if (!t || !pr.width) continue;
+      var l = look(ps[i]);
+      if (unstyled(l)) return null;
+      blocks.push({ text: t, top: pr.top, left: pr.left, right: pr.right, look: l, italic: getComputedStyle(ps[i].querySelector("span") || ps[i]).fontStyle === "italic" });
+    }
+    var rest = [];
+    for (var b = 0; b < blocks.length; b++) {
+      var bl = blocks[b], owner = null;
+      if (bl.text.length <= 16) {
+        for (var q = 0; q < qrs.length; q++) {
+          var mid = (bl.left + bl.right) / 2;
+          if (mid >= qrs[q].left - 10 && mid <= qrs[q].right + 10 && bl.top >= qrs[q].bottom - 12 && bl.top <= qrs[q].bottom + 80) owner = qrs[q];
+        }
+      }
+      if (owner && !owner.label) owner.label = bl.text;
+      else rest.push(bl);
+    }
+    if (rest.length < 2) return null;
+    var bySize = rest.slice().sort(function (a, b2) { return b2.look.size - a.look.size; });
+    var head = bySize.slice(0, 2).sort(function (a, b2) { return a.top - b2.top; });
+    var body = rest.filter(function (x) { return head.indexOf(x) === -1; }).sort(function (a, b2) { return a.top - b2.top; });
+    var qTop = Infinity;
+    for (var z = 0; z < qrs.length; z++) qTop = Math.min(qTop, qrs[z].top);
+    return {
+      head: head,
+      before: body.filter(function (x) { return x.top < qTop; }),
+      after: body.filter(function (x) { return x.top >= qTop; }),
+      qrs: qrs
+    };
+  }
+
+  function buildGift(got) {
+    var section = el("section");
+    section.id = "sj-gift";
+    section.setAttribute("aria-label", "Gift registry");
+    var inner = el("div", "sjd-gift-inner");
+    var h = el("h2", "sjd-gift-title");
+    var caps = el("span", "sjd-gift-caps"); caps.textContent = got.head[0].text; caps.style.fontFamily = got.head[0].look.font + ", " + FALLBACK;
+    var scr = el("span", "sjd-faq-script"); scr.textContent = got.head[1].text; scr.style.fontFamily = got.head[1].look.font + ", " + FALLBACK;
+    h.appendChild(caps); h.appendChild(scr);
+    inner.appendChild(h);
+    inner.appendChild(el("span", "sjd-rule"));
+    /* The plain lines in the site's Lato, like the FAQ answers; the asides
+       keep Canva's italic face. */
+    function para(block) {
+      var p = el("p", block.italic ? "sjd-gift-note" : "sjd-gift-lead");
+      p.textContent = block.text;
+      if (block.italic) p.style.fontFamily = block.look.font + ", Georgia, serif";
+      return p;
+    }
+    /* Canva sets some sentences as separate lines: rejoin a line to the one
+       before it when that one has not finished its sentence. */
+    function joined(blocks) {
+      var out = [];
+      for (var j = 0; j < blocks.length; j++) {
+        var prev = out[out.length - 1];
+        if (prev && prev.italic === blocks[j].italic && !/[.!?:)]$/.test(prev.text)) prev.text += " " + blocks[j].text;
+        else out.push({ text: blocks[j].text, italic: blocks[j].italic, look: blocks[j].look });
+      }
+      return out;
+    }
+    got.before = joined(got.before);
+    got.after = joined(got.after);
+    for (var i = 0; i < got.before.length; i++) inner.appendChild(para(got.before[i]));
+    var list = el("ul", "sjd-qrs");
+    for (var q = 0; q < got.qrs.length; q++) {
+      var li = el("li");
+      var fig = el("figure", "sjd-qr");
+      var img = el("img");
+      img.src = got.qrs[q].src;
+      img.alt = (got.qrs[q].label || "Payment") + " QR code";
+      img.decoding = "async";
+      fig.appendChild(img);
+      if (got.qrs[q].label) { var cap = el("figcaption"); cap.textContent = got.qrs[q].label; fig.appendChild(cap); }
+      li.appendChild(fig);
+      list.appendChild(li);
+    }
+    inner.appendChild(list);
+    for (var a = 0; a < got.after.length; a++) inner.appendChild(para(got.after[a]));
+    section.appendChild(inner);
+    return section;
+  }
+
   /* Kept, so a details section built after the FAQ still gets the script. */
   var faqLook = null;
   function applyFaqFonts(f) {
     faqLook = f;
-    if (!faq) return;
-    var caps = faq.querySelectorAll(".sjd-faq-caps"), scr = faq.querySelector(".sjd-faq-script");
-    for (var i = 0; i < caps.length; i++) { caps[i].style.fontFamily = f.caps + ", " + FALLBACK; caps[i].style.color = f.color; }
-    if (scr) { scr.style.fontFamily = f.script + ", " + FALLBACK; scr.style.color = f.color; }
-    var dress = details && details.querySelector(".sjd-script");
-    if (dress) dress.style.fontFamily = f.script + ", " + FALLBACK;
+    if (faq) {
+      var caps = faq.querySelectorAll(".sjd-faq-caps"), scr = faq.querySelector(".sjd-faq-script");
+      for (var i = 0; i < caps.length; i++) { caps[i].style.fontFamily = f.caps + ", " + FALLBACK; caps[i].style.color = f.color; }
+      if (scr) { scr.style.fontFamily = f.script + ", " + FALLBACK; scr.style.color = f.color; }
+    }
+    /* The details title and "Petals & Pastels" share the FAQ's script. */
+    var scripts = details ? details.querySelectorAll(".sjd-script, .sjd-title") : [];
+    for (var s = 0; s < scripts.length; s++) scripts[s].style.fontFamily = f.script + ", " + FALLBACK;
   }
 
   /* ---------- interaction ---------- */
@@ -854,15 +1029,19 @@ const script = (sections: Record<string, string[]>) => `
   /* The FAQ is the section whose text holds questions; the details section
      is the first after the hero that is not it. */
   function findSections() {
-    if (canvaDetails && canvaFaq && canvaDetails.isConnected && canvaFaq.isConnected) return { details: canvaDetails, faq: canvaFaq };
+    if (canvaDetails && canvaFaq && canvaGift && canvaDetails.isConnected && canvaFaq.isConnected && canvaGift.isConnected) {
+      return { details: canvaDetails, faq: canvaFaq, gift: canvaGift };
+    }
     var ids = pageSections();
     if (!ids || ids.length < 2) return null;
-    var found = { details: null, faq: null };
+    /* The gift registry: the section right after the FAQ. */
+    var found = { details: null, faq: null, gift: null };
     for (var i = 1; i < ids.length; i++) {
       var s = document.getElementById(ids[i]);
       if (!s) continue;
       if (!found.faq && readFaq(s)) found.faq = s;
       else if (!found.details && !found.faq) found.details = s;
+      else if (found.faq && !found.gift) found.gift = s;
     }
     return found;
   }
@@ -887,12 +1066,13 @@ const script = (sections: Record<string, string[]>) => `
     for (var lb = 0; lb < leftBehind.length; lb++) if (here && ids.indexOf(leftBehind[lb].anchor.id) !== -1) back = true;
     settleLeftBehind(back);
     if (!here) {
-      if (details || canvaDetails || faq || canvaFaq) {
+      if (details || canvaDetails || faq || canvaFaq || gift || canvaGift) {
         if (observer) observer.disconnect();
         leaveBehind(details, canvaDetails);
         leaveBehind(faq, canvaFaq);
-        details = canvaDetails = faq = canvaFaq = null;
-        faqStyled = false; faqSince = 0; firstRead = 0;
+        leaveBehind(gift, canvaGift);
+        details = canvaDetails = faq = canvaFaq = gift = canvaGift = null;
+        faqStyled = false; faqSince = 0; firstRead = 0; giftSince = 0;
       }
       return;
     }
@@ -950,6 +1130,35 @@ const script = (sections: Record<string, string[]>) => `
       }
       if (details && details.style.backgroundImage && !faq.style.backgroundImage) faq.style.backgroundImage = details.style.backgroundImage;
     }
+
+    /* The gift registry: read once Canva has drawn it out of sight; if it
+       never reads, Canva's own is handed back. */
+    if (found.gift && found.gift !== canvaGift) {
+      if (canvaGift) { canvaGift.style.display = ""; canvaGift.classList.remove("sjd-reading"); }
+      if (gift && gift.parentNode) gift.parentNode.removeChild(gift);
+      gift = null;
+      canvaGift = found.gift;
+      giftSince = Date.now();
+      giftCount = -1;
+    }
+    if (canvaGift && !gift && giftSince) {
+      if (Date.now() - giftSince > FONT_WAIT) {
+        canvaGift.classList.remove("sjd-reading");
+        giftSince = 0;
+      } else {
+        canvaGift.classList.add("sjd-reading");
+        var g = readGift(canvaGift);
+        /* Canva adds the codes one by one: build once none has arrived for
+           a moment. */
+        if (g && g.qrs.length !== giftCount) { giftCount = g.qrs.length; giftCountSince = Date.now(); g = null; }
+        else if (g && Date.now() - giftCountSince < 1500) g = null;
+        if (g) gift = buildGift(g);
+      }
+    }
+    if (gift && canvaGift) {
+      mount(gift, canvaGift);
+      if (details && details.style.backgroundImage && !gift.style.backgroundImage) gift.style.backgroundImage = details.style.backgroundImage;
+    }
   }
 
   var pending = false;
@@ -963,7 +1172,7 @@ const script = (sections: Record<string, string[]>) => `
   }
   /* Canva routes with pushState, which fires no event, so a slow poll too. */
   window.addEventListener("popstate", sync);
-  window.addEventListener("resize", function () { size(details); size(faq); });
+  window.addEventListener("resize", function () { size(details); size(faq); size(gift); });
   window.setInterval(sync, 800);
   if (document.body) sync();
   else document.addEventListener("DOMContentLoaded", sync);

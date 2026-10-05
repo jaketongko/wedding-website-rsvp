@@ -226,7 +226,7 @@ defaults (no nav, no envelope). It is `noindex` and linked from nowhere.
 | `netlify/lib/story.ts` | `/our-story`: the story section re-set as minimal lavender cards with a photo carousel per event, the quotes open above them; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
 | `scripts/story-photos.mjs` | The build step: resizes `source-images/our-story/<event>/*` into `public/_wedding/our-story/` and writes `netlify/lib/story-photos.generated.ts` |
 | `netlify/lib/menu.ts` | Phones: every page's Canva nav row becomes a fixed menu button (top right) with a dropdown; the music button sits level with it, top left. Links map `#page-N` by each page's `"P"` number in Canva's data |
-| `netlify/lib/details.ts` | `/details`: each category as a bubble card (timeline, venue + Google Maps, dress code, reminders) and the FAQ as an accordion. See below |
+| `netlify/lib/details.ts` | `/details`: the title, each category as a full-width band (timeline, venue + Google Maps, dress code, reminders), the FAQ as an accordion and the gift registry. See below |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
 | `netlify.toml` | Static publish dir, the photo build step, and asset caching |
 
@@ -255,11 +255,14 @@ so a replaced photo is never served stale from the week-long immutable cache. Ru
 
 ### The Details page
 
-`details.ts` puts two sections of ours in front of Canva's details and FAQ sections.
+`details.ts` puts three sections of ours in front of Canva's details, FAQ and gift registry
+sections.
 
-**Read from Canva** (edit in Canva as usual): the intro lines, the lake painting, the venue
-photo and its lines, every FAQ question and answer (a line ending in `?` starts a question),
-the paper and the fonts.
+**Read from Canva** (edit in Canva as usual): the intro lines (the first becomes the script
+title), the lake painting, the venue photo and its lines, every FAQ question and answer (a line
+ending in `?` starts a question), the gift registry's heading, text and QR codes (square images,
+each with the short label under it; the images are used unchanged so they still scan), the
+paper and the fonts.
 
 **In `details.ts`**, because in Canva they are painted into images that are unreadable on a
 phone: `CELEBRATION` (the timeline), `DRESS`, `THINGS` (the reminders; the RSVP date comes
