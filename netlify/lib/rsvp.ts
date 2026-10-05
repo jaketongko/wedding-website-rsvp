@@ -30,8 +30,8 @@ import { MOBILE } from "./player.ts";
 
 const ENDPOINT = "/_forms/rsvp.html";
 
-/** The reply-by date shown on the page. */
-const REPLY_BY = "December 31, 2026";
+/** The reply-by date shown on the page, and in the Details page's reminders. */
+export const REPLY_BY = "December 31, 2026";
 
 /**
  * "The Seasons", the invitation's own typeface. Not self-hosted: these are the

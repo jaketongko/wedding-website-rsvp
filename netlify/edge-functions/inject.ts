@@ -1,5 +1,6 @@
 import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
+import { renderDetails } from "../lib/details.ts";
 import { renderGallery } from "../lib/gallery.ts";
 import { renderMenu } from "../lib/menu.ts";
 import { findOpeningPhotos, renderOpening, renderOpeningPreload } from "../lib/opening.ts";
@@ -155,6 +156,7 @@ export default async function inject(request: Request, _context: Context): Promi
     renderSlideshow(nonce, slides, pages, sections) +
     renderOpening(nonce, openingPhotos, pages, sections) +
     renderStory(nonce, sections) +
+    renderDetails(nonce, sections) +
     renderMenu(nonce, pages);
 
   // In <head>, so the RSVP fonts and the first photo download with the HTML rather
