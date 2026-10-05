@@ -200,6 +200,32 @@ const styles = (heroSelector: string) => `
     #sj-shero .sj-shero-nav { display: none; }
   }
 
+  /* ---------- the Gallery's title (fillGallery): left of centre, mid-height ---------- */
+  #sj-shero.sj-shero--gallery .sj-shero-shade {
+    background:
+      linear-gradient(90deg, rgba(20, 14, 16, 0.42) 0%, rgba(20, 14, 16, 0.12) 55%, rgba(20, 14, 16, 0) 75%),
+      linear-gradient(180deg, rgba(20, 14, 16, 0.35) 0%, rgba(20, 14, 16, 0) 25%);
+  }
+  #sj-shero .sj-gtitle { left: 8%; right: auto; bottom: auto; top: 50%; width: min(40em, 84%); transform: translateY(-50%); }
+  #sj-shero .sj-gtitle p { margin: 0; }
+  #sj-shero .sj-gtitle-script { font-size: 5.2em; line-height: 1; margin-bottom: -0.1em !important; }
+  #sj-shero .sj-gtitle-caps { font-size: 3em; letter-spacing: 0.08em; line-height: 1.1; }
+  #sj-shero .sj-gtitle-rule { display: flex; align-items: center; justify-content: center; gap: 0.8em; margin: 1em auto 1.1em; width: 82%; }
+  #sj-shero .sj-gtitle-rule span { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.75); }
+  #sj-shero .sj-gtitle-rule i { width: 0.5em; height: 0.5em; border: 1px solid rgba(255, 255, 255, 0.85); transform: rotate(45deg); }
+  #sj-shero .sj-gtitle-sub { font-size: 1.15em; font-style: italic; line-height: 1.5; opacity: 0.95; }
+
+  @media (max-width: 760px) {
+    #sj-shero .sj-gtitle { left: 50%; top: auto; bottom: 14%; width: 90%; transform: translateX(-50%); }
+    #sj-shero .sj-gtitle-script { font-size: 3.4em; }
+    #sj-shero .sj-gtitle-caps { font-size: 1.9em; }
+    #sj-shero .sj-gtitle-sub { font-size: 1em; }
+
+    #sj-shero.sj-shero--gallery .sj-shero-shade {
+      background: linear-gradient(180deg, rgba(20, 14, 16, 0.35) 0%, rgba(20, 14, 16, 0) 30%, rgba(20, 14, 16, 0) 45%, rgba(20, 14, 16, 0.6) 100%);
+    }
+  }
+
   /* The lines rise into place one after another, as the names do on the
      main page (slideshow.ts). "both" holds each hidden through its delay. */
   #sj-shero .sj-rise { animation: sj-shero-rise 1000ms cubic-bezier(0.22, 0.68, 0.24, 1) both; }
@@ -212,6 +238,9 @@ const styles = (heroSelector: string) => `
     @keyframes sj-shero-fade { from { opacity: 0; } to { opacity: 1; } }
   }
 `;
+
+/** Under the Gallery's title, from the couple's reference (not in Canva). */
+const GALLERY_LINE = "A glimpse of our journey, the moments<br>that brought us here.";
 
 /** ES5 on purpose, like the other injected scripts. */
 const script = (
@@ -226,6 +255,7 @@ const script = (
   var PAGES = ${JSON.stringify(pages)};
   var SECTIONS = ${JSON.stringify(sections)};
   var FALLBACK_FONT = ${JSON.stringify(FONT)};
+  var GALLERY_LINE = ${JSON.stringify(GALLERY_LINE)};
   var GIVE_UP = 8000;
 
   var shero = null;     // our opening section
@@ -420,7 +450,10 @@ const script = (
       }
       shero.appendChild(nav);
     }
-    if (heroCopy.rows.length) {
+    var gallery = slug().indexOf("gallery") === 0;
+    shero.classList.toggle("sj-shero--gallery", gallery);
+    if (gallery && heroCopy.rows.length) { fillGallery(animate); }
+    else if (heroCopy.rows.length) {
       var copy = el("div", "sj-shero-copy");
       for (var n = 0; n < heroCopy.rows.length; n++) {
         var line = el("p", animate ? "sj-rise" : null);
@@ -446,6 +479,48 @@ const script = (
       shared.push({ text: heroCopy.nav[j].text, href: heroCopy.nav[j].href, font: heroCopy.nav[j].look.font });
     }
     window.__sjHeroNav = shared;
+  }
+
+  /**
+   * The Gallery's title, laid out like the couple's reference (2026-10-05):
+   * Canva's script words ("before the vows") on a line of their own above the
+   * caps title, then a rule with an ornament and a short line of ours. The
+   * words and fonts are Canva's; only the arrangement is ours.
+   */
+  function fillGallery(animate) {
+    var pieces = [];
+    for (var r = 0; r < heroCopy.rows.length; r++) pieces = pieces.concat(heroCopy.rows[r]);
+    var caps = [], script = [];
+    for (var p = 0; p < pieces.length; p++) (pieces[p].look.upper || pieces[p].text === pieces[p].text.toUpperCase() ? caps : script).push(pieces[p]);
+    var copy = el("div", "sj-shero-copy sj-gtitle");
+    var lines = [];
+    if (script.length) {
+      var s = el("p", "sj-gtitle-script");
+      s.textContent = script.map(function (x) { return x.text; }).join(" ").replace(/\\b\\w/g, function (c) { return c.toUpperCase(); });
+      styleLike(s, script[0]);
+      s.style.fontStyle = "normal";
+      lines.push(s);
+    }
+    if (caps.length) {
+      var c = el("p", "sj-gtitle-caps");
+      c.textContent = caps.map(function (x) { return x.text; }).join(" ");
+      styleLike(c, caps[0]);
+      lines.push(c);
+    }
+    var rule = el("div", "sj-gtitle-rule");
+    rule.setAttribute("aria-hidden", "true");
+    rule.innerHTML = "<span></span><i></i><span></span>";
+    lines.push(rule);
+    var sub = el("p", "sj-gtitle-sub");
+    sub.innerHTML = GALLERY_LINE;
+    lines.push(sub);
+    for (var n = 0; n < lines.length; n++) {
+      if (animate) { lines[n].classList.add("sj-rise"); lines[n].style.animationDelay = 60 + n * 160 + "ms"; }
+      copy.appendChild(lines[n]);
+    }
+    shero.appendChild(copy);
+    shero.setAttribute("aria-label", textOf(copy));
+
   }
 
   /* Whether a node can be seen at all. */

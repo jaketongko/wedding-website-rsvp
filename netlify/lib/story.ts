@@ -46,6 +46,33 @@ const FOOT = {
   line: "We are so excited to celebrate this special day with you.",
 };
 
+/** The footer's markup; shared with the Gallery page (gallery-page.ts). */
+export const FOOT_HTML =
+  '<img class="sj-foot-logo" src="/_wedding/monogram.webp" alt="' + FOOT.names + '" width="240" height="250">' +
+  '<div class="sj-foot-rule" aria-hidden="true"><span></span><img src="/_wedding/story-sprig.webp" alt=""><span></span></div>' +
+  '<p class="sj-foot-when">' + FOOT.when + '</p>' +
+  '<p class="sj-foot-line">' + FOOT.line + '</p>';
+
+/** The footer's look, under a page's own section id. */
+export const footStyles = (scope: string) => `
+  ${scope} .sj-foot { text-align: center; border-top: 1px solid rgba(120, 100, 90, 0.14); }
+  ${scope} .sj-foot p { margin: 0; }
+  /* The couple's monogram, in colour, from their Canva card. */
+  ${scope} .sj-foot-logo { display: block; width: 8.5em; height: auto; margin: 0 auto; }
+  ${scope} .sj-foot-rule { display: flex; align-items: center; justify-content: center; gap: 0.9em; margin: 0.6em 0 1.1em; }
+  ${scope} .sj-foot-rule span { width: 5.5em; height: 1px; background: rgba(110, 74, 99, 0.35); }
+  ${scope} .sj-foot-rule img { display: block; width: 3.4em; height: auto; }
+  ${scope} .sj-foot-when { font-size: 0.95em; letter-spacing: 0.3em; text-transform: uppercase; color: #5c4f53; }
+  ${scope} .sj-foot-line { margin-top: 0.9em !important; font-size: 1.3em; font-style: italic; color: #6b5e62; }
+`;
+/** And on narrow screens (inside a max-width media query). */
+export const footStylesNarrow = (scope: string) => `
+    ${scope} .sj-foot-logo { width: 7em; }
+    ${scope} .sj-foot-rule span { width: 3.5em; }
+    ${scope} .sj-foot-when { font-size: 0.82em; letter-spacing: 0.2em; line-height: 1.7; }
+    ${scope} .sj-foot-line { font-size: 1.12em; }
+`;
+
 /**
  * Sized in em from a root font-size the script sets: 16px divided by Canva's
  * page scale (it shrinks the page with a transform on narrow phones). Never
@@ -240,30 +267,8 @@ const STYLES = `
   }
 
   /* ---------- the closing footer: its own band, a hairline above ---------- */
-  #sj-story .sj-foot {
-    margin: 0 0 -3em;
-    padding: 3.6em 1.25em 4em;
-    text-align: center;
-    border-top: 1px solid rgba(120, 100, 90, 0.14);
-  }
-  #sj-story .sj-foot p { margin: 0; }
-  /* The couple's monogram, in colour, from their Canva card. */
-  #sj-story .sj-foot-logo { display: block; width: 8.5em; height: auto; margin: 0 auto; }
-  #sj-story .sj-foot-rule { display: flex; align-items: center; justify-content: center; gap: 0.9em; margin: 0.6em 0 1.1em; }
-  #sj-story .sj-foot-rule span { width: 5.5em; height: 1px; background: rgba(110, 74, 99, 0.35); }
-  #sj-story .sj-foot-rule img { display: block; width: 3.4em; height: auto; }
-  #sj-story .sj-foot-when {
-    font-size: 0.95em;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: #5c4f53;
-  }
-  #sj-story .sj-foot-line {
-    margin-top: 0.9em !important;
-    font-size: 1.3em;
-    font-style: italic;
-    color: #6b5e62;
-  }
+  ${footStyles("#sj-story")}
+  #sj-story .sj-foot { margin: 0 0 -3em; padding: 3.6em 1.25em 4em; }
   #sj-story .sj-story-ornament { display: block; width: 5em; height: auto; margin: 0.5em auto 0; }
 
   /* Each card rises in as it scrolls into view, as Canva's own elements did. */
@@ -293,10 +298,7 @@ const STYLES = `
     #sj-story .sj-card--flip .sj-card-body { padding: 1.5em 1.4em 1.75em; }
     #sj-story .sj-card-title { font-size: 1.85em; }
     #sj-story .sj-foot { padding: 2.8em 1em 3.2em; margin-bottom: -2em; }
-    #sj-story .sj-foot-logo { width: 7em; }
-    #sj-story .sj-foot-rule span { width: 3.5em; }
-    #sj-story .sj-foot-when { font-size: 0.82em; letter-spacing: 0.2em; line-height: 1.7; }
-    #sj-story .sj-foot-line { font-size: 1.12em; }
+${footStylesNarrow("#sj-story")}
     #sj-story .sj-card-body p.sj-card-text { font-size: 1.05em; line-height: 1.75; }
   }
   @media ${MOBILE} {
@@ -318,7 +320,7 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
   var SECTIONS = ${JSON.stringify(sections)};
   var ICON_PREV = ${JSON.stringify(chevron("M15 5 8 12l7 7"))};
   var ICON_NEXT = ${JSON.stringify(chevron("M9 5l7 7-7 7"))};
-  var FOOT = ${JSON.stringify(FOOT)};
+  var FOOT_HTML = ${JSON.stringify(FOOT_HTML)};
   var FALLBACK_FONT = ${JSON.stringify('Georgia, "Times New Roman", serif')};
 
   var root = null;     // our section
@@ -605,11 +607,8 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
       /* The stories' own serif for the date and the line. */
       var body = content.events[0] && content.events[0].body[0];
       if (body) foot.style.fontFamily = body.look.font + ", " + FALLBACK_FONT;
-      foot.innerHTML =
-        '<img class="sj-foot-logo" src="/_wedding/monogram.webp" alt="' + FOOT.names + '" width="240" height="250">' +
-        '<div class="sj-foot-rule" aria-hidden="true"><span></span><img src="/_wedding/story-sprig.webp" alt=""><span></span></div>' +
-        '<p class="sj-foot-when">' + FOOT.when + '</p>' +
-        '<p class="sj-foot-line">' + FOOT.line + '</p>';
+      foot.innerHTML = FOOT_HTML;
+
       section.appendChild(foot);
     }
     return section;

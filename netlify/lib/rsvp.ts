@@ -53,6 +53,18 @@ export function findLargestMedia(html: string): Record<string, string> {
   return out;
 }
 
+/**
+ * The couple's envelope art (Canva, 2026-10-05) has the reply-by bubble painted
+ * in. Its files (1x and 2x), and the inside of the painted bubble as fractions
+ * of the image, measured on the 2x file. A new envelope in Canva has new files,
+ * so the overlay simply stops applying.
+ */
+const BUBBLE_ART: Record<string, 1> = {
+  "98dc818bd6be52548554bbd1985ec13b.png": 1,
+  "052d42bb14fa3235355de4a1371ad9fd.png": 1,
+};
+const BUBBLE = { x: 0.248, y: 0.7135, w: 0.511, h: 0.2245 };
+
 /** The reply-by date shown on the page, and in the Details page's reminders. */
 export const REPLY_BY = "December 31, 2026";
 
@@ -193,7 +205,10 @@ const REMINDERS: Array<{ icon: string; title: string; text: string }> = [
   },
 ];
 
-const SEND_ICON = icon('<path d="M21 3 10.5 13.5"/><path d="M21 3 14.5 21l-4-7.5L3 9.5z"/>');
+/** A lavender heart for the page's closing line. */
+const HEART =
+  '<svg class="sjr-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+  '<path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" fill="currentColor"/></svg>';
 
 /**
  * Sized in em from the section's own base size (16px, divided by Canva's page
@@ -239,7 +254,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     position: relative;
     box-sizing: border-box;
     width: 100%;
-    padding: 6em 1.5em 5em;
+    padding: 6em 1.5em 0;
     background-color: #f6f3f7;
     background-position: center top;
     background-size: cover;
@@ -250,17 +265,40 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp-page .sjr-inner { position: relative; z-index: 1; max-width: 68em; margin: 0 auto; }
 
   /* ---------- watercolour lavender, from the couple's Canva art ---------- */
-  #sj-rsvp-page .sjr-corner,
-  #sj-rsvp-page .sjr-leaves { position: absolute; display: block; height: auto; pointer-events: none; }
+  #sj-rsvp-page .sjr-corner { position: absolute; display: block; height: auto; pointer-events: none; }
   /* The bouquet from the couple's theme, in the bottom-left corner. */
   #sj-rsvp-page .sjr-corner {
     left: 0;
     bottom: 0;
-    width: 17em;
+    width: 15em;
     z-index: 0;
-    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
-    mask-image: linear-gradient(to bottom, #000 80%, transparent);
   }
+  #sj-rsvp-page .sjr-corner--right { left: auto; right: 0; transform: scaleX(-1); }
+
+  /* ---------- the closing band: a thank-you on a lavender wash ---------- */
+  #sj-rsvp-page .sjr-foot {
+    position: relative;
+    z-index: 1;
+    margin: 5em -1.5em 0;
+    padding: 3.6em 1.5em 4.2em;
+    text-align: center;
+    border-top: 1px solid rgba(var(--sjr-accent-rgb), 0.22);
+    background: linear-gradient(to bottom, rgba(214, 200, 232, 0.12), rgba(214, 200, 232, 0.42));
+  }
+  #sj-rsvp-page .sjr-foot p { margin: 0; }
+  #sj-rsvp-page .sjr-foot-title { font-size: 2.6em; line-height: 1.2; color: #6e5585; }
+  #sj-rsvp-page .sjr-foot-line {
+    margin-top: 0.5em !important;
+    font-family: ${SERIF};
+    font-size: 1.2em;
+    font-style: italic;
+    text-wrap: balance;
+    color: var(--sjr-muted);
+  }
+  #sj-rsvp-page .sjr-heart { display: inline-block; width: 0.95em; height: 0.95em; margin-left: 0.2em; vertical-align: -0.1em; color: #9f84bf; }
+  #sj-rsvp-page .sjr-foot-rule { display: flex; align-items: center; justify-content: center; gap: 0.9em; margin-top: 1.4em; }
+  #sj-rsvp-page .sjr-foot-rule span { width: 4.5em; height: 1px; background: rgba(var(--sjr-accent-rgb), 0.35); }
+  #sj-rsvp-page .sjr-foot-rule img { display: block; width: 3em; height: auto; }
   /* Read aloud, not shown: the envelope art carries the reply-by bubble. */
   #sj-rsvp-page .sjr-sr {
     position: absolute !important;
@@ -273,9 +311,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     white-space: nowrap;
     border: 0;
   }
-  /* A sprig of leaves above "Things to Know". */
   #sj-rsvp-page .sjr-notes { position: relative; }
-  #sj-rsvp-page .sjr-leaves { top: -5.6em; left: -1.6em; width: 7em; opacity: 0.85; }
 
   /* A display serif for reminder titles and the date; Lato (above) for the rest. */
   #sj-rsvp-page .sjr-serif, #sj-rsvp .sjr-serif { font-family: ${SERIF}; font-weight: 400; }
@@ -341,6 +377,41 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     transition: opacity 600ms ease;
   }
   #sj-rsvp-page .sjr-art img.is-loaded { opacity: 1; }
+  /* The reply-by words in real text over the painted bubble (bubbleOver). */
+  #sj-rsvp-page .sjr-art { container-type: inline-size; }
+  #sj-rsvp-page .sjr-bubble {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #f7f3f0;
+    border-radius: calc(var(--k) * 3.2cqw);
+    /* A soft edge, so no seam shows against the painted fill. */
+    box-shadow: 0 0 calc(var(--k) * 0.9cqw) calc(var(--k) * 0.5cqw) #f7f3f0;
+    font-size: calc(var(--k) * 4.7cqw);
+    color: #3a3036;
+    opacity: 0;
+    transition: opacity 600ms ease;
+  }
+  #sj-rsvp-page .sjr-art img.is-loaded + .sjr-bubble { opacity: 1; }
+  #sj-rsvp-page .sjr-bubble span { display: block; }
+  #sj-rsvp-page .sjr-bubble-label {
+    font-family: ${SERIF};
+    font-size: 0.34em;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #4d4448;
+  }
+  #sj-rsvp-page .sjr-bubble-date { margin: 0.12em 0 0.18em; font-family: ${SERIF}; line-height: 1.15; }
+  #sj-rsvp-page .sjr-bubble-note {
+    font-family: ${SERIF};
+    font-size: 0.42em;
+    font-style: italic;
+    line-height: 1.5;
+    color: #5b5055;
+  }
   /* The reply-by date and the ask, a bubble under the envelope. Three lines
      tall, so a rounded card rather than a full pill, whose ends would crowd the
      text. */
@@ -549,15 +620,10 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.25em; font-size: 0.95em; font-weight: 300; text-wrap: balance; color: var(--sjr-muted); }
   #sj-rsvp .sjr-choice > span:nth-of-type(2) { flex: 1; min-width: 0; }
-  /* A lavender sprig at the right of each answer. */
-  #sj-rsvp .sjr-choice-sprig { flex: none; display: flex; opacity: 0.55; transition: opacity 180ms ease; }
-  #sj-rsvp .sjr-choice { padding-right: 0.7em; }
-  #sj-rsvp .sjr-choice-sprig .sjr-bloom { width: 1.6em; height: 2.2em; }
   #sj-rsvp .sjr-choice--on {
     border-color: var(--sjr-accent);
     background: rgba(var(--sjr-accent-rgb), 0.07);
   }
-  #sj-rsvp .sjr-choice--on .sjr-choice-sprig { opacity: 1; }
   #sj-rsvp .sjr-choice--on .sjr-mark {
     border-color: var(--sjr-accent);
     box-shadow: inset 0 0 0 0.25em #fff;
@@ -664,15 +730,17 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     #sj-rsvp-page .sjr-notes ul { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2em; }
     #sj-rsvp-page .sjr-notes li:nth-last-child(2) { border-bottom: 1px solid var(--sjr-line); }
     /* Stacked, the corner art would sit behind the form. */
-    #sj-rsvp-page .sjr-corner { display: none; }
-    #sj-rsvp-page .sjr-leaves { top: -4.4em; left: 50%; margin-left: -12em; width: 5.5em; }
+    /* Stacked: smaller, so they stay in the closing band. */
+    #sj-rsvp-page .sjr-corner { width: 8em; }
   }
   @media (max-width: 720px) {
-    #sj-rsvp-page { padding: 5em 1em 3.5em; }
+    #sj-rsvp-page { padding: 5em 1em 0; }
+    #sj-rsvp-page .sjr-foot { margin: 3.5em -1em 0; padding: 2.8em 1em 3.4em; }
+    #sj-rsvp-page .sjr-foot-title { font-size: 2.1em; }
+    #sj-rsvp-page .sjr-foot-line { font-size: 1.05em; }
     #sj-rsvp-page .sjr-please { font-size: 4em; }
     #sj-rsvp-page .sjr-rsvp { font-size: 3.6em; }
     #sj-rsvp-page .sjr-envelope { margin-top: 1em; }
-    #sj-rsvp-page .sjr-leaves { margin-left: -11.5em; }
     #sj-rsvp-page .sjr-badge { padding: 0.95em 1.6em 1.05em; border-radius: 1.8em; }
     #sj-rsvp-page .sjr-date { font-size: 1.45em; }
     #sj-rsvp-page .sjr-notes-title { font-size: 1.7em; }
@@ -697,6 +765,8 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
   var PAGES = ${JSON.stringify(pages)};
   var SECTIONS = ${JSON.stringify(sections)};
   var LARGEST = ${JSON.stringify(media)};  // Canva file -> its largest size
+  var BUBBLE_ART = ${JSON.stringify(BUBBLE_ART)};
+  var BUBBLE = ${JSON.stringify(BUBBLE)};
 
   /* The sharpest file Canva has of an image (same path, larger file). */
   function sharpest(src) {
@@ -704,7 +774,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     return m && LARGEST[m[1]] ? src.slice(0, src.length - m[1].length) + LARGEST[m[1]] : src;
   }
   var BLOOM = ${JSON.stringify(BLOOM)};
-  var SEND_ICON = ${JSON.stringify(SEND_ICON)};
+  var HEART = ${JSON.stringify(HEART)};
   var REPLY_BY = ${JSON.stringify(REPLY_BY)};
   var REMINDERS = ${JSON.stringify(REMINDERS)};
   var FALLBACK_FONT = ${JSON.stringify(FONT)};
@@ -879,9 +949,38 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
       img.style.width = (p.iw / p.w * 100).toFixed(3) + "%";
       img.style.height = (p.ih / p.h * 100).toFixed(3) + "%";
       clip.appendChild(img);
+      var bubble = bubbleOver(p, W);
+      if (bubble) clip.appendChild(bubble);
       box.appendChild(clip);
     }
     return box;
+  }
+
+  /**
+   * The couple's envelope art has the reply-by bubble painted in, which
+   * blurs when scaled. On that art (matched by file), the bubble's inside is
+   * covered with the same words in real text, so they stay crisp; the
+   * painted edge and florals around it still show. Any other art: nothing.
+   */
+  function bubbleOver(p, boxW) {
+    var file = (p.src.match(/[0-9a-f]+\\.(?:png|jpe?g|webp)$/) || [""])[0];
+    if (!BUBBLE_ART[file]) return null;
+    var il = (p.ix - p.x) / p.w * 100, it = (p.iy - p.y) / p.h * 100;
+    var iw = p.iw / p.w * 100, ih = p.ih / p.h * 100;
+    var b = el("div", "sjr-bubble");
+    b.setAttribute("aria-hidden", "true");
+    b.style.left = (il + BUBBLE.x * iw).toFixed(3) + "%";
+    b.style.top = (it + BUBBLE.y * ih).toFixed(3) + "%";
+    b.style.width = (BUBBLE.w * iw).toFixed(3) + "%";
+    b.style.height = (BUBBLE.h * ih).toFixed(3) + "%";
+    /* Text sized to the image: the art box is a size container, and this is
+       the image's share of its width. */
+    b.style.setProperty("--k", (p.iw / boxW).toFixed(4));
+    b.innerHTML = '<span class="sjr-bubble-label">Kindly reply by</span>' +
+      '<span class="sjr-bubble-date"></span>' +
+      '<span class="sjr-bubble-note">Please let us know if you&rsquo;ll be joining us<br>on our special day.</span>';
+    b.querySelector(".sjr-bubble-date").textContent = REPLY_BY;
+    return b;
   }
 
   function buildPage(c) {
@@ -924,7 +1023,6 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     var body = el("div", "sjr-body");
     var notes = el("aside", "sjr-notes");
     notes.setAttribute("aria-label", "Things to know");
-    notes.appendChild(floral("leaves", "sjr-leaves"));
     notes.appendChild(el("div", "sjr-notes-head",
       '<h2 class="sjr-notes-title sjr-heading">Things to Know</h2>' +
       '<p class="sjr-notes-sub">A few little things before you reply</p>'));
@@ -941,8 +1039,17 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     wire(form);
     inner.appendChild(body);
 
-    s.appendChild(floral("bouquet", "sjr-corner"));
     s.appendChild(inner);
+
+    /* The page's closing band: a thank-you, with the theme's bouquet in both
+       bottom corners. */
+    var foot = el("footer", "sjr-foot",
+      '<p class="sjr-foot-title sjr-heading">Thank you!</p>' +
+      '<p class="sjr-foot-line">We&rsquo;re looking forward to seeing you there! ' + HEART + '</p>' +
+      '<div class="sjr-foot-rule" aria-hidden="true"><span></span><img src="/_wedding/story-sprig.webp" alt=""><span></span></div>');
+    s.appendChild(foot);
+    s.appendChild(floral("bouquet", "sjr-corner"));
+    s.appendChild(floral("bouquet", "sjr-corner sjr-corner--right"));
     return s;
   }
 
@@ -964,7 +1071,6 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
       '<span class="sjr-mark"></span>' +
       '<span><span class="sjr-choice-title">' + title + '</span>' +
       '<span class="sjr-choice-sub">' + sub + '</span></span>' +
-      '<span class="sjr-choice-sprig" aria-hidden="true">' + BLOOM + '</span>' +
     '</label>';
   }
 
@@ -998,7 +1104,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
             '<label class="sjr-label" for="sj-message">Leave a message for the bride &amp; groom</label>' +
             '<textarea id="sj-message" name="message" rows="4" placeholder="Write your message here..."></textarea>' +
           '</div>' +
-          '<button type="submit" class="sjr-submit sjr-serif">Send with love &#9825;' + SEND_ICON + '</button>' +
+          '<button type="submit" class="sjr-submit sjr-serif">Submit</button>' +
           '<p class="sjr-required-note">Fields marked with <span class="sjr-req">*</span> are required.</p>' +
           '<p class="sjr-note" id="sj-rsvp-note"></p>' +
         '</form>' +

@@ -233,7 +233,8 @@ const STYLES = `
   #sj-hero .sj-hero-nav {
     position: absolute;
     z-index: 3;
-    top: 5.6em;
+    /* 6em: level with the nav on every other page (opening.ts, rsvp.ts). */
+    top: 6em;
     left: 0;
     right: 0;
     display: flex;

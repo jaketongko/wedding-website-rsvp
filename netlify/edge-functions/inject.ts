@@ -2,6 +2,7 @@ import type { Config, Context } from "@netlify/edge-functions";
 import { renderHideCanvaFooter } from "../lib/canva-footer.ts";
 import { renderDetails } from "../lib/details.ts";
 import { renderGallery } from "../lib/gallery.ts";
+import { renderGalleryPage } from "../lib/gallery-page.ts";
 import { renderMenu } from "../lib/menu.ts";
 import { findOpeningPhotos, renderOpening, renderOpeningPreload } from "../lib/opening.ts";
 import { renderPetals } from "../lib/petals.ts";
@@ -147,16 +148,18 @@ export default async function inject(request: Request, _context: Context): Promi
   const pages = findPages(html);
   const sections = findSections(html);
   const openingPhotos = findOpeningPhotos(html);
+  const media = findLargestMedia(html);
   const injected =
     renderPlayer(nonce) +
-    renderRsvp(nonce, pages, sections, findLargestMedia(html)) +
+    renderRsvp(nonce, pages, sections, media) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +
+    renderGalleryPage(nonce, sections, media) +
     renderSlideshow(nonce, slides, pages, sections) +
     renderOpening(nonce, openingPhotos, pages, sections) +
     renderStory(nonce, sections) +
-    renderDetails(nonce, sections) +
+    renderDetails(nonce, sections, media) +
     renderMenu(nonce, pages);
 
   // In <head>, so the RSVP fonts and the first photo download with the HTML rather

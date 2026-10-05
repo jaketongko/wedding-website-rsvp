@@ -37,6 +37,10 @@ const MAP_URL =
   "!2d14.0692687!3e0?entry=ttu&g_ep=EgoyMDI2MDkzMC4wIKXMDSoASAFQAw%3D%3D";
 
 const ART = "/_wedding/details/";
+/** /_wedding/* is cached for a week as immutable, so a file replaced under the
+ *  same name never reaches returning browsers. Bump this whenever any file in
+ *  public/_wedding/details/ is replaced (2: Pastel Blue and the blue suit). */
+const ART_VERSION = "2";
 
 /** The timeline, from Canva's "THE CELEBRATION" strip. */
 const CELEBRATION: Array<{ time: string; title: string; text: string; art: string }> = [
@@ -183,8 +187,9 @@ const STYLES = `
   #sj-details .sjd-event p.sjd-say { margin: 0; font-size: 1.12em; line-height: 1.45; color: var(--sjd-muted); }
 
   /* The venue: the photo beside its lines. */
-  /* The photo takes the larger share, as in the couple's design. */
-  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 2em; align-items: center; }
+  /* Wider than the other bands, the photo taking two thirds: it is the point
+     of this one. */
+  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 3em; align-items: center; max-width: 96em; }
   /* Its own paper fades out into the wash. */
   #sj-details .sjd-venue-photo {
     display: block;
@@ -389,11 +394,19 @@ const STYLES = `
 `;
 
 /** ES5 on purpose, like the other injected scripts: no build step transpiles it. */
-const script = (sections: Record<string, string[]>) => `
+const script = (sections: Record<string, string[]>, media: Record<string, string>) => `
 (function () {
   var ROUTE = ${JSON.stringify(ROUTE_PREFIX)};
   var SECTIONS = ${JSON.stringify(sections)};
   var ART = ${JSON.stringify(ART)};
+  var ART_VERSION = ${JSON.stringify(ART_VERSION)};
+  var LARGEST = ${JSON.stringify(media)};  // Canva file -> its largest size
+
+  /* The sharpest file Canva has of an image: its <img> always loads the 1x. */
+  function sharpest(src) {
+    var m = /\\/_assets\\/media\\/([0-9a-f]+\\.(?:png|jpe?g|webp))$/.exec(src || "");
+    return m && LARGEST[m[1]] ? src.slice(0, src.length - m[1].length) + LARGEST[m[1]] : src;
+  }
   var MAP_URL = ${JSON.stringify(MAP_URL)};
   var CELEBRATION = ${JSON.stringify(CELEBRATION)};
   var DRESS = ${JSON.stringify(DRESS)};
@@ -559,7 +572,7 @@ const script = (sections: Record<string, string[]>) => `
 
   function art(name, cls, alt) {
     var img = el("img", cls);
-    img.src = ART + name + ".webp";
+    img.src = ART + name + ".webp?v=" + ART_VERSION;
     img.alt = alt || "";
     img.decoding = "async";
     img.loading = "lazy";
@@ -590,7 +603,7 @@ const script = (sections: Record<string, string[]>) => `
     card.setAttribute("aria-label", "The venue");
     if (content.venuePhoto) {
       var photo = el("img", "sjd-venue-photo");
-      photo.src = content.venuePhoto.src;
+      photo.src = sharpest(content.venuePhoto.src);
       photo.alt = "";
       photo.decoding = "async";
       card.appendChild(photo);
@@ -1180,7 +1193,7 @@ const script = (sections: Record<string, string[]>) => `
 })();
 `;
 
-export function renderDetails(nonce: string | null, sections: Record<string, string[]>): string {
+export function renderDetails(nonce: string | null, sections: Record<string, string[]>, media: Record<string, string> = {}): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
-  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(sections)}</script>\n`;
+  return `\n<style${nonceAttr}>${STYLES}</style>\n<script${nonceAttr}>${script(sections, media)}</script>\n`;
 }

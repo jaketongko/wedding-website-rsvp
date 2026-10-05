@@ -284,6 +284,8 @@ const SCRIPT = `
       var src = img.currentSrc || img.src;
       /* Canva paints some text to a canvas and hands it over as a blob URL. */
       if (!src || src.indexOf("blob:") === 0 || src.indexOf("data:") === 0) continue;
+      /* Our own decoration (the gallery's monogram footer) is not a photo. */
+      if (img.closest && img.closest("[data-sj-nobox]")) continue;
       var frame = frameOf(img);
       var r = frame.getBoundingClientRect();
       if (r.width < MIN_TILE || r.height < MIN_TILE) continue;
