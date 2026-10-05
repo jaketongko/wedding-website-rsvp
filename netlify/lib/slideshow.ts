@@ -320,7 +320,7 @@ const STYLES = `
   }
   #sj-hero .sj-hero-venue {
     margin: 0.35em 0 0;
-    font-size: clamp(2em, 3.6vw, 2.9em);
+    font-size: clamp(2.4em, 4.3vw, 3.4em);
     line-height: 1.3;
   }
 
@@ -405,7 +405,7 @@ const STYLES = `
   @media (max-height: 520px) {
     #sj-hero .sj-hero-names { font-size: 2.3em; }
     #sj-hero .sj-hero-rule { margin: 0.8em auto 0.75em; }
-    #sj-hero .sj-hero-venue { font-size: 1.8em; }
+    #sj-hero .sj-hero-venue { font-size: 2.1em; }
     #sj-hero .sj-hero-foot { bottom: 0.9em; }
     #sj-hero .sj-hero-scroll { display: none; }
     #sj-hero .sj-hero-arrow { top: 50%; bottom: auto; margin-top: -1.2em; }

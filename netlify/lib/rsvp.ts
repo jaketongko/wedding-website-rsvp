@@ -2,9 +2,9 @@
  * The RSVP page, rebuilt as one section of our own on a touch of lavender:
  *
  *   nav (desktop; the phone menu stands in on phones, menu.ts)
- *   a centred opening: kicker, Canva's "Please RSVP", the tagline, and the
- *     Canva envelope under an arch with the reply-by date pinned to its foot
- *   "Good to know" (save the date, let us know, dress code, the venue) beside
+ *   a centred opening: Canva's "Please RSVP" and the Canva envelope, with the
+ *     reply-by date and the ask in a bubble beneath it
+ *   "Things to know" (save the date, let us know, dress code, the venue) beside
  *     the RSVP form; stacked on narrow screens
  *
  * Why our own form at all: Canva's form widget redirects to
@@ -68,21 +68,22 @@ const FONT_FACES = SEASONS_FACES.map(
 export const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
 
 /**
- * The RSVP page's three faces, each with one job: Dancing Script for the warm
- * lines, Playfair Display for headings and the date, Lato for everything read.
- * Canva's own "Please RSVP" title and nav keep the invitation's fonts.
+ * The RSVP page's faces: Playfair Display for reminder titles and the date, Lato
+ * for everything read, Marcellus for headings and The Seasons (FONT) for the two
+ * answers. Canva's own "Please RSVP" title and nav keep the invitation's fonts.
  */
-const SCRIPT = '"Dancing Script", "Brush Script MT", cursive';
 const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
 const SANS = '"Lato", "Helvetica Neue", Arial, sans-serif';
+/** Marcellus, the face of the couple's page titles in Canva, from the file Canva
+ *  serves for the design (same-origin through the proxy, like The Seasons). */
+const HEADING = '"SJ Marcellus", "Marcellus", Georgia, serif';
 
 /** In <head> on every page (Canva routes client-side, so a guest can reach
  *  /rsvp without a page load); `display=swap` shows the fallbacks meanwhile. */
 export const RSVP_FONTS =
   '<link rel="preconnect" href="https://fonts.googleapis.com">' +
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600' +
-  '&family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500&display=swap">';
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500&display=swap">';
 
 /** Lavender flower colours: buds darken toward the base of each spike. Shared
  * with the falling petals (petals.ts) so the site uses one lavender. */
@@ -177,6 +178,13 @@ const SEND_ICON = icon('<path d="M21 3 10.5 13.5"/><path d="M21 3 14.5 21l-4-7.5
  * `html { font-size: 10px }`.
  */
 const styles = (heroSelector: string) => `${FONT_FACES}
+  @font-face {
+    font-family: "SJ Marcellus";
+    src: url("/_assets/fonts/01b954d135aa736b118b66f4429ea154.woff") format("woff");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
   /* Canva's RSVP section is held invisible from the first moment on the
      route, while ours is built. */
   ${heroSelector} { visibility: hidden !important; }
@@ -190,13 +198,13 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
 
   #sj-rsvp-page, #sj-rsvp {
-    --sjr-ink: #4d4256;
-    --sjr-muted: #7d7187;
+    --sjr-ink: #3f3a38;
+    --sjr-muted: #77706c;
     --sjr-accent: #8a6aa8;
     --sjr-accent-rgb: 138, 106, 168;
     --sjr-soft: #b9a0d0;
-    --sjr-line: rgba(164, 127, 196, 0.28);
-    --sjr-card: rgba(252, 250, 254, 0.95);
+    --sjr-line: rgba(164, 127, 196, 0.45);
+    --sjr-card: #fffefd;
     color: var(--sjr-ink);
     font-family: ${SANS};
     font-weight: 400;
@@ -214,10 +222,10 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp-page * { box-sizing: border-box; }
   #sj-rsvp-page .sjr-inner { max-width: 68em; margin: 0 auto; }
 
-  /* Three faces with a job each: a script for the warm lines, a display
-     serif for headings and the date, a sans for everything read. */
-  #sj-rsvp-page .sjr-script, #sj-rsvp .sjr-script { font-family: ${SCRIPT}; font-weight: 500; }
+  /* A display serif for reminder titles and the date; Lato (above) for the rest. */
   #sj-rsvp-page .sjr-serif, #sj-rsvp .sjr-serif { font-family: ${SERIF}; font-weight: 400; }
+  /* The form's headings: Marcellus, as the couple titles their pages in Canva. */
+  #sj-rsvp-page .sjr-heading, #sj-rsvp .sjr-heading { font-family: ${HEADING}; font-weight: 400; letter-spacing: 0.02em; }
 
   /* ---------- nav (desktop) ---------- */
   #sj-rsvp-page .sjr-nav {
@@ -251,49 +259,11 @@ const styles = (heroSelector: string) => `${FONT_FACES}
 
   /* ---------- the opening: centred title, the envelope under an arch ---------- */
   #sj-rsvp-page .sjr-hero { text-align: center; }
-  #sj-rsvp-page .sjr-kicker {
-    margin: 0 0 1.4em;
-    font-size: 0.8em;
-    letter-spacing: 0.42em;
-    text-transform: uppercase;
-    color: var(--sjr-muted);
-  }
   #sj-rsvp-page .sjr-title { margin: 0; line-height: 0.9; font-weight: 400; }
   #sj-rsvp-page .sjr-please { display: block; font-size: 5em; line-height: 1; margin-bottom: -0.12em; }
   #sj-rsvp-page .sjr-rsvp { display: block; font-size: 4.6em; letter-spacing: 0.1em; text-transform: uppercase; }
-  #sj-rsvp-page .sjr-tagline {
-    margin: 0.7em 0 0;
-    font-size: 2.1em;
-    line-height: 1.25;
-    color: var(--sjr-accent);
-  }
-  #sj-rsvp-page .sjr-lead {
-    max-width: 30em;
-    margin: 0.9em auto 2.6em;
-    font-size: 1.05em;
-    font-weight: 300;
-    line-height: 1.75;
-    color: var(--sjr-muted);
-  }
-  #sj-rsvp-page .sjr-arch {
-    position: relative;
-    width: min(27em, 100%);
-    margin: 0 auto;
-    padding: 0.7em;
-    border: 1px solid var(--sjr-line);
-    border-radius: 14em 14em 1.4em 1.4em;
-    background: rgba(255, 255, 255, 0.55);
-  }
-  #sj-rsvp-page .sjr-window {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 26em;
-    padding: 5.5em 1.6em 4.2em;
-    border-radius: 13.3em 13.3em 1em 1em;
-    background: radial-gradient(120% 80% at 50% 0%, #ffffff 0%, #f3edf8 70%, #ece3f4 100%);
-    overflow: hidden;
-  }
+  /* The envelope on its own, straight on the paper. */
+  #sj-rsvp-page .sjr-envelope { width: min(26em, 100%); margin: 2.6em auto 0; }
   /* Canva's envelope pieces, laid out as Canva lays them, scaled to fit. */
   #sj-rsvp-page .sjr-art { position: relative; width: 100%; margin: 0 auto; }
   #sj-rsvp-page .sjr-clip { position: absolute; overflow: hidden; }
@@ -304,15 +274,18 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     transition: opacity 600ms ease;
   }
   #sj-rsvp-page .sjr-art img.is-loaded { opacity: 1; }
-  /* The reply-by date, pinned over the foot of the arch like a ribbon. */
+  /* The reply-by date and the ask, a bubble under the envelope. Three lines
+     tall, so a rounded card rather than a full pill, whose ends would crowd the
+     text. */
   #sj-rsvp-page .sjr-badge {
     position: relative;
     display: inline-block;
-    margin: -2.4em 0 0;
-    padding: 0.95em 2.4em 1em;
+    max-width: 100%;
+    margin: 1.8em 0 0;
+    padding: 1.1em 2.6em 1.2em;
     background: #fff;
     border: 1px solid var(--sjr-line);
-    border-radius: 999px;
+    border-radius: 2.4em;
     box-shadow: 0 0.8em 2em rgba(110, 80, 140, 0.12);
   }
   #sj-rsvp-page .sjr-badge-label {
@@ -329,6 +302,16 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     letter-spacing: 0.04em;
     color: var(--sjr-ink);
   }
+  #sj-rsvp-page .sjr-badge-note {
+    display: block;
+    max-width: 22em;
+    margin: 0.7em auto 0;
+    font-size: 0.95em;
+    font-weight: 300;
+    line-height: 1.6;
+    text-wrap: balance;
+    color: var(--sjr-muted);
+  }
 
   /* ---------- below: good to know | the form ---------- */
   #sj-rsvp-page .sjr-body {
@@ -340,10 +323,10 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp-page .sjr-notes { padding-top: 1.2em; }
   #sj-rsvp-page .sjr-notes-title {
-    margin: 0 0 0.2em;
-    font-size: 2.6em;
-    line-height: 1.1;
-    color: var(--sjr-accent);
+    margin: 0 0 0.3em;
+    font-size: 2.1em;
+    line-height: 1.2;
+    color: var(--sjr-ink);
   }
   #sj-rsvp-page .sjr-notes .sjr-notes-sub {
     margin: 0 0 1.6em;
@@ -398,7 +381,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     background: var(--sjr-card);
     border: 1px solid var(--sjr-line);
     border-radius: 1.6em;
-    box-shadow: 0 1em 2.6em rgba(110, 80, 140, 0.08);
+    box-shadow: 0 1em 2.6em rgba(60, 50, 45, 0.06);
   }
   #sj-rsvp .sjr-form-head {
     display: flex;
@@ -409,9 +392,9 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp .sjr-form-title {
     margin: 0;
-    font-size: 2.5em;
-    line-height: 1.15;
-    color: var(--sjr-accent);
+    font-size: 2.1em;
+    line-height: 1.2;
+    color: var(--sjr-ink);
   }
   #sj-rsvp .sjr-bloom { width: 2.4em; height: 2.4em; flex: none; }
   #sj-rsvp .sjr-field { margin-bottom: 1.5em; }
@@ -423,7 +406,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     text-transform: uppercase;
     color: var(--sjr-muted);
   }
-  #sj-rsvp .sjr-req { margin-left: 0.3em; color: var(--sjr-accent); }
+  #sj-rsvp .sjr-req { margin-left: 0.3em; color: var(--sjr-muted); }
   #sj-rsvp input[type="text"],
   #sj-rsvp textarea {
     width: 100%;
@@ -473,17 +456,22 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     background: #fff;
     transition: border-color 180ms ease, box-shadow 180ms ease;
   }
+  /* The invitation's own face, The Seasons, for the two answers. */
   #sj-rsvp .sjr-choice-title {
     display: block;
-    font-size: 0.86em;
-    letter-spacing: 0.1em;
+    font-family: ${FONT};
+    font-size: 1.05em;
+    line-height: 1.3;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    /* The Seasons runs wide; without this a wrap strands "IT" on its own line. */
+    text-wrap: balance;
     color: var(--sjr-ink);
   }
   #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.25em; font-size: 0.95em; font-weight: 300; color: var(--sjr-muted); }
   #sj-rsvp .sjr-choice--on {
     border-color: var(--sjr-accent);
-    background: rgba(var(--sjr-accent-rgb), 0.06);
+    background: #fff;
   }
   #sj-rsvp .sjr-choice--on .sjr-mark {
     border-color: var(--sjr-accent);
@@ -491,17 +479,6 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     background: var(--sjr-accent);
   }
   #sj-rsvp .sjr-choice:focus-within { box-shadow: 0 0 0 4px rgba(var(--sjr-accent-rgb), 0.12); }
-
-  #sj-rsvp .sjr-more {
-    display: flex;
-    align-items: center;
-    gap: 0.6em;
-    margin: 2.1em 0 1.5em;
-    padding-bottom: 0.9em;
-    border-bottom: 1px solid var(--sjr-line);
-  }
-  #sj-rsvp .sjr-more h3 { margin: 0; font-size: 1.9em; color: var(--sjr-accent); }
-  #sj-rsvp .sjr-more .sjr-bloom { width: 1.6em; height: 1.6em; }
 
   #sj-rsvp .sjr-submit {
     display: flex;
@@ -543,7 +520,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
 
   #sj-rsvp .sjr-done { padding: 2.5em 1em; text-align: center; }
   #sj-rsvp .sjr-done .sjr-bloom { display: block; width: 3.2em; height: 3.2em; margin: 0 auto 1em; }
-  #sj-rsvp .sjr-done h2 { margin: 0 0 0.4em; font-size: 2.8em; color: var(--sjr-accent); }
+  #sj-rsvp .sjr-done h2 { margin: 0 0 0.4em; font-size: 2.3em; color: var(--sjr-ink); }
   #sj-rsvp .sjr-done p { margin: 0; font-size: 1.05em; font-weight: 300; line-height: 1.7; color: var(--sjr-muted); }
 
   /* ---------- the fallback: a floating button and the form in a modal ---------- */
@@ -602,21 +579,17 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   @media (max-width: 720px) {
     #sj-rsvp-page { padding: 5em 1em 3.5em; }
-    #sj-rsvp-page .sjr-kicker { font-size: 0.7em; letter-spacing: 0.32em; }
     #sj-rsvp-page .sjr-please { font-size: 4em; }
     #sj-rsvp-page .sjr-rsvp { font-size: 3.6em; }
-    #sj-rsvp-page .sjr-tagline { font-size: 1.6em; }
-    #sj-rsvp-page .sjr-lead { margin-bottom: 2em; font-size: 1em; }
-    #sj-rsvp-page .sjr-window { min-height: 0; padding: 3.2em 1.2em 3.6em; }
-    #sj-rsvp-page .sjr-badge { padding: 0.85em 1.8em 0.9em; }
+    #sj-rsvp-page .sjr-envelope { margin-top: 2em; }
+    #sj-rsvp-page .sjr-badge { padding: 0.95em 1.6em 1.05em; border-radius: 1.8em; }
     #sj-rsvp-page .sjr-date { font-size: 1.45em; }
-    #sj-rsvp-page .sjr-notes-title { font-size: 2.2em; }
+    #sj-rsvp-page .sjr-notes-title { font-size: 1.7em; }
     #sj-rsvp-page .sjr-notes ul { grid-template-columns: 1fr; }
     #sj-rsvp-page .sjr-notes li:nth-last-child(2) { border-bottom: 0; }
     #sj-rsvp #sj-rsvp-card { padding: 1.8em 1.3em 1.5em; }
-    #sj-rsvp .sjr-form-title { font-size: 2.1em; }
+    #sj-rsvp .sjr-form-title { font-size: 1.7em; }
     #sj-rsvp .sjr-choices { grid-template-columns: 1fr; gap: 0.7em; }
-    #sj-rsvp .sjr-more h3 { font-size: 1.7em; }
     #sj-rsvp .sjr-submit { letter-spacing: 0.22em; }
   }
   /* Phones: the menu button (menu.ts) stands in for the nav row. */
@@ -717,20 +690,30 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     if (title.length === 2 && title[0].look.size < 30) return null; // not styled yet
     nav.sort(function (a, b) { return Math.abs(a.top - b.top) < 8 ? a.left - b.left : a.top - b.top; });
 
-    var art = [], background = null;
+    /* The paper is the biggest image; everything else is the envelope art.
+       (Not "anything screen-wide": on a phone Canva lets the envelope run
+       past both edges of the screen.) */
+    var art = [], background = null, biggest = null, most = 0;
     var imgs = section.getElementsByTagName("img");
+    for (var b = 0; b < imgs.length; b++) {
+      var br = imgs[b].getBoundingClientRect();
+      if (br.width * br.height > most) { most = br.width * br.height; biggest = imgs[b]; }
+    }
+    if (biggest && biggest.getBoundingClientRect().width >= sr.width * 0.9) background = biggest.currentSrc || biggest.src;
     for (var m = 0; m < imgs.length; m++) {
       var src = imgs[m].currentSrc || imgs[m].src;
       var ir = imgs[m].getBoundingClientRect();
-      if (!src || !ir.width) continue;
-      if (ir.width >= sr.width * 0.9) { background = background || src; continue; }
+      if (!src || !ir.width || (background && imgs[m] === biggest)) continue;
       if (ir.width < 40 || ir.height < 40) continue;
       /* Canva crops a photo by clipping a larger image: keep the image and
-         the visible part (x, y, w, h) apart. */
+         the visible part (x, y, w, h) apart. Only Canva's crop boxes count -
+         boxes about the image's own size - not the screen-sized page, which
+         would cut off an envelope that runs past the edges on a phone. */
       var vis = { left: ir.left, top: ir.top, right: ir.right, bottom: ir.bottom };
       for (var up = imgs[m].parentElement; up && up !== section; up = up.parentElement) {
         if (getComputedStyle(up).overflow === "visible") continue;
         var cr = up.getBoundingClientRect();
+        if (cr.width > ir.width * 1.5 || cr.height > ir.height * 1.5) continue;
         vis = { left: Math.max(vis.left, cr.left), top: Math.max(vis.top, cr.top), right: Math.min(vis.right, cr.right), bottom: Math.min(vis.bottom, cr.bottom) };
       }
       if (vis.right - vis.left < 40 || vis.bottom - vis.top < 40) continue;
@@ -802,10 +785,9 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     if (c.nav.length) { s.appendChild(navNode(c.nav)); s.classList.add("sjr-has-nav"); }
     var inner = el("div", "sjr-inner");
 
-    /* The opening, centred: kicker, Canva's title, the tagline, then the
-       envelope under an arch with the reply-by date pinned to its foot. */
+    /* The opening, centred: Canva's title, the envelope, then the reply-by
+       date and the ask in a bubble beneath it. */
     var hero = el("div", "sjr-hero");
-    hero.appendChild(el("p", "sjr-kicker", "R&eacute;pondez s&rsquo;il vous pla&icirc;t"));
     var title = el("h1", "sjr-title");
     var words = c.title.length === 2 ? c.title : [
       { text: "Please", look: { font: FALLBACK_FONT, color: "#725885" } },
@@ -820,14 +802,11 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
       title.appendChild(word);
     }
     hero.appendChild(title);
-    hero.appendChild(el("p", "sjr-tagline sjr-script", "We can&rsquo;t wait to celebrate with you!"));
-    hero.appendChild(el("p", "sjr-lead", "Please let us know if you&rsquo;ll be joining us on our special day."));
-    var arch = el("div", "sjr-arch");
-    var win = el("div", "sjr-window");
-    win.appendChild(artNode(c.art));
-    arch.appendChild(win);
-    hero.appendChild(arch);
-    var badge = el("p", "sjr-badge", '<span class="sjr-badge-label">Kindly reply by</span><span class="sjr-date sjr-serif"></span>');
+    var envelope = el("div", "sjr-envelope");
+    envelope.appendChild(artNode(c.art));
+    hero.appendChild(envelope);
+    var badge = el("p", "sjr-badge", '<span class="sjr-badge-label">Kindly reply by</span><span class="sjr-date sjr-serif"></span>' +
+      '<span class="sjr-badge-note">Please let us know if you&rsquo;ll be joining us on our special day.</span>');
     badge.querySelector(".sjr-date").textContent = REPLY_BY;
     hero.appendChild(badge);
     inner.appendChild(hero);
@@ -835,9 +814,9 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     /* Below: the little things to know beside the form. */
     var body = el("div", "sjr-body");
     var notes = el("aside", "sjr-notes");
-    notes.setAttribute("aria-label", "Good to know");
+    notes.setAttribute("aria-label", "Things to know");
     notes.appendChild(el("div", "sjr-notes-head",
-      '<h2 class="sjr-notes-title sjr-script">Good to know</h2>' +
+      '<h2 class="sjr-notes-title sjr-heading">Things to know</h2>' +
       '<p class="sjr-notes-sub">A few little things before you reply</p>'));
     var list = el("ul");
     for (var i = 0; i < REMINDERS.length; i++) {
@@ -862,7 +841,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     return '<label class="sjr-choice" data-choice="' + value + '">' +
       '<input type="radio" name="attending" value="' + value + '">' +
       '<span class="sjr-mark"></span>' +
-      '<span><span class="sjr-choice-title sjr-serif">' + title + '</span>' +
+      '<span><span class="sjr-choice-title">' + title + '</span>' +
       '<span class="sjr-choice-sub">' + sub + '</span></span>' +
     '</label>';
   }
@@ -874,7 +853,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     wrap.innerHTML =
       '<div id="sj-rsvp-card">' +
         (overlay ? '<button class="sjr-close" type="button" aria-label="Close">&#10005;</button>' : "") +
-        '<div class="sjr-form-head"><h2 class="sjr-form-title sjr-script">Will you celebrate with us?</h2>' + BLOOM + '</div>' +
+        '<div class="sjr-form-head"><h2 class="sjr-form-title sjr-heading">Will you celebrate with us?</h2>' + BLOOM + '</div>' +
         '<form id="sj-rsvp-form" novalidate>' +
           '<div class="sjr-hp"><label>Do not fill this in <input name="bot-field" tabindex="-1" autocomplete="off"></label></div>' +
           '<div class="sjr-field">' +
@@ -884,18 +863,13 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
           '<div class="sjr-field">' +
             '<span class="sjr-label">Will you attend our wedding?<span class="sjr-req">*</span></span>' +
             '<div class="sjr-choices">' +
-              choice("yes", "Happily attending", "Can\\u2019t wait to celebrate") +
-              choice("no", "Regretfully can\\u2019t make it", "Sending love from afar") +
+              choice("yes", "Wouldn\\u2019t miss it for the world!", "Can\\u2019t wait to celebrate with you") +
+              choice("no", "Sorry, we can\\u2019t make it", "Sending love from afar") +
             '</div>' +
           '</div>' +
           '<div class="sjr-field">' +
             '<label class="sjr-label" for="sj-dietary">Dietary restrictions or allergies<span class="sjr-req">*</span></label>' +
             '<textarea id="sj-dietary" name="dietary" rows="3" placeholder="Please let us know, or write \\u201cnone\\u201d"></textarea>' +
-          '</div>' +
-          '<div class="sjr-more"><h3 class="sjr-script">Tell us more</h3>' + BLOOM + '</div>' +
-          '<div class="sjr-field">' +
-            '<label class="sjr-label" for="sj-song">What song will definitely get you on the dance floor?</label>' +
-            '<input id="sj-song" name="song" type="text" placeholder="Song title / Artist">' +
           '</div>' +
           '<div class="sjr-field">' +
             '<label class="sjr-label" for="sj-message">Leave a message for the bride &amp; groom</label>' +
@@ -968,7 +942,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
           var card = root.querySelector("#sj-rsvp-card");
           card.innerHTML =
             '<div class="sjr-done">' + BLOOM +
-              '<h2 class="sjr-script">Thank you</h2>' +
+              '<h2 class="sjr-heading">Thank you</h2>' +
               "<p>" + (coming
                 ? "We cannot wait to celebrate with you."
                 : "We will miss you, but thank you for letting us know.") +

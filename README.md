@@ -161,7 +161,6 @@ registration), then redeploy. Current fields:
 | `name` | yes | Full name |
 | `attending` | yes | `yes` / `no` |
 | `dietary` | yes, when attending | Not enforced for a decline |
-| `song` | no | "What song will get you on the dance floor?" |
 | `message` | no | |
 | `bot-field` | — | Honeypot, ignored |
 
@@ -170,16 +169,16 @@ registration), then redeploy. Current fields:
 `rsvp.ts` builds the whole RSVP page as one section of ours (`#sj-rsvp-page`), in lavender:
 
 - the nav (desktop; the phone menu stands in on phones, fed by `window.__sjHeroNav`);
-- a centred opening: kicker, "Please RSVP", the tagline, and the envelope under an arch with the
-  reply-by date (`REPLY_BY`) pinned to its foot as a pill;
-- "Good to know" (`REMINDERS`: save the date, let us know, dress code, the venue) beside the form,
+- a centred opening: "Please RSVP" and the envelope, with the reply-by date (`REPLY_BY`) and
+  "Please let us know..." in a bubble beneath it;
+- "Things to know" (`REMINDERS`: save the date, let us know, dress code, the venue) beside the form,
   stacked on narrow screens.
 
 **What comes from Canva:** the nav, the "Please" / "RSVP" title (its two largest lines, with their
 fonts and colours), the envelope (every image that is not the page background, cropped the way
 Canva crops it) and the paper background. Canva's section is hidden by id from the first moment on
 the route, read once its text and images have settled, then set to `display: none`. Edit those in
-Canva as usual. **What is ours:** the tagline, the reply-by date, the reminders and the form
+Canva as usual. **What is ours:** the reply-by bubble, the reminders and the form
 wording; edit them in `rsvp.ts`. The reminders repeat the Details page, so update them together.
 
 Text is sized in `em` from a 16px base on the section (Canva's root is 10px). The envelope art is
@@ -187,9 +186,11 @@ capped at `ART_MAX` (17em) tall: Canva's phone layout of it is a tall stem.
 
 ### The fonts
 
-The RSVP page uses three faces from Google Fonts, each with one job: **Dancing Script** for the warm
-lines (tagline, "Good to know", the form titles), **Playfair Display** for headings, choices, the
-date and the button, and **Lato** for everything read (descriptions, labels, fields). `RSVP_FONTS`
+The RSVP page uses two faces from Google Fonts: **Playfair Display** for reminder titles, the
+date and the button, and **Lato** for everything read (descriptions, labels, fields). The headings
+("Things to know", "Will you celebrate with us?", "Thank you") use **Marcellus**, the face of the
+page titles in Canva, and the two answers use **The Seasons**, the invitation's own face; both come
+from the `/_assets/fonts` files Canva serves. `RSVP_FONTS`
 is put in `<head>` on every page, since a guest can reach /rsvp without a page load. Canva's CSP
 restricts only scripts and framing, so the stylesheet loads; if that ever changes, the stacks fall
 back to Georgia / Helvetica.
