@@ -30,6 +30,29 @@ import { MOBILE } from "./player.ts";
 
 const ENDPOINT = "/_forms/rsvp.html";
 
+/**
+ * Canva's <img> has no srcset: it always loads the 1x file, which looks soft
+ * once the RSVP envelope is shown large. Its page data lists every size of
+ * each image (`{"type":"RASTER","id":…,"files":[{"url":…,"width":…`, one
+ * entry per size), so map each file to the largest of its image. Only the
+ * files that HAVE a larger version are listed, to keep the map small.
+ */
+export function findLargestMedia(html: string): Record<string, string> {
+  const sizes = new Map<string, Array<{ file: string; width: number }>>();
+  const re = /\{"type":"RASTER","id":"([^"]+)","version":\d+,"files":\[\{"url":"_assets\/media\/([0-9a-f]+\.(?:png|jpe?g|webp))","urlDenied":false,"width":(\d+)/g;
+  for (const m of html.matchAll(re)) {
+    const list = sizes.get(m[1]) ?? [];
+    list.push({ file: m[2], width: Number(m[3]) });
+    sizes.set(m[1], list);
+  }
+  const out: Record<string, string> = {};
+  for (const list of sizes.values()) {
+    const best = list.reduce((a, b) => (b.width > a.width ? b : a));
+    for (const f of list) if (f.file !== best.file) out[f.file] = best.file;
+  }
+  return out;
+}
+
 /** The reply-by date shown on the page, and in the Details page's reminders. */
 export const REPLY_BY = "December 31, 2026";
 
@@ -204,7 +227,9 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     --sjr-accent-rgb: 138, 106, 168;
     --sjr-soft: #b9a0d0;
     --sjr-line: rgba(164, 127, 196, 0.45);
-    --sjr-card: #fffefd;
+    --sjr-card: #f9f4ec;
+    /* The fields and answers: a lighter cream inside the cream card. */
+    --sjr-field: #fdfaf4;
     color: var(--sjr-ink);
     font-family: ${SANS};
     font-weight: 400;
@@ -218,9 +243,39 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     background-color: #f6f3f7;
     background-position: center top;
     background-size: cover;
+    /* The watercolours run off the edges; never a sideways scroll. */
+    overflow: hidden;
   }
   #sj-rsvp-page * { box-sizing: border-box; }
-  #sj-rsvp-page .sjr-inner { max-width: 68em; margin: 0 auto; }
+  #sj-rsvp-page .sjr-inner { position: relative; z-index: 1; max-width: 68em; margin: 0 auto; }
+
+  /* ---------- watercolour lavender, from the couple's Canva art ---------- */
+  #sj-rsvp-page .sjr-corner,
+  #sj-rsvp-page .sjr-leaves { position: absolute; display: block; height: auto; pointer-events: none; }
+  /* The bouquet from the couple's theme, in the bottom-left corner. */
+  #sj-rsvp-page .sjr-corner {
+    left: 0;
+    bottom: 0;
+    width: 17em;
+    z-index: 0;
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+    mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  }
+  /* Read aloud, not shown: the envelope art carries the reply-by bubble. */
+  #sj-rsvp-page .sjr-sr {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* A sprig of leaves above "Things to Know". */
+  #sj-rsvp-page .sjr-notes { position: relative; }
+  #sj-rsvp-page .sjr-leaves { top: -5.6em; left: -1.6em; width: 7em; opacity: 0.85; }
 
   /* A display serif for reminder titles and the date; Lato (above) for the rest. */
   #sj-rsvp-page .sjr-serif, #sj-rsvp .sjr-serif { font-family: ${SERIF}; font-weight: 400; }
@@ -263,7 +318,19 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp-page .sjr-please { display: block; font-size: 5em; line-height: 1; margin-bottom: -0.12em; }
   #sj-rsvp-page .sjr-rsvp { display: block; font-size: 4.6em; letter-spacing: 0.1em; text-transform: uppercase; }
   /* The envelope on its own, straight on the paper. */
-  #sj-rsvp-page .sjr-envelope { width: min(26em, 100%); margin: 2.6em auto 0; }
+  /* The couple's envelope art, with its florals and bubble, at about the
+     size Canva shows it. */
+  #sj-rsvp-page .sjr-envelope {
+    position: relative;
+    z-index: 0;
+    width: min(46em, 100%);
+    margin: 0.8em auto 0;
+    /* The art's own paper is a shade off the page's: fade its edges out. */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    mask-composite: intersect;
+  }
   /* Canva's envelope pieces, laid out as Canva lays them, scaled to fit. */
   #sj-rsvp-page .sjr-art { position: relative; width: 100%; margin: 0 auto; }
   #sj-rsvp-page .sjr-clip { position: absolute; overflow: hidden; }
@@ -330,8 +397,9 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   }
   #sj-rsvp-page .sjr-notes .sjr-notes-sub {
     margin: 0 0 1.6em;
-    font-size: 0.95em;
-    font-weight: 300;
+    font-family: ${SERIF};
+    font-size: 1em;
+    font-style: italic;
     color: var(--sjr-muted);
   }
   #sj-rsvp-page .sjr-notes ul { margin: 0; padding: 0; list-style: none; }
@@ -350,10 +418,10 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     justify-content: center;
     width: 2.6em;
     height: 2.6em;
-    border: 1px solid var(--sjr-line);
+    border: 0;
     border-radius: 50%;
     color: var(--sjr-accent);
-    background: #fff;
+    background: rgba(var(--sjr-accent-rgb), 0.12);
   }
   #sj-rsvp-page .sjr-icon svg { width: 1.2em; height: 1.2em; }
   #sj-rsvp-page .sjr-notes h3 {
@@ -379,9 +447,9 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     position: relative;
     padding: 2.6em 2.8em 2em;
     background: var(--sjr-card);
-    border: 1px solid var(--sjr-line);
+    border: 1px solid rgba(190, 170, 150, 0.45);
     border-radius: 1.6em;
-    box-shadow: 0 1em 2.6em rgba(60, 50, 45, 0.06);
+    box-shadow: 0 1em 2.8em rgba(90, 70, 50, 0.1);
   }
   #sj-rsvp .sjr-form-head {
     display: flex;
@@ -396,7 +464,18 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     line-height: 1.2;
     color: var(--sjr-ink);
   }
+  /* A short rule under the heading, as in the couple's theme. */
+  #sj-rsvp .sjr-form-title::after {
+    content: "";
+    display: block;
+    width: 2.2em;
+    height: 1px;
+    margin-top: 0.45em;
+    background: rgba(var(--sjr-accent-rgb), 0.45);
+  }
   #sj-rsvp .sjr-bloom { width: 2.4em; height: 2.4em; flex: none; }
+  /* The sprig from the couple's theme, on the card's top-right corner. */
+  #sj-rsvp .sjr-card-sprig { flex: none; width: 3.6em; height: auto; margin: -1.2em -1.2em 0 0; pointer-events: none; }
   #sj-rsvp .sjr-field { margin-bottom: 1.5em; }
   #sj-rsvp .sjr-label {
     display: block;
@@ -418,12 +497,12 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     font-size: 16px;
     line-height: 1.5;
     color: var(--sjr-ink);
-    background: #fff;
+    background: var(--sjr-field);
     border: 1px solid var(--sjr-line);
-    border-radius: 999px;
+    border-radius: 0.7em;
     transition: border-color 180ms ease, box-shadow 180ms ease;
   }
-  #sj-rsvp textarea { border-radius: 1.1em; resize: vertical; min-height: 6.5em; }
+  #sj-rsvp textarea { resize: vertical; min-height: 6.5em; }
   #sj-rsvp input::placeholder, #sj-rsvp textarea::placeholder { color: #b7abc1; font-weight: 300; }
   #sj-rsvp input:focus, #sj-rsvp textarea:focus {
     outline: none;
@@ -439,7 +518,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     align-items: center;
     gap: 1em;
     padding: 1em 1.2em;
-    background: #fff;
+    background: var(--sjr-field);
     border: 1px solid var(--sjr-line);
     border-radius: 1.1em;
     cursor: pointer;
@@ -453,7 +532,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     height: 1.2em;
     border: 1.5px solid var(--sjr-soft);
     border-radius: 50%;
-    background: #fff;
+    background: var(--sjr-field);
     transition: border-color 180ms ease, box-shadow 180ms ease;
   }
   /* The invitation's own face, The Seasons, for the two answers. */
@@ -468,11 +547,17 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     text-wrap: balance;
     color: var(--sjr-ink);
   }
-  #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.25em; font-size: 0.95em; font-weight: 300; color: var(--sjr-muted); }
+  #sj-rsvp .sjr-choice-sub { display: block; margin-top: 0.25em; font-size: 0.95em; font-weight: 300; text-wrap: balance; color: var(--sjr-muted); }
+  #sj-rsvp .sjr-choice > span:nth-of-type(2) { flex: 1; min-width: 0; }
+  /* A lavender sprig at the right of each answer. */
+  #sj-rsvp .sjr-choice-sprig { flex: none; display: flex; opacity: 0.55; transition: opacity 180ms ease; }
+  #sj-rsvp .sjr-choice { padding-right: 0.7em; }
+  #sj-rsvp .sjr-choice-sprig .sjr-bloom { width: 1.6em; height: 2.2em; }
   #sj-rsvp .sjr-choice--on {
     border-color: var(--sjr-accent);
-    background: #fff;
+    background: rgba(var(--sjr-accent-rgb), 0.07);
   }
+  #sj-rsvp .sjr-choice--on .sjr-choice-sprig { opacity: 1; }
   #sj-rsvp .sjr-choice--on .sjr-mark {
     border-color: var(--sjr-accent);
     box-shadow: inset 0 0 0 0.25em #fff;
@@ -493,7 +578,7 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: #fff;
-    background: linear-gradient(135deg, #c3aadb 0%, #9c7dbd 100%);
+    background: #9f84bf;
     border: 0;
     border-radius: 999px;
     box-shadow: 0 0.6em 1.6em rgba(var(--sjr-accent-rgb), 0.28);
@@ -507,6 +592,8 @@ const styles = (heroSelector: string) => `${FONT_FACES}
   #sj-rsvp .sjr-required-note {
     margin: 1em 0 0;
     text-align: center;
+    font-family: ${SERIF};
+    font-style: italic;
     font-size: 0.88em;
     font-weight: 300;
     color: var(--sjr-muted);
@@ -576,12 +663,16 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     #sj-rsvp-page .sjr-notes-head { text-align: center; }
     #sj-rsvp-page .sjr-notes ul { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2em; }
     #sj-rsvp-page .sjr-notes li:nth-last-child(2) { border-bottom: 1px solid var(--sjr-line); }
+    /* Stacked, the corner art would sit behind the form. */
+    #sj-rsvp-page .sjr-corner { display: none; }
+    #sj-rsvp-page .sjr-leaves { top: -4.4em; left: 50%; margin-left: -12em; width: 5.5em; }
   }
   @media (max-width: 720px) {
     #sj-rsvp-page { padding: 5em 1em 3.5em; }
     #sj-rsvp-page .sjr-please { font-size: 4em; }
     #sj-rsvp-page .sjr-rsvp { font-size: 3.6em; }
-    #sj-rsvp-page .sjr-envelope { margin-top: 2em; }
+    #sj-rsvp-page .sjr-envelope { margin-top: 1em; }
+    #sj-rsvp-page .sjr-leaves { margin-left: -11.5em; }
     #sj-rsvp-page .sjr-badge { padding: 0.95em 1.6em 1.05em; border-radius: 1.8em; }
     #sj-rsvp-page .sjr-date { font-size: 1.45em; }
     #sj-rsvp-page .sjr-notes-title { font-size: 1.7em; }
@@ -600,11 +691,18 @@ const styles = (heroSelector: string) => `${FONT_FACES}
 `;
 
 /** ES5 on purpose, like the other injected scripts: no build step transpiles it. */
-const script = (pages: Record<string, string>, sections: Record<string, string[]>) => `
+const script = (pages: Record<string, string>, sections: Record<string, string[]>, media: Record<string, string>) => `
 (function () {
   var ENDPOINT = ${JSON.stringify(ENDPOINT)};
   var PAGES = ${JSON.stringify(pages)};
   var SECTIONS = ${JSON.stringify(sections)};
+  var LARGEST = ${JSON.stringify(media)};  // Canva file -> its largest size
+
+  /* The sharpest file Canva has of an image (same path, larger file). */
+  function sharpest(src) {
+    var m = /\\/_assets\\/media\\/([0-9a-f]+\\.(?:png|jpe?g|webp))$/.exec(src || "");
+    return m && LARGEST[m[1]] ? src.slice(0, src.length - m[1].length) + LARGEST[m[1]] : src;
+  }
   var BLOOM = ${JSON.stringify(BLOOM)};
   var SEND_ICON = ${JSON.stringify(SEND_ICON)};
   var REPLY_BY = ${JSON.stringify(REPLY_BY)};
@@ -612,7 +710,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
   var FALLBACK_FONT = ${JSON.stringify(FONT)};
   var READ_WAIT = 6000;   // for Canva's title and envelope before building with what there is
   var FALLBACK_AFTER = 12000;
-  var ART_MAX = 17;       // em: the tallest the envelope art may be
+  var ART_MAX = 42;       // em: the tallest the envelope art may be (the 2026-10-05 art is nearly square)
 
   var page = null;        // our section
   var canva = null;       // Canva's RSVP section, hidden behind ours
@@ -718,10 +816,18 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
       }
       if (vis.right - vis.left < 40 || vis.bottom - vis.top < 40) continue;
       art.push({
-        src: src,
+        src: sharpest(src),
         x: vis.left, y: vis.top, w: vis.right - vis.left, h: vis.bottom - vis.top,
         ix: ir.left, iy: ir.top, iw: ir.width, ih: ir.height
       });
+    }
+    /* The envelope is the topmost art and whatever overlaps it. Anything
+       wholly below is the couple's painted mock of the form (added in Canva
+       2026-10-05 as the theme), which ours stands in for. */
+    art.sort(function (a, b) { return a.y - b.y; });
+    if (art.length) {
+      var lowest = art[0].y + art[0].h;
+      art = art.filter(function (p) { return p.y < lowest - 2; });
     }
     return { nav: nav, title: title, art: art, background: background };
   }
@@ -805,7 +911,10 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     var envelope = el("div", "sjr-envelope");
     envelope.appendChild(artNode(c.art));
     hero.appendChild(envelope);
-    var badge = el("p", "sjr-badge", '<span class="sjr-badge-label">Kindly reply by</span><span class="sjr-date sjr-serif"></span>' +
+    /* The couple's envelope art (Canva, 2026-10-05) has the reply-by bubble
+       painted in, so ours is kept for screen readers only while there is
+       art; without it, ours shows. */
+    var badge = el("p", "sjr-badge" + (c.art.length ? " sjr-sr" : ""), '<span class="sjr-badge-label">Kindly reply by</span><span class="sjr-date sjr-serif"></span>' +
       '<span class="sjr-badge-note">Please let us know if you&rsquo;ll be joining us on our special day.</span>');
     badge.querySelector(".sjr-date").textContent = REPLY_BY;
     hero.appendChild(badge);
@@ -815,8 +924,9 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     var body = el("div", "sjr-body");
     var notes = el("aside", "sjr-notes");
     notes.setAttribute("aria-label", "Things to know");
+    notes.appendChild(floral("leaves", "sjr-leaves"));
     notes.appendChild(el("div", "sjr-notes-head",
-      '<h2 class="sjr-notes-title sjr-heading">Things to know</h2>' +
+      '<h2 class="sjr-notes-title sjr-heading">Things to Know</h2>' +
       '<p class="sjr-notes-sub">A few little things before you reply</p>'));
     var list = el("ul");
     for (var i = 0; i < REMINDERS.length; i++) {
@@ -831,8 +941,19 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     wire(form);
     inner.appendChild(body);
 
+    s.appendChild(floral("bouquet", "sjr-corner"));
     s.appendChild(inner);
     return s;
+  }
+
+  /* A decorative watercolour from /_wedding/rsvp/, hidden from readers. */
+  function floral(name, cls) {
+    var img = el("img", cls);
+    img.src = "/_wedding/rsvp/" + name + ".webp";
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    img.decoding = "async";
+    return img;
   }
 
   /* ---------- the form ---------- */
@@ -843,6 +964,7 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
       '<span class="sjr-mark"></span>' +
       '<span><span class="sjr-choice-title">' + title + '</span>' +
       '<span class="sjr-choice-sub">' + sub + '</span></span>' +
+      '<span class="sjr-choice-sprig" aria-hidden="true">' + BLOOM + '</span>' +
     '</label>';
   }
 
@@ -853,7 +975,8 @@ const script = (pages: Record<string, string>, sections: Record<string, string[]
     wrap.innerHTML =
       '<div id="sj-rsvp-card">' +
         (overlay ? '<button class="sjr-close" type="button" aria-label="Close">&#10005;</button>' : "") +
-        '<div class="sjr-form-head"><h2 class="sjr-form-title sjr-heading">Will you celebrate with us?</h2>' + BLOOM + '</div>' +
+        '<div class="sjr-form-head"><h2 class="sjr-form-title sjr-heading">Will you celebrate with us?</h2>' +
+          '<img class="sjr-card-sprig" src="/_wedding/rsvp/cardsprig.webp" alt="" aria-hidden="true"></div>' +
         '<form id="sj-rsvp-form" novalidate>' +
           '<div class="sjr-hp"><label>Do not fill this in <input name="bot-field" tabindex="-1" autocomplete="off"></label></div>' +
           '<div class="sjr-field">' +
@@ -1131,6 +1254,7 @@ export function renderRsvp(
   nonce: string | null,
   pages: Record<string, string> = {},
   sections: Record<string, string[]> = {},
+  media: Record<string, string> = {},
 ): string {
   const nonceAttr = nonce ? ` nonce="${nonce}"` : "";
   const ids = Object.keys(sections)
@@ -1140,5 +1264,5 @@ export function renderRsvp(
   const heroSelector = ids.length
     ? ids.map((id) => `html.sj-rsvp-route #${id}`).join(", ")
     : "html.sj-rsvp-route .sj-never";
-  return `\n<style${nonceAttr}>${styles(heroSelector)}</style>\n<script${nonceAttr}>${script(pages, sections)}</script>\n`;
+  return `\n<style${nonceAttr}>${styles(heroSelector)}</style>\n<script${nonceAttr}>${script(pages, sections, media)}</script>\n`;
 }

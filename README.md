@@ -175,14 +175,21 @@ registration), then redeploy. Current fields:
   stacked on narrow screens.
 
 **What comes from Canva:** the nav, the "Please" / "RSVP" title (its two largest lines, with their
-fonts and colours), the envelope (every image that is not the page background, cropped the way
-Canva crops it) and the paper background. Canva's section is hidden by id from the first moment on
+fonts and colours), the envelope (the topmost image and anything overlapping it, cropped the way
+Canva crops it; images wholly below it, such as the couple's painted mock of the form, are
+ignored) and the paper background. Canva's section is hidden by id from the first moment on
 the route, read once its text and images have settled, then set to `display: none`. Edit those in
 Canva as usual. **What is ours:** the reply-by bubble, the reminders and the form
 wording; edit them in `rsvp.ts`. The reminders repeat the Details page, so update them together.
+The current envelope art (2026-10-05) has the reply-by bubble painted in, so ours is kept for screen
+readers only while there is envelope art. The watercolour florals are cut from the couple's
+Canva theme into `public/_wedding/rsvp/`.
+
+Canva's `<img>` has no srcset and always loads its 1x file; `findLargestMedia` (rsvp.ts) maps
+each file to the largest size in Canva's page data so the envelope is sharp when shown large.
 
 Text is sized in `em` from a 16px base on the section (Canva's root is 10px). The envelope art is
-capped at `ART_MAX` (17em) tall: Canva's phone layout of it is a tall stem.
+capped at `ART_MAX` (42em) tall.
 
 ### The fonts
 
@@ -223,9 +230,9 @@ defaults (no nav, no envelope). It is `noindex` and linked from nowhere.
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
 | `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero. On phones its nav row gives way to the menu below |
 | `netlify/lib/opening.ts` | `/our-story`, `/details`, `/gallery`: the first section becomes a full-screen opening (Canva's photo, the nav, the lines rising in). Canva's section is held invisible at full-screen height from the start, so nothing below moves |
-| `netlify/lib/story.ts` | `/our-story`: the story section re-set as minimal lavender cards with a photo carousel per event, the quotes open above them; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
+| `netlify/lib/story.ts` | `/our-story`: the story section re-set as full-width bands (every other on a lavender wash) with a photo carousel per event, the quotes open above them, and a closing footer (colour monogram, date and venue, greeting; text in `FOOT`) re-set from the couple's painted card, shown while that card is in Canva; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
 | `scripts/story-photos.mjs` | The build step: resizes `source-images/our-story/<event>/*` into `public/_wedding/our-story/` and writes `netlify/lib/story-photos.generated.ts` |
-| `netlify/lib/menu.ts` | Phones: every page's Canva nav row becomes a fixed menu button (top right) with a dropdown; the music button sits level with it, top left. Links map `#page-N` by each page's `"P"` number in Canva's data |
+| `netlify/lib/menu.ts` | Desktop: once the page's own nav scrolls away, a slim cream bar with the same links stays at the top (`#sj-navbar`). Phones: every page's Canva nav row becomes a fixed menu button (top right) with a dropdown; the music button sits level with it, top left. Links map `#page-N` by each page's `"P"` number in Canva's data |
 | `netlify/lib/details.ts` | `/details`: the title, each category as a full-width band (timeline, venue + Google Maps, dress code, reminders), the FAQ as an accordion and the gift registry. See below |
 | `public/_forms/rsvp.html` | Registers the form with Netlify at deploy time |
 | `netlify.toml` | Static publish dir, the photo build step, and asset caching |

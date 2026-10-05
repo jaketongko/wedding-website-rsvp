@@ -1,8 +1,8 @@
 /**
- * The Our Story page's story section, re-set as minimal rounded cards with a
- * touch of lavender: a photo carousel on one side (arrows, dots, swipe) and
- * the event's date, title and story on the other, alternating sides on
- * desktop and stacked on a phone. The two quotes above the stories are
+ * The Our Story page's story section, re-set as full-width bands on the paper
+ * (every other one on a lavender wash, as on the Details page): a photo
+ * carousel on one side (arrows, dots, swipe) and the event's date, title and
+ * story on the other, alternating sides on desktop and stacked on a phone. The two quotes above the stories are
  * carried over, open on the paper in two columns.
  *
  * The approach, as for the main page's slideshow: leave Canva's layout alone
@@ -38,6 +38,14 @@ const chevron = (d: string) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ` +
   `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
 
+/** The closing footer, from the couple's painted card in Canva (2026-10-05),
+ *  laid out like their reference. Edit here if the card's words change. */
+const FOOT = {
+  names: "Shan and Jake", // the monogram's alt text
+  when: "February 7, 2027 &middot; Nuuk Taal, Batangas",
+  line: "We are so excited to celebrate this special day with you.",
+};
+
 /**
  * Sized in em from a root font-size the script sets: 16px divided by Canva's
  * page scale (it shrinks the page with a transform on narrow phones). Never
@@ -48,7 +56,7 @@ const STYLES = `
     position: relative;
     box-sizing: border-box;
     width: 100%;
-    padding: 2.25em 1.25em 3em;
+    padding: 2.25em 0 3em;
     background-color: #f8f4f0;
     background-position: center top;
     background-size: cover;
@@ -56,16 +64,12 @@ const STYLES = `
     -webkit-font-smoothing: antialiased;
   }
   #sj-story * { box-sizing: border-box; }
-  #sj-story .sj-story-inner { max-width: 68em; margin: 0 auto; }
+  #sj-story .sj-story-inner { max-width: 68em; margin: 0 auto; padding: 0 1.25em; }
 
-  /* The story cards: minimal, with a touch of the site's lavender - a
-     near-white fill, a hairline edge, a soft shadow. */
-  #sj-story .sj-card {
-    border: 1px solid rgba(164, 127, 196, 0.2);
-    border-radius: 2.1em;
-    background: rgba(251, 249, 253, 0.95);
-    box-shadow: 0 1em 2.6em rgba(110, 80, 140, 0.07);
-  }
+  /* Each story is a full-width band on the paper, as on the Details page:
+     every other one on a soft lavender wash. */
+  #sj-story .sj-band { padding: 3.2em 1.25em; }
+  #sj-story .sj-band--wash { background: rgba(214, 200, 232, 0.32); }
 
   /* ---------- the quotes ---------- */
   /* Open, straight on the paper: two centred columns, the quote in italic and
@@ -95,8 +99,9 @@ const STYLES = `
   #sj-story .sj-card {
     display: grid;
     grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    margin: 0 auto 3em;
-    overflow: hidden;
+    align-items: center;
+    max-width: 68em;
+    margin: 0 auto;
   }
   #sj-story .sj-card--flip { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); }
   #sj-story .sj-card--flip .sj-card-media { order: 2; }
@@ -234,6 +239,31 @@ const STYLES = `
     #sj-story .sj-outro-text p { text-align: center; }
   }
 
+  /* ---------- the closing footer: its own band, a hairline above ---------- */
+  #sj-story .sj-foot {
+    margin: 0 0 -3em;
+    padding: 3.6em 1.25em 4em;
+    text-align: center;
+    border-top: 1px solid rgba(120, 100, 90, 0.14);
+  }
+  #sj-story .sj-foot p { margin: 0; }
+  /* The couple's monogram, in colour, from their Canva card. */
+  #sj-story .sj-foot-logo { display: block; width: 8.5em; height: auto; margin: 0 auto; }
+  #sj-story .sj-foot-rule { display: flex; align-items: center; justify-content: center; gap: 0.9em; margin: 0.6em 0 1.1em; }
+  #sj-story .sj-foot-rule span { width: 5.5em; height: 1px; background: rgba(110, 74, 99, 0.35); }
+  #sj-story .sj-foot-rule img { display: block; width: 3.4em; height: auto; }
+  #sj-story .sj-foot-when {
+    font-size: 0.95em;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #5c4f53;
+  }
+  #sj-story .sj-foot-line {
+    margin-top: 0.9em !important;
+    font-size: 1.3em;
+    font-style: italic;
+    color: #6b5e62;
+  }
   #sj-story .sj-story-ornament { display: block; width: 5em; height: auto; margin: 0.5em auto 0; }
 
   /* Each card rises in as it scrolls into view, as Canva's own elements did. */
@@ -246,15 +276,15 @@ const STYLES = `
 
   /* ---------- phones and small tablets: one column ---------- */
   @media (max-width: 820px) {
-    #sj-story { padding: 1.75em 1em 2em; }
+    #sj-story { padding: 1.75em 0 2em; }
+    #sj-story .sj-story-inner { padding: 0 1em; }
+    #sj-story .sj-band { padding: 2.2em 1em 2.4em; }
     #sj-story .sj-quotes { grid-template-columns: 1fr; gap: 2.2em; margin-bottom: 2.5em; padding: 0 0.5em; }
     #sj-story .sj-quote blockquote { font-size: 1.4em; margin-bottom: 0.9em; }
     #sj-story .sj-quote figcaption { font-size: 0.75em; }
     #sj-story .sj-card,
     #sj-story .sj-card--flip {
       grid-template-columns: 1fr;
-      margin-bottom: 2em;
-      border-radius: 1.6em;
     }
     #sj-story .sj-card--flip .sj-card-media { order: 0; }
     #sj-story .sj-card-media { padding: 0.75em 0.75em 0; }
@@ -262,6 +292,11 @@ const STYLES = `
     #sj-story .sj-card-body,
     #sj-story .sj-card--flip .sj-card-body { padding: 1.5em 1.4em 1.75em; }
     #sj-story .sj-card-title { font-size: 1.85em; }
+    #sj-story .sj-foot { padding: 2.8em 1em 3.2em; margin-bottom: -2em; }
+    #sj-story .sj-foot-logo { width: 7em; }
+    #sj-story .sj-foot-rule span { width: 3.5em; }
+    #sj-story .sj-foot-when { font-size: 0.82em; letter-spacing: 0.2em; line-height: 1.7; }
+    #sj-story .sj-foot-line { font-size: 1.12em; }
     #sj-story .sj-card-body p.sj-card-text { font-size: 1.05em; line-height: 1.75; }
   }
   @media ${MOBILE} {
@@ -283,6 +318,7 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
   var SECTIONS = ${JSON.stringify(sections)};
   var ICON_PREV = ${JSON.stringify(chevron("M15 5 8 12l7 7"))};
   var ICON_NEXT = ${JSON.stringify(chevron("M9 5l7 7-7 7"))};
+  var FOOT = ${JSON.stringify(FOOT)};
   var FALLBACK_FONT = ${JSON.stringify('Georgia, "Times New Roman", serif')};
 
   var root = null;     // our section
@@ -384,7 +420,7 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
     /* Canva's own photos, each given to the event whose title is nearest -
        used only for events without photos in the repo. Full-width images are
        the background; small ones are ornaments. */
-    var background = null, ornament = null;
+    var background = null, ornament = null, banner = null;
     var imgs = section.getElementsByTagName("img");
     for (var m = 0; m < imgs.length; m++) {
       var src = imgs[m].currentSrc || imgs[m].src;
@@ -392,6 +428,12 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
       var frame = imgs[m].parentElement;
       for (var f = 0; f < 5 && frame && getComputedStyle(frame).overflow !== "hidden"; f++) frame = frame.parentElement;
       var fr = (frame || imgs[m]).getBoundingClientRect();
+      /* A wide painted strip below the stories (the couple's closing card,
+         2026-10-05): shown as a banner after the last one. */
+      if (fr.width >= sr.width * 0.5 && fr.width > fr.height * 2 && events.length && fr.top > events[events.length - 1].title.mid) {
+        banner = banner || { src: src, alt: imgs[m].getAttribute("alt") || "", w: Math.round(fr.width), h: Math.round(fr.height) };
+        continue;
+      }
       if (fr.width >= sr.width * 0.9) { background = background || src; continue; }
       if (fr.width < 150 || fr.height < 150) { if (fr.width > 30) ornament = src; continue; }
       var mid = fr.top + fr.height / 2, best = null, dist = Infinity;
@@ -416,7 +458,7 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
 
     var pairs = [];
     for (var q = 0; q < quotes.length; q++) pairs.push({ quote: quotes[q], name: names[q] || null });
-    return { quotes: pairs, events: events, outro: outro, background: background, ornament: ornament };
+    return { quotes: pairs, events: events, outro: outro, background: background, ornament: ornament, banner: banner };
   }
 
   /* ---------- building ours ---------- */
@@ -509,7 +551,14 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
       }
       inner.appendChild(quotes);
     }
-    for (var e = 0; e < content.events.length; e++) inner.appendChild(buildCard(content.events[e], e));
+    section.appendChild(inner);
+    /* Each story in a full-width band; every other one on the wash. */
+    for (var e = 0; e < content.events.length; e++) {
+      var band = el("div", "sj-band" + (e % 2 ? "" : " sj-band--wash"));
+      band.appendChild(buildCard(content.events[e], e));
+      section.appendChild(band);
+    }
+    inner = el("div", "sj-story-inner");
     /* The closing message after the stories, laid out as in the Canva
        design: a hairline across, then the couple's monogram with the lines
        beside it. The text is Canva's own; the line and monogram are not text,
@@ -541,13 +590,28 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
     }
     /* Canva's lone monogram at the bottom - only when the closing block,
        which carries the monogram itself, is not there. */
-    if (content.ornament && !content.outro.length) {
+    if (content.ornament && !content.outro.length && !content.banner) {
       var orn = el("img", "sj-story-ornament");
       orn.alt = "";
       orn.src = content.ornament;
       inner.appendChild(orn);
     }
     section.appendChild(inner);
+    /* The couple's closing card is a painted image in Canva, unreadable on a
+       phone, so it is re-set here in real text, as a footer on its own band;
+       it shows only while the card is in the design. */
+    if (content.banner) {
+      var foot = el("footer", "sj-foot");
+      /* The stories' own serif for the date and the line. */
+      var body = content.events[0] && content.events[0].body[0];
+      if (body) foot.style.fontFamily = body.look.font + ", " + FALLBACK_FONT;
+      foot.innerHTML =
+        '<img class="sj-foot-logo" src="/_wedding/monogram.webp" alt="' + FOOT.names + '" width="240" height="250">' +
+        '<div class="sj-foot-rule" aria-hidden="true"><span></span><img src="/_wedding/story-sprig.webp" alt=""><span></span></div>' +
+        '<p class="sj-foot-when">' + FOOT.when + '</p>' +
+        '<p class="sj-foot-line">' + FOOT.line + '</p>';
+      section.appendChild(foot);
+    }
     return section;
   }
 

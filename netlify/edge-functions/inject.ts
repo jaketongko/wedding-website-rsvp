@@ -6,7 +6,7 @@ import { renderMenu } from "../lib/menu.ts";
 import { findOpeningPhotos, renderOpening, renderOpeningPreload } from "../lib/opening.ts";
 import { renderPetals } from "../lib/petals.ts";
 import { renderPlayer } from "../lib/player.ts";
-import { RSVP_FONTS, renderRsvp } from "../lib/rsvp.ts";
+import { RSVP_FONTS, findLargestMedia, renderRsvp } from "../lib/rsvp.ts";
 import { findPages, findSections, findSlides, renderSlideshow, renderSlideshowPreload } from "../lib/slideshow.ts";
 import { renderStory } from "../lib/story.ts";
 
@@ -149,7 +149,7 @@ export default async function inject(request: Request, _context: Context): Promi
   const openingPhotos = findOpeningPhotos(html);
   const injected =
     renderPlayer(nonce) +
-    renderRsvp(nonce, pages, sections) +
+    renderRsvp(nonce, pages, sections, findLargestMedia(html)) +
     renderHideCanvaFooter(nonce) +
     renderPetals(nonce) +
     renderGallery(nonce) +

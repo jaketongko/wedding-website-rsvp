@@ -55,8 +55,8 @@ const DRESS = {
     ["Mauve", "mauve"],
     ["Plum", "plum"],
     ["Lavender", "lavender"],
-    ["Burgundy", "burgundy"],
     ["Dusty Rose", "dustyrose"],
+    ["Pastel Blue", "pastelblue"],
     ["Sage", "sage"],
   ],
   note: ["Gentle pastel and rich jewel tones are encouraged.", "Please reserve white for the bride."],
@@ -159,7 +159,7 @@ const STYLES = `
      venue and the reminders on a soft wash, as in the couple's design ---------- */
   #sj-details .sjd-band { padding: 3.4em 1.5em 3.6em; }
   #sj-details .sjd-band--wash { background: rgba(226, 214, 200, 0.38); }
-  #sj-details .sjd-band--blush { background: rgba(232, 208, 204, 0.5); }
+  #sj-details .sjd-band--lavender { background: rgba(214, 200, 232, 0.45); }
   #sj-details .sjd-card { max-width: 62em; margin: 0 auto; }
   #sj-details .sjd-kicker {
     margin: 0;
@@ -183,7 +183,8 @@ const STYLES = `
   #sj-details .sjd-event p.sjd-say { margin: 0; font-size: 1.12em; line-height: 1.45; color: var(--sjd-muted); }
 
   /* The venue: the photo beside its lines. */
-  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2.4em; align-items: center; }
+  /* The photo takes the larger share, as in the couple's design. */
+  #sj-details .sjd-venue { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 2em; align-items: center; }
   /* Its own paper fades out into the wash. */
   #sj-details .sjd-venue-photo {
     display: block;
@@ -262,9 +263,9 @@ const STYLES = `
   #sj-faq .sjd-faq-row { display: flex; align-items: flex-end; }
   /* The script word tucked in after "ASKED", dropping below its baseline. */
   #sj-faq .sjd-faq-script { margin: 0 0 -0.32em -0.08em; font-size: 3.4em; line-height: 1; }
-  #sj-faq .sjd-faq-list { margin: 0; padding: 0; list-style: none; }
+  #sj-faq .sjd-faq-list { max-width: 44em; margin: 0 auto; padding: 0; list-style: none; }
   #sj-faq .sjd-q {
-    margin: 0 0 0.95em;
+    margin: 0 0 0.8em;
     background: #fdfbf6;
     border-radius: 1.1em;
     box-shadow: 0 0.35em 1.4em rgba(60, 50, 45, 0.08);
@@ -276,12 +277,12 @@ const STYLES = `
     gap: 1.2em;
     width: 100%;
     margin: 0;
-    padding: 1.45em 1.9em;
+    padding: 1.15em 1.6em;
     border: 0;
     background: none;
     color: var(--sjd-ink);
     font-family: "Playfair Display", Georgia, "Times New Roman", serif;
-    font-size: 1.28em;
+    font-size: 1.05em;
     line-height: 1.35;
     text-align: left;
     cursor: pointer;
@@ -293,12 +294,12 @@ const STYLES = `
   #sj-faq .sjd-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms ease; }
   #sj-faq .sjd-q.is-open .sjd-a { grid-template-rows: 1fr; }
   #sj-faq .sjd-a > div { overflow: hidden; }
-  #sj-faq .sjd-a p { margin: 0; padding: 0 1.9em 1.6em; font-size: 1.05em; line-height: 1.8; color: #5f5653; }
+  #sj-faq .sjd-a p { margin: 0; padding: 0 1.9em 1.3em; font-size: 0.95em; line-height: 1.75; color: #5f5653; }
 
-  /* ---------- the gift registry: on a blush wash, the QR codes kept exactly
+  /* ---------- the gift registry: on a lavender wash, the QR codes kept exactly
      as Canva has them (white tiles, so they still scan) ---------- */
   #sj-gift { padding: 4.2em 1.5em 4.6em; text-align: center; }
-  #sj-gift::before { content: ""; position: absolute; inset: 0; background: rgba(232, 208, 204, 0.5); pointer-events: none; }
+  #sj-gift::before { content: ""; position: absolute; inset: 0; background: rgba(214, 200, 232, 0.45); pointer-events: none; }
   #sj-gift > * { position: relative; }
   #sj-gift .sjd-gift-inner { max-width: 44em; margin: 0 auto; }
   #sj-gift .sjd-rule { display: block; width: 3em; height: 1px; margin: 0 auto 1.6em; background: var(--sjd-gold); }
@@ -370,8 +371,8 @@ const STYLES = `
 
     #sj-faq .sjd-faq-caps { font-size: 1.95em; }
     #sj-faq .sjd-faq-script { font-size: 2.5em; }
-    #sj-faq .sjd-q-btn { padding: 1.2em 1.25em; font-size: 1.12em; }
-    #sj-faq .sjd-a p { padding: 0 1.4em 1.3em; font-size: 1em; }
+    #sj-faq .sjd-q-btn { padding: 1em 1.2em; font-size: 1em; }
+    #sj-faq .sjd-a p { padding: 0 1.2em 1.1em; font-size: 0.93em; }
     #sj-gift .sjd-gift-caps { font-size: 2.6em; }
     #sj-gift .sjd-faq-script { font-size: 3.6em; }
     #sj-gift .sjd-qrs { gap: 1.2em 0.8em; }
@@ -641,7 +642,7 @@ const script = (sections: Record<string, string[]>) => `
     note.innerHTML = DRESS.note.join("<br>");
     main.appendChild(note);
     card.appendChild(main);
-    card.appendChild(art("attire", "sjd-outfits", "A burgundy suit and a lavender gown"));
+    card.appendChild(art("attire", "sjd-outfits", "A blue suit and a lavender gown"));
     return card;
   }
 
@@ -726,7 +727,7 @@ const script = (sections: Record<string, string[]>) => `
     section.appendChild(band(buildCelebration(fonts), ""));
     section.appendChild(band(buildVenue(content, fonts), "sjd-band--wash"));
     section.appendChild(band(buildDress(fonts), ""));
-    section.appendChild(band(buildThings(fonts), "sjd-band--blush"));
+    section.appendChild(band(buildThings(fonts), "sjd-band--lavender"));
     return section;
   }
 

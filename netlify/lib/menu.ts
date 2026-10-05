@@ -1,5 +1,8 @@
 /**
- * The phone menu: on a phone, every page's Canva nav row is replaced by a
+ * The page menus. On desktop, a slim bar with the same links stays at the top
+ * once the page's own nav has scrolled away (#sj-navbar).
+ *
+ * On a phone, every page's Canva nav row is replaced by a
  * menu button in the top-right corner that opens a dropdown of the same
  * links. The music button sits level with it in the top-left (player.ts).
  *
@@ -27,6 +30,54 @@ const Z_INDEX = 2147482500;
 const STYLES = `
   #sj-menu { display: none; }
 
+  /* Desktop: once the page's own nav has scrolled away, a slim bar with the
+     same links slides down and stays at the top. Above the petals, below the
+     music button. Phones keep the menu button instead. */
+  #sj-navbar {
+    position: fixed;
+    z-index: 2147481500;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 34px;
+    padding: 15px 24px;
+    background: rgba(250, 247, 243, 0.88);
+    border-bottom: 1px solid rgba(120, 100, 90, 0.14);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 18px rgba(60, 50, 45, 0.06);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-100%);
+    transition: transform 280ms ease, opacity 280ms ease, visibility 0s linear 280ms;
+  }
+  #sj-navbar.is-on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: transform 280ms ease, opacity 280ms ease;
+  }
+  /* 12px, and in px: Canva's root font-size is 10px. */
+  #sj-navbar button {
+    margin: 0;
+    padding: 2px 0;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #3f3a38;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    transition: opacity 220ms ease;
+    -webkit-font-smoothing: antialiased;
+  }
+  #sj-navbar button:hover { opacity: 0.55; }
+  #sj-navbar button[aria-current] { color: #8a6aa8; }
+  #sj-navbar button:focus-visible { outline: 1px solid #8a6aa8; outline-offset: 4px; }
+
   /* Desktop: the nav link under the mouse fades back (the couple's
      reference, 2026-10-04). Links only - the current page's own entry is
      plain text on some layouts. */
@@ -36,6 +87,7 @@ const STYLES = `
   }
 
   @media ${MOBILE} {
+    #sj-navbar { display: none; }
     #sj-menu:not(.sj-menu--off) { display: block; }
     /* Canva's own nav row, replaced by the menu on a phone. */
     .sj-canva-nav { visibility: hidden !important; }
@@ -129,7 +181,7 @@ const STYLES = `
   #sj-menu-list button[aria-current] { opacity: 1; }
 
   @media (prefers-reduced-motion: reduce) {
-    #sj-menu-button span, #sj-menu-list { transition: none; }
+    #sj-menu-button span, #sj-menu-list, #sj-navbar { transition: none; }
   }
 `;
 
@@ -148,6 +200,10 @@ const script = (pages: Record<string, string>) => `
     '<ul id="sj-menu-list" aria-label="Pages"></ul>';
   var button = root.firstChild;
   var list = root.lastChild;
+  var bar = document.createElement("nav");
+  bar.id = "sj-navbar";
+  bar.setAttribute("aria-label", "Pages");
+  var PHONE = window.matchMedia ? window.matchMedia(${JSON.stringify(MOBILE)}) : null;
   var shown = ""; // the items currently in the list, to rebuild only on change
 
   /* "#page-2" -> "/details", from Canva's page order; null if unknown. */
@@ -218,6 +274,7 @@ const script = (pages: Record<string, string>) => `
     if (key === shown) return;
     shown = key;
     list.innerHTML = "";
+    bar.innerHTML = "";
     for (var i = 0; i < items.length; i++) {
       var href = items[i].href || hrefForCurrent();
       if (!href) continue;
@@ -230,8 +287,28 @@ const script = (pages: Record<string, string>) => `
       if (pathFor(href) === location.pathname) b.setAttribute("aria-current", "page");
       li.appendChild(b);
       list.appendChild(li);
+      /* The same link in the desktop bar. */
+      bar.appendChild(b.cloneNode(true));
     }
   }
+
+  /* The desktop bar shows once the page has scrolled most of a screen, so
+     the page's own nav is out of sight first; it stops short of Canva's
+     scrollbar, which sits inside the window. */
+  var scrollEl = null;
+  function updateBar() {
+    if (!scrollEl || !scrollEl.isConnected) scrollEl = scroller();
+    var on = !!shown && location.pathname !== "/" && !(PHONE && PHONE.matches) &&
+      !!scrollEl && scrollEl.scrollTop > scrollEl.clientHeight * 0.6;
+    if (bar.classList.contains("is-on") !== on) bar.classList.toggle("is-on", on);
+    if (scrollEl) {
+      var gutter = Math.max(0, window.innerWidth - scrollEl.getBoundingClientRect().right) + Math.max(0, scrollEl.offsetWidth - scrollEl.clientWidth);
+      var right = gutter + "px";
+      if (bar.style.right !== right) bar.style.right = right;
+    }
+  }
+  /* Scroll does not bubble, but capture sees the scroller's. */
+  document.addEventListener("scroll", updateBar, true);
 
   function isOpen() { return root.classList.contains("is-open"); }
   function setOpen(open) {
@@ -268,10 +345,12 @@ const script = (pages: Record<string, string>) => `
   function sync() {
     if (!document.body) return;
     if (root.parentNode !== document.body) document.body.appendChild(root);
+    if (bar.parentNode !== document.body) document.body.appendChild(bar);
 
     if (location.pathname === "/") {
       root.classList.add("sj-menu--off");
       setOpen(false);
+      updateBar();
       return;
     }
 
@@ -288,6 +367,7 @@ const script = (pages: Record<string, string>) => `
        since the links are the same on every page. */
     if (items && items.length) render(items);
     root.classList.toggle("sj-menu--off", !shown);
+    updateBar();
   }
 
   /* By position, not event.target: Canva swaps the element under the pointer
@@ -303,6 +383,21 @@ const script = (pages: Record<string, string>) => `
   }
 
   document.addEventListener("click", function (e) {
+    /* The desktop bar first. */
+    if (bar.classList.contains("is-on")) {
+      var links = bar.querySelectorAll("button"), link = null;
+      for (var k = 0; k < links.length; k++) {
+        var lr = links[k].getBoundingClientRect();
+        if (lr.width && e.clientX >= lr.left && e.clientX <= lr.right && e.clientY >= lr.top && e.clientY <= lr.bottom) link = links[k];
+      }
+      if (!link && e.detail === 0 && bar.contains(e.target)) link = e.target.closest("button");
+      if (link) {
+        e.preventDefault();
+        e.stopPropagation();
+        goTo(link.getAttribute("data-href"));
+        return;
+      }
+    }
     if (root.classList.contains("sj-menu--off") || getComputedStyle(root).display === "none") return;
     var hit = buttonAt(e.clientX, e.clientY);
     if (!hit && e.detail === 0 && root.contains(e.target)) hit = e.target.closest("button");
