@@ -200,15 +200,13 @@ const styles = (heroSelector: string) => `
     #sj-shero .sj-shero-nav { display: none; }
   }
 
-  /* ---------- the Gallery's title (fillGallery): left of centre, mid-height ---------- */
-  #sj-shero.sj-shero--gallery .sj-shero-shade {
-    background:
-      linear-gradient(90deg, rgba(20, 14, 16, 0.42) 0%, rgba(20, 14, 16, 0.12) 55%, rgba(20, 14, 16, 0) 75%),
-      linear-gradient(180deg, rgba(20, 14, 16, 0.35) 0%, rgba(20, 14, 16, 0) 25%);
-  }
-  #sj-shero .sj-gtitle { left: 8%; right: auto; bottom: auto; top: 50%; width: min(40em, 84%); transform: translateY(-50%); }
+  /* ---------- the Gallery's title (fillGallery) ---------- */
+  /* Centred near the foot of the photo, as the openings on the other pages. */
+  #sj-shero .sj-gtitle { width: min(40em, 90%); }
   #sj-shero .sj-gtitle p { margin: 0; }
-  #sj-shero .sj-gtitle-script { font-size: 5.2em; line-height: 1; margin-bottom: -0.1em !important; }
+  /* The script face has a very wide space, which read as a double space
+     between its words: pulled in. */
+  #sj-shero .sj-gtitle-script { font-size: 5.2em; line-height: 1; margin-bottom: -0.1em !important; word-spacing: -0.22em; }
   #sj-shero .sj-gtitle-caps { font-size: 3em; letter-spacing: 0.08em; line-height: 1.1; }
   #sj-shero .sj-gtitle-rule { display: flex; align-items: center; justify-content: center; gap: 0.8em; margin: 1em auto 1.1em; width: 82%; }
   #sj-shero .sj-gtitle-rule span { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.75); }
@@ -216,14 +214,10 @@ const styles = (heroSelector: string) => `
   #sj-shero .sj-gtitle-sub { font-size: 1.15em; font-style: italic; line-height: 1.5; opacity: 0.95; }
 
   @media (max-width: 760px) {
-    #sj-shero .sj-gtitle { left: 50%; top: auto; bottom: 14%; width: 90%; transform: translateX(-50%); }
     #sj-shero .sj-gtitle-script { font-size: 3.4em; }
     #sj-shero .sj-gtitle-caps { font-size: 1.9em; }
     #sj-shero .sj-gtitle-sub { font-size: 1em; }
 
-    #sj-shero.sj-shero--gallery .sj-shero-shade {
-      background: linear-gradient(180deg, rgba(20, 14, 16, 0.35) 0%, rgba(20, 14, 16, 0) 30%, rgba(20, 14, 16, 0) 45%, rgba(20, 14, 16, 0.6) 100%);
-    }
   }
 
   /* The lines rise into place one after another, as the names do on the

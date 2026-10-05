@@ -23,6 +23,11 @@ import { FOOT_HTML, footStyles, footStylesNarrow } from "./story.ts";
 /** A prefix, so a `/gallery-2` copy matches too. */
 const ROUTE_PREFIX = "/gallery";
 
+/** The site's paper texture, as Canva serves it on the other pages; used when
+ *  the couple's gallery section has none. If Canva ever drops the file, the
+ *  section's cream colour shows instead. */
+const PAPER = "/_assets/media/bb2dc1916f2d3df4ff139aa6bf8da332.png";
+
 const STYLES = `
   #sj-gal {
     position: relative;
@@ -88,6 +93,9 @@ const STYLES = `
 
   #sj-gal .sjg-title {
     margin: 0;
+    /* Marcellus, as the headings on the RSVP page (its @font-face is in rsvp.ts,
+       injected on every page). */
+    font-family: "SJ Marcellus", "Marcellus", Georgia, serif;
     font-size: 1.9em;
     font-weight: 400;
     letter-spacing: 0.32em;
@@ -95,6 +103,17 @@ const STYLES = `
     text-align: center;
   }
   #sj-gal .sjg-rule { display: block; width: 3.4em; height: 1px; margin: 1em auto 2.4em; background: #c9ab80; }
+  /* The couple's note under the title: how to use the gallery. */
+  #sj-gal .sjg-note {
+    max-width: 40em;
+    margin: -0.9em auto 2.4em;
+    font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.05em;
+    line-height: 1.7;
+    text-align: center;
+    text-wrap: balance;
+    color: #77706c;
+  }
 
   #sj-gal .sjg-grid {
     display: grid;
@@ -126,14 +145,17 @@ const STYLES = `
   #sj-gal .sjg-tile img.is-loaded { opacity: 1; }
 
   ${footStyles("#sj-gal")}
-  /* Room underneath for the meadow, so it grows below the words. */
-  #sj-gal .sj-foot { margin: 4em -1.5em 0; padding: 3.6em 1.25em 11em; }
+  /* As on Our Story: its own band, a hairline above. */
+  #sj-gal .sj-foot { margin: 4em -1.5em 0; padding: 3.6em 1.25em 4em; }
+  /* Room underneath for a meadow, so it grows below the words. */
+  #sj-gal.sjg-has-meadow .sj-foot { padding-bottom: 11em; }
 
   @media (max-width: 820px) {
     #sj-gal { padding: 3em 1em 0; }
     #sj-gal .sjg-title { font-size: 1.5em; }
     #sj-gal .sjg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7em; }
-    #sj-gal .sj-foot { margin: 3em -1em 0; padding: 2.8em 1em 8em; }
+    #sj-gal .sj-foot { margin: 3em -1em 0; padding: 2.8em 1em 3.2em; }
+    #sj-gal.sjg-has-meadow .sj-foot { padding-bottom: 8em; }
     ${footStylesNarrow("#sj-gal")}
   }
   @media ${MOBILE} {
@@ -153,6 +175,8 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
   var SECTIONS = ${JSON.stringify(sections)};
   var LARGEST = ${JSON.stringify(media)};
   var FOOT_HTML = ${JSON.stringify(FOOT_HTML)};
+  var PAPER = ${JSON.stringify(PAPER)};
+  var TOUCH = (window.matchMedia && matchMedia("(hover: none), (pointer: coarse)").matches) || "ontouchstart" in window;
   var SETTLE = 1500;   // ms with no new photo before building
   var GIVE_UP = 15000; // ms on the page before leaving Canva's grid as it is
 
@@ -240,7 +264,26 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
       var kind = x.w >= sr.width * 0.6 && x.w >= x.h * 0.95 ? "meadow" : x.left + x.w / 2 < sr.width / 2 ? "left" : "right";
       placed.push({ src: x.src, kind: kind });
     }
-    return { photos: photos, card: card, decor: placed };
+    /* The couple's words above the grid (2026-10-05): the biggest line is
+       the title, the rest the note under it. Canva's <br>s become spaces. */
+    var lines = [];
+    var ps = section.querySelectorAll("p");
+    for (var q = 0; q < ps.length; q++) {
+      var copy = ps[q].cloneNode(true);
+      var brs = copy.getElementsByTagName("br");
+      for (var k = brs.length - 1; k >= 0; k--) brs[k].parentNode.replaceChild(document.createTextNode(" "), brs[k]);
+      var words = (copy.textContent || "").replace(/\\s+/g, " ").trim();
+      var pr = ps[q].getBoundingClientRect();
+      if (!words || !pr.width) continue;
+      var size = parseFloat(getComputedStyle(ps[q].querySelector("span") || ps[q]).fontSize) || 0;
+      if (size < 11) return null; /* Canva's hidden text layer: not drawn yet */
+      lines.push({ text: words, size: size, top: pr.top });
+    }
+    lines.sort(function (a, b) { return a.top - b.top; });
+    var title = null, note = [];
+    for (var z = 0; z < lines.length; z++) if (!title || lines[z].size > title.size) title = lines[z];
+    for (var y = 0; y < lines.length; y++) if (lines[y] !== title) note.push(lines[y].text);
+    return { photos: photos, card: card, decor: placed, title: title ? title.text : null, note: note.join(" ") };
   }
 
   function flowerImg(src, kind) {
@@ -260,7 +303,10 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
     /* The section's full-size image: a paper texture is the background; a
        transparent flower piece (the couple's, 2026-10-05) is laid out as
        flower heads across the top and a meadow along the bottom. */
-    if (bg && !bg.flowers) s.style.backgroundImage = 'url("' + bg.src + '")';
+    /* No paper in Canva's section: the paper the rest of the site uses, so
+       the page matches Our Story and Details. */
+    var paper = bg && !bg.flowers ? bg.src : PAPER;
+    s.style.backgroundImage = 'url("' + paper + '")';
     if (bg && bg.flowers) {
       s.appendChild(flowerImg(sharpest(bg.src), "crown"));
       s.appendChild(flowerImg(sharpest(bg.src), "meadow"));
@@ -272,10 +318,17 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
       if (got.decor[d].kind === "meadow") s.appendChild(flowerImg(got.decor[d].src, "crown"));
       s.appendChild(flowerImg(got.decor[d].src, got.decor[d].kind));
     }
+    if (s.querySelector(".sjg-decor--meadow")) s.classList.add("sjg-has-meadow");
     var h = el("h2", "sjg-title");
-    h.textContent = "The Gallery";
+    h.textContent = got.title || "The Gallery";
     s.appendChild(h);
     s.appendChild(el("span", "sjg-rule"));
+    if (got.note) {
+      var note = el("p", "sjg-note");
+      /* On a touch screen "click" reads oddly: tap. */
+      note.textContent = TOUCH ? got.note.replace(/^Click\\b/, "Tap") : got.note;
+      s.appendChild(note);
+    }
     var list = el("ul", "sjg-grid");
     for (var i = 0; i < got.photos.length; i++) {
       var li = el("li", "sjg-tile");
@@ -381,6 +434,14 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
     if (root.nextElementSibling !== canva) canva.parentNode.insertBefore(root, canva);
     if (canva.style.display !== "none") canva.style.display = "none";
     size();
+    /* The footer's date and line in the site's serif, as on Our Story (which
+       takes it from its stories): here it is the nav's face, loaded on every
+       page. */
+    var foot = root.querySelector(".sj-foot");
+    if (foot && !foot.style.fontFamily) {
+      var navItem = document.querySelector(".sj-shero-nav > *");
+      if (navItem) foot.style.fontFamily = getComputedStyle(navItem).fontFamily;
+    }
   }
 
   var pending = false;

@@ -39,8 +39,8 @@ const MAP_URL =
 const ART = "/_wedding/details/";
 /** /_wedding/* is cached for a week as immutable, so a file replaced under the
  *  same name never reaches returning browsers. Bump this whenever any file in
- *  public/_wedding/details/ is replaced (2: Pastel Blue and the blue suit). */
-const ART_VERSION = "2";
+ *  public/_wedding/details/ is replaced (2: Pastel Blue and the blue suit; 3: suit at full resolution). */
+const ART_VERSION = "3";
 
 /** The timeline, from Canva's "THE CELEBRATION" strip. */
 const CELEBRATION: Array<{ time: string; title: string; text: string; art: string }> = [
@@ -235,7 +235,7 @@ const STYLES = `
   #sj-details .sjd-note { margin: 0; font-size: 1.12em; line-height: 1.55; color: var(--sjd-muted); }
   #sj-details .sjd-outfits {
     display: block;
-    width: 14em;
+    width: 19em;
     height: auto;
     -webkit-mask-image: radial-gradient(closest-side, #000 82%, transparent);
     mask-image: radial-gradient(closest-side, #000 82%, transparent);
@@ -333,7 +333,7 @@ const STYLES = `
     #sj-details .sjd-event:nth-child(3n + 1) { border-left: 0; }
     #sj-details .sjd-things { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2em; }
     #sj-details .sjd-thing:nth-child(2n + 1) { border-left: 0; }
-    #sj-details .sjd-outfits { width: 11em; }
+    #sj-details .sjd-outfits { width: 15em; }
   }
 
   /* ---------- phones: one column, icons beside the text ---------- */
@@ -369,7 +369,7 @@ const STYLES = `
     #sj-details .sjd-venue-name { font-size: 2.1em; }
 
     #sj-details .sjd-dress { grid-template-columns: 1fr; }
-    #sj-details .sjd-outfits { order: -1; width: 10em; margin: 0 auto; }
+    #sj-details .sjd-outfits { order: -1; width: 14em; margin: 0 auto; }
     #sj-details .sjd-script { font-size: 3.2em; }
     #sj-details .sjd-swatches { gap: 1em 0.6em; }
     #sj-details .sjd-swatches li { width: 30%; }

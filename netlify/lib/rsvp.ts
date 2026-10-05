@@ -242,9 +242,9 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     --sjr-accent-rgb: 138, 106, 168;
     --sjr-soft: #b9a0d0;
     --sjr-line: rgba(164, 127, 196, 0.45);
-    --sjr-card: #f9f4ec;
+    --sjr-card: #fdfbf8;
     /* The fields and answers: a lighter cream inside the cream card. */
-    --sjr-field: #fdfaf4;
+    --sjr-field: #fffefc;
     color: var(--sjr-ink);
     font-family: ${SANS};
     font-weight: 400;
@@ -483,6 +483,14 @@ const styles = (heroSelector: string) => `${FONT_FACES}
     border-top: 1px solid var(--sjr-line);
   }
   #sj-rsvp-page .sjr-notes li:last-child { border-bottom: 1px solid var(--sjr-line); }
+  /* Desktop: the reminders run the full height of the form beside them,
+     their rows sharing it evenly. */
+  @media (min-width: 901px) {
+    #sj-rsvp-page .sjr-body { align-items: stretch; }
+    #sj-rsvp-page .sjr-notes { display: flex; flex-direction: column; padding-top: 2.4em; }
+    #sj-rsvp-page .sjr-notes ul { flex: 1; display: flex; flex-direction: column; }
+    #sj-rsvp-page .sjr-notes li { flex: 1; align-content: center; }
+  }
   #sj-rsvp-page .sjr-icon {
     display: inline-flex;
     align-items: center;
