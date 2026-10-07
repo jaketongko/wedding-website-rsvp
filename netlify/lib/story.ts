@@ -268,7 +268,7 @@ const STYLES = `
 
   /* ---------- the closing footer: its own band, a hairline above ---------- */
   ${footStyles("#sj-story")}
-  #sj-story .sj-foot { margin: 0 0 -3em; padding: 3.6em 1.25em 4em; }
+  #sj-story .sj-foot { margin: 0 0 -3em; padding: 3.6em 1.25em 2.2em; }
   #sj-story .sj-story-ornament { display: block; width: 5em; height: auto; margin: 0.5em auto 0; }
 
   /* Each card rises in as it scrolls into view, as Canva's own elements did. */
@@ -297,7 +297,7 @@ const STYLES = `
     #sj-story .sj-card-body,
     #sj-story .sj-card--flip .sj-card-body { padding: 1.5em 1.4em 1.75em; }
     #sj-story .sj-card-title { font-size: 1.85em; }
-    #sj-story .sj-foot { padding: 2.8em 1em 3.2em; margin-bottom: -2em; }
+    #sj-story .sj-foot { padding: 2.8em 1em 1.8em; margin-bottom: -2em; }
 ${footStylesNarrow("#sj-story")}
     #sj-story .sj-card-body p.sj-card-text { font-size: 1.05em; line-height: 1.75; }
   }
