@@ -3,14 +3,55 @@
 // digits kept, lower-cased ("THE FIRST HELLO" -> thefirsthello).
 export const STORY_PHOTOS: Record<string, string[]> = {
   "thefirsthello": [
-    "/_wedding/our-story/thefirsthello/7029943406a0.jpg",
-    "/_wedding/our-story/thefirsthello/80fc1fb21f44.jpg"
+    "/_wedding/our-story/thefirsthello/ea16c5bc8a3b.jpg",
+    "/_wedding/our-story/thefirsthello/9c3ebf899d2c.jpg",
+    "/_wedding/our-story/thefirsthello/151fa76dcc3f.jpg",
+    "/_wedding/our-story/thefirsthello/ebc0b11d072c.jpg",
+    "/_wedding/our-story/thefirsthello/42654bc95e1b.jpg",
+    "/_wedding/our-story/thefirsthello/bfbcbe46f367.jpg",
+    "/_wedding/our-story/thefirsthello/854ae5ed3bc1.jpg",
+    "/_wedding/our-story/thefirsthello/beed567b3450.jpg",
+    "/_wedding/our-story/thefirsthello/504c5f20af39.jpg",
+    "/_wedding/our-story/thefirsthello/d01fba3bdde3.jpg"
   ],
   "thequestion": [
-    "/_wedding/our-story/thequestion/8bb19d853071.jpg"
+    "/_wedding/our-story/thequestion/673999006893.jpg",
+    "/_wedding/our-story/thequestion/1068a62f7333.jpg",
+    "/_wedding/our-story/thequestion/1452a4bbf550.jpg",
+    "/_wedding/our-story/thequestion/8bb19d853071.jpg",
+    "/_wedding/our-story/thequestion/0623dbc184ea.jpg",
+    "/_wedding/our-story/thequestion/d0de2444f274.jpg",
+    "/_wedding/our-story/thequestion/b0e06b277bf3.jpg",
+    "/_wedding/our-story/thequestion/6625c133ff81.jpg",
+    "/_wedding/our-story/thequestion/307e07fbc7eb.jpg",
+    "/_wedding/our-story/thequestion/46a4c022cfeb.jpg",
+    "/_wedding/our-story/thequestion/70a68f3a43b5.jpg"
   ],
   "usalongtheway": [
-    "/_wedding/our-story/usalongtheway/b9d1b5c1980a.jpg",
-    "/_wedding/our-story/usalongtheway/621a83b13f40.jpg"
+    "/_wedding/our-story/usalongtheway/058d0390708a.jpg",
+    "/_wedding/our-story/usalongtheway/b08394fe79e7.jpg",
+    "/_wedding/our-story/usalongtheway/4ae9709debcc.jpg",
+    "/_wedding/our-story/usalongtheway/08d8e20990f1.jpg",
+    "/_wedding/our-story/usalongtheway/58745d784743.jpg",
+    "/_wedding/our-story/usalongtheway/1a5b00b875cc.jpg",
+    "/_wedding/our-story/usalongtheway/621a83b13f40.jpg",
+    "/_wedding/our-story/usalongtheway/ea06d0e6596b.jpg",
+    "/_wedding/our-story/usalongtheway/d3a73ac13f7d.jpg",
+    "/_wedding/our-story/usalongtheway/cce8b06331f7.jpg",
+    "/_wedding/our-story/usalongtheway/6bdb4134fc53.jpg",
+    "/_wedding/our-story/usalongtheway/42d784db77f4.jpg",
+    "/_wedding/our-story/usalongtheway/618fe56315cd.jpg",
+    "/_wedding/our-story/usalongtheway/11a88cdbf3c2.jpg",
+    "/_wedding/our-story/usalongtheway/4052ac6c9c0f.jpg",
+    "/_wedding/our-story/usalongtheway/b3a40e7fd053.jpg",
+    "/_wedding/our-story/usalongtheway/2838b325c004.jpg",
+    "/_wedding/our-story/usalongtheway/f935905861b5.jpg",
+    "/_wedding/our-story/usalongtheway/a41e1ddb1dba.jpg",
+    "/_wedding/our-story/usalongtheway/dee3f45a9f34.jpg",
+    "/_wedding/our-story/usalongtheway/57ad3d085019.jpg",
+    "/_wedding/our-story/usalongtheway/b7bc420ba472.jpg",
+    "/_wedding/our-story/usalongtheway/306ae6147565.jpg",
+    "/_wedding/our-story/usalongtheway/6d5149533f95.jpg",
+    "/_wedding/our-story/usalongtheway/38019c8d7e30.jpg"
   ]
 };
