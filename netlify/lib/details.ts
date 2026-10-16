@@ -23,7 +23,7 @@
  * the same goes for the FAQ on its own.
  */
 import { MOBILE } from "./player.ts";
-import { FONT, REPLY_BY } from "./rsvp.ts";
+import { FONT, HEADING, HEART, REPLY_BY, SERIF } from "./rsvp.ts";
 
 /** A prefix, so a `/details-2` copy matches too. */
 const ROUTE_PREFIX = "/details";
@@ -319,6 +319,46 @@ const STYLES = `
   #sj-gift .sjd-qr img { display: block; width: 10.5em; height: 10.5em; object-fit: contain; }
   #sj-gift .sjd-qr figcaption { margin-top: 0.7em; font-size: 0.82em; letter-spacing: 0.26em; text-transform: uppercase; color: var(--sjd-ink); }
 
+  /* ---------- the closing band: the RSVP page's thank-you, at the same sizes,
+     with the theme's bouquet in both bottom corners ---------- */
+  #sj-dfoot {
+    --sjd-accent-rgb: 138, 106, 168;
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 3.6em 1.5em 4.2em;
+    overflow: hidden;
+    text-align: center;
+    border-top: 1px solid rgba(var(--sjd-accent-rgb), 0.22);
+    background-color: #f7f5f1;
+    background-position: center bottom;
+    background-size: 100% auto;
+    color: #3f3a38;
+    font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* The wash goes over the bouquets, as on the RSVP page, so their own paper
+     never shows as a lighter box. */
+  #sj-dfoot::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, rgba(214, 200, 232, 0.12), rgba(214, 200, 232, 0.42));
+    pointer-events: none;
+  }
+  #sj-dfoot * { box-sizing: border-box; }
+  #sj-dfoot .sjd-foot-text { position: relative; z-index: 2; }
+  #sj-dfoot p { margin: 0; }
+  #sj-dfoot .sjd-foot-title { font-family: ${HEADING}; font-size: 2.6em; font-weight: 400; letter-spacing: 0.02em; line-height: 1.2; color: #6e5585; }
+  #sj-dfoot .sjd-foot-line { margin-top: 0.5em; font-family: ${SERIF}; font-size: 1.2em; font-style: italic; text-wrap: balance; color: #77706c; }
+  #sj-dfoot .sjr-heart { display: inline-block; width: 0.95em; height: 0.95em; margin-left: 0.2em; vertical-align: -0.1em; color: #9f84bf; }
+  #sj-dfoot .sjd-foot-rule { display: flex; align-items: center; justify-content: center; gap: 0.9em; margin-top: 1.4em; }
+  #sj-dfoot .sjd-foot-rule span { width: 4.5em; height: 1px; background: rgba(var(--sjd-accent-rgb), 0.35); }
+  #sj-dfoot .sjd-foot-rule img { display: block; width: 3em; height: auto; }
+  #sj-dfoot .sjd-corner { position: absolute; left: 0; bottom: 0; z-index: 0; display: block; width: 15em; height: auto; pointer-events: none; }
+  #sj-dfoot .sjd-corner--right { left: auto; right: 0; transform: scaleX(-1); }
+
   /* Each band rises in as it scrolls into view, as Canva's own elements did. */
   #sj-details .sjd-card.sjd-reveal { opacity: 0; transform: translateY(1.6em); }
   #sj-details .sjd-card.sjd-reveal.is-in {
@@ -334,6 +374,7 @@ const STYLES = `
     #sj-details .sjd-things { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 2em; }
     #sj-details .sjd-thing:nth-child(2n + 1) { border-left: 0; }
     #sj-details .sjd-outfits { width: 15em; }
+    #sj-dfoot .sjd-corner { width: 8em; }
   }
 
   /* ---------- phones: one column, icons beside the text ---------- */
@@ -384,6 +425,12 @@ const STYLES = `
     #sj-gift .sjd-qrs li { width: 44%; }
     #sj-gift .sjd-qr img { width: 100%; height: auto; }
   }
+  /* The RSVP page's phone sizes for the same band. */
+  @media (max-width: 720px) {
+    #sj-dfoot { padding: 2.8em 1em 3.4em; }
+    #sj-dfoot .sjd-foot-title { font-size: 2.1em; }
+    #sj-dfoot .sjd-foot-line { font-size: 1.05em; }
+  }
   @media ${MOBILE} {
     #sj-details .sjd-map { padding: 1em 1.6em; }
   }
@@ -413,6 +460,7 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
   var THINGS = ${JSON.stringify(THINGS)};
   var PIN = ${JSON.stringify(PIN)};
   var PLUS = ${JSON.stringify(PLUS)};
+  var HEART = ${JSON.stringify(HEART)};
   var FALLBACK = ${JSON.stringify(FONT)};
   var IMAGE_WAIT = 6000;   // for Canva's photos, after its text has read
   var FONT_WAIT = 15000;   // for Canva to draw the FAQ heading's fonts
@@ -421,6 +469,7 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
   var faq = null, canvaFaq = null;
   var gift = null, canvaGift = null, giftSince = 0, giftCount = -1, giftCountSince = 0;
   var faqStyled = false, faqSince = 0;
+  var foot = null, footAnchor = null;   // the closing band, after the last section
   var firstRead = 0;
   var observer = null;
 
@@ -742,6 +791,26 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
     section.appendChild(band(buildDress(fonts), ""));
     section.appendChild(band(buildThings(fonts), "sjd-band--lavender"));
     return section;
+  }
+
+  /* The closing band, as on the RSVP page: a thank-you over the theme's
+     bouquet in both bottom corners. */
+  function buildFoot() {
+    var f = el("footer");
+    f.id = "sj-dfoot";
+    f.appendChild(el("div", "sjd-foot-text",
+      '<p class="sjd-foot-title">Thank you!</p>' +
+      '<p class="sjd-foot-line">We&rsquo;re looking forward to seeing you there! ' + HEART + '</p>' +
+      '<div class="sjd-foot-rule" aria-hidden="true"><span></span><img src="/_wedding/story-sprig.webp" alt=""><span></span></div>'));
+    for (var i = 0; i < 2; i++) {
+      var img = el("img", "sjd-corner" + (i ? " sjd-corner--right" : ""));
+      img.src = "/_wedding/rsvp/bouquet.webp";
+      img.alt = "";
+      img.setAttribute("aria-hidden", "true");
+      img.decoding = "async";
+      f.appendChild(img);
+    }
+    return f;
   }
 
   function band(content, cls) {
@@ -1085,6 +1154,8 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
         leaveBehind(details, canvaDetails);
         leaveBehind(faq, canvaFaq);
         leaveBehind(gift, canvaGift);
+        leaveBehind(foot, footAnchor);
+        foot = footAnchor = null;
         details = canvaDetails = faq = canvaFaq = gift = canvaGift = null;
         faqStyled = false; faqSince = 0; firstRead = 0; giftSince = 0;
       }
@@ -1173,6 +1244,16 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
       mount(gift, canvaGift);
       if (details && details.style.backgroundImage && !gift.style.backgroundImage) gift.style.backgroundImage = details.style.backgroundImage;
     }
+
+    /* The closing band: once our details are up, after the page's last
+       section (Canva's, hidden behind ours, or its own if ours never built). */
+    footAnchor = canvaGift || canvaFaq;
+    if (details && footAnchor) {
+      if (!foot) foot = buildFoot();
+      if (footAnchor.nextElementSibling !== foot) footAnchor.parentNode.insertBefore(foot, footAnchor.nextSibling);
+      if (details.style.backgroundImage && !foot.style.backgroundImage) foot.style.backgroundImage = details.style.backgroundImage;
+      size(foot);
+    }
   }
 
   var pending = false;
@@ -1186,7 +1267,7 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
   }
   /* Canva routes with pushState, which fires no event, so a slow poll too. */
   window.addEventListener("popstate", sync);
-  window.addEventListener("resize", function () { size(details); size(faq); size(gift); });
+  window.addEventListener("resize", function () { size(details); size(faq); size(gift); size(foot); });
   window.setInterval(sync, 800);
   if (document.body) sync();
   else document.addEventListener("DOMContentLoaded", sync);

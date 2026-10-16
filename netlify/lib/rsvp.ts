@@ -107,11 +107,11 @@ export const FONT = '"SJ The Seasons", Georgia, "Times New Roman", serif';
  * for everything read, Marcellus for headings and The Seasons (FONT) for the two
  * answers. Canva's own "Please RSVP" title and nav keep the invitation's fonts.
  */
-const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
+export const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
 const SANS = '"Lato", "Helvetica Neue", Arial, sans-serif';
 /** Marcellus, the face of the couple's page titles in Canva, from the file Canva
  *  serves for the design (same-origin through the proxy, like The Seasons). */
-const HEADING = '"SJ Marcellus", "Marcellus", Georgia, serif';
+export const HEADING = '"SJ Marcellus", "Marcellus", Georgia, serif';
 
 /** In <head> on every page (Canva routes client-side, so a guest can reach
  *  /rsvp without a page load); `display=swap` shows the fallbacks meanwhile. */
@@ -206,7 +206,7 @@ const REMINDERS: Array<{ icon: string; title: string; text: string }> = [
 ];
 
 /** A lavender heart for the page's closing line. */
-const HEART =
+export const HEART =
   '<svg class="sjr-heart" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
   '<path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" fill="currentColor"/></svg>';
 
