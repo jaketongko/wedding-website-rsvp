@@ -121,6 +121,8 @@ const STYLES = `
     font-size: 0.8em;
     letter-spacing: 0.3em;
   }
+  /* The reply's name sits at its right edge, so the two read as an exchange. */
+  #sj-story .sj-quote:nth-child(even) figcaption { text-align: right; }
 
   /* ---------- the cards ---------- */
   #sj-story .sj-card {
