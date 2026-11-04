@@ -92,6 +92,14 @@ npm run deploy          # production
 npm run deploy:preview  # draft URL
 ```
 
+Production is built from `master` in this folder (`C:\Workspaces\wedding-website-rsvp`). From
+2026-09-18 to 2026-11-05 it came from a second worktree (`...-live`, branch `phone-brief-spacing`);
+that worktree was removed and `master` now equals what was live. The old `master` is kept as tag
+`archive/master-2026-11-05` and branch `archive/stacked-card` (rejected stacked-card phone layout).
+
+`public/_wedding/rsvp/spray.webp` is committed because it was already served on live, but nothing
+references it; it is safe to delete.
+
 Share the Netlify URL with guests. The original `my.canva.site` link keeps working — it just has
 no music.
 

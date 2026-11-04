@@ -9,8 +9,7 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/thefirsthello/bfbcbe46f367.jpg",
     "/_wedding/our-story/thefirsthello/854ae5ed3bc1.jpg",
     "/_wedding/our-story/thefirsthello/beed567b3450.jpg",
-    "/_wedding/our-story/thefirsthello/504c5f20af39.jpg",
-    "/_wedding/our-story/thefirsthello/d01fba3bdde3.jpg"
+    "/_wedding/our-story/thefirsthello/504c5f20af39.jpg"
   ],
   "thequestion": [
     "/_wedding/our-story/thequestion/673999006893.jpg",
@@ -22,11 +21,9 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/thequestion/b0e06b277bf3.jpg",
     "/_wedding/our-story/thequestion/6625c133ff81.jpg",
     "/_wedding/our-story/thequestion/307e07fbc7eb.jpg",
-    "/_wedding/our-story/thequestion/46a4c022cfeb.jpg"
+    "/_wedding/our-story/thequestion/b3ddc5555873.jpg"
   ],
   "usalongtheway": [
-    "/_wedding/our-story/usalongtheway/058d0390708a.jpg",
-    "/_wedding/our-story/usalongtheway/b08394fe79e7.jpg",
     "/_wedding/our-story/usalongtheway/08d8e20990f1.jpg",
     "/_wedding/our-story/usalongtheway/58745d784743.jpg",
     "/_wedding/our-story/usalongtheway/621a83b13f40.jpg",
@@ -38,7 +35,6 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/usalongtheway/2838b325c004.jpg",
     "/_wedding/our-story/usalongtheway/f935905861b5.jpg",
     "/_wedding/our-story/usalongtheway/a41e1ddb1dba.jpg",
-    "/_wedding/our-story/usalongtheway/dee3f45a9f34.jpg",
     "/_wedding/our-story/usalongtheway/57ad3d085019.jpg",
     "/_wedding/our-story/usalongtheway/6d5149533f95.jpg",
     "/_wedding/our-story/usalongtheway/64df00b84884.jpg",
