@@ -234,7 +234,7 @@ defaults (no nav, no envelope). It is `noindex` and linked from nowhere.
 | `netlify/lib/player.ts` | The injected audio element and mute toggle |
 | `netlify/lib/rsvp.ts` | The RSVP page: envelope, reply-by date, reminders and the form (replaces Canva's blocked widget) |
 | `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
-| `netlify/lib/petals.ts` | Lavender petals drifting over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
+| `netlify/lib/petals.ts` | Sage leaves blown right on a light breeze over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
 | `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero. On phones its nav row gives way to the menu below |
 | `netlify/lib/opening.ts` | `/our-story`, `/details`, `/gallery`: the first section becomes a full-screen opening (Canva's photo, the nav, the lines rising in). Canva's section is held invisible at full-screen height from the start, so nothing below moves |

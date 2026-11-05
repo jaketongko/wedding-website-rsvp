@@ -1,6 +1,7 @@
 /**
- * Lavender petals drifting down over the invitation, from /main onward. The
- * cover page (/) stays clean so the petals arrive with the invitation itself.
+ * Sage leaves drifting down over the invitation, from /main onward. The cover
+ * page (/) stays clean so the leaves arrive with the invitation itself. (Named
+ * petals in the code: they were lavender petals before.)
  *
  * Decoration only, so it must never get in the way: the layer ignores pointer
  * events, sits below the music toggle and the RSVP modal, animates only
@@ -19,8 +20,9 @@
  */
 import { LAVENDER } from "./rsvp.ts";
 
-/** The sprig buds plus one pinker shade, so the petals echo the palette. */
-const PETAL_COLOURS = [...LAVENDER.buds, "#dcb6d9"];
+/** The sprig's sage stem and leaf plus one deeper shade, so the leaves echo
+ *  the palette and still show against the pale page. */
+const PETAL_COLOURS = [LAVENDER.stem, LAVENDER.leaf, "#9caa84"];
 
 const STYLES = `
   #sj-petals {
@@ -59,14 +61,16 @@ const STYLES = `
     display: block;
     width: 100%;
     height: 100%;
-    /* Asymmetric on both axes: a rounded body with the tip drawn out to one
-       corner, so it reads as a petal rather than a symmetric leaf. */
-    border-radius: 96% 24% 84% 12% / 86% 38% 62% 14%;
+    /* A leaf: pointed at two opposite corners, round between them, with a
+       pale midrib drawn corner to corner along the same diagonal. */
+    border-radius: 0 100% 0 100%;
     background:
-      radial-gradient(125% 95% at 22% 16%, rgba(255, 255, 255, 0.8),
-        rgba(255, 255, 255, 0.1) 54%, rgba(255, 255, 255, 0) 72%),
-      linear-gradient(150deg, rgba(255, 255, 255, 0.3), var(--colour) 60%,
-        rgba(86, 58, 108, 0.32));
+      linear-gradient(to top right, rgba(255, 255, 255, 0) 48%,
+        rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 52%),
+      radial-gradient(125% 95% at 22% 16%, rgba(255, 255, 255, 0.5),
+        rgba(255, 255, 255, 0) 60%),
+      linear-gradient(150deg, rgba(255, 255, 255, 0.2), var(--colour) 55%,
+        rgba(58, 74, 44, 0.35));
     filter: blur(var(--blur));
     animation: sj-petal-turn var(--turn) linear var(--turn-delay) infinite
       var(--turn-dir);
@@ -117,9 +121,9 @@ const SCRIPT = `
   var scale = Math.min(1.35, Math.max(0.78, w / 1280));
   // Count follows screen area, not width, so a tall portrait tablet gets as
   // many petals as a short wide laptop instead of looking half empty.
-  var count = Math.max(11, Math.min(28, Math.round(Math.sqrt(w * window.innerHeight) / 52)));
-  var minSize = 9 * scale;
-  var maxSize = 20 * scale;
+  var count = Math.max(13, Math.min(34, Math.round(Math.sqrt(w * window.innerHeight) / 43)));
+  var minSize = 12 * scale;
+  var maxSize = 26 * scale;
   for (var i = 0; i < count; i++) {
     var petal = document.createElement("i");
     petal.className = "sj-petal";
@@ -136,10 +140,12 @@ const SCRIPT = `
     style.setProperty("--alpha", (0.42 + near * 0.44).toFixed(2));
     style.setProperty("--blur", ((1 - near) * 0.9).toFixed(2) + "px");
 
-    // Start off screen on both sides too, so petals also blow in from the edges
-    // rather than every column starting full.
-    style.setProperty("--x", between(-8, 106).toFixed(2) + "vw");
-    style.setProperty("--drift", between(-16, 16).toFixed(1) + "vw");
+    // A light breeze from the left: every leaf drifts right, by a different
+    // amount. Starts sit further left, some off screen, so leaves blow in from
+    // the left edge and the left side never runs empty.
+    var drift = between(8, 22) + near * 6; // nearer feels the wind more
+    style.setProperty("--x", between(-24, 100).toFixed(2) + "vw");
+    style.setProperty("--drift", drift.toFixed(1) + "vw");
     // Swing is set against the petal's own width, so the near ones sweep wide
     // and the far ones only shiver, whatever the screen size.
     style.setProperty("--swing", (size * between(0.8, 1.9)).toFixed(1) + "px");

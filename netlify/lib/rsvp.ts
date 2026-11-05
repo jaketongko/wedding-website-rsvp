@@ -120,8 +120,9 @@ export const RSVP_FONTS =
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
   '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500&display=swap">';
 
-/** Lavender flower colours: buds darken toward the base of each spike. Shared
- * with the falling petals (petals.ts) so the site uses one lavender. */
+/** Lavender sprig colours: buds darken toward the base of each spike. The
+ * falling leaves (petals.ts) reuse the stem and leaf greens, so the site keeps
+ * one palette. */
 export const LAVENDER = {
   buds: ["#a47fc4", "#b896d4", "#cdb3e4"],
   stem: "#b9c3a0",
