@@ -236,10 +236,10 @@ defaults (no nav, no envelope). It is `noindex` and linked from nowhere.
 | `netlify/lib/canva-footer.ts` | Hides Canva's bottom bar (Terms & Support / Privacy Policy / Designed with Canva) |
 | `netlify/lib/petals.ts` | Sage leaves blown right on a light breeze over every page from `/main` on, not the `/` cover (pointer-events none, off under reduced motion) |
 | `netlify/lib/gallery.ts` | Hover treatment on the `/gallery` photos, and the lightbox they open with previous/next |
-| `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos come from the Gallery page's grid, text and fonts from Canva's own hero. On phones its nav row gives way to the menu below |
+| `netlify/lib/slideshow.ts` | Full-screen photo slideshow in place of `/main`'s first section; photos from `source-images/slideshow/` (see "Slideshow photos"), else the Gallery page's grid; text and fonts from Canva's own hero. On phones its nav row gives way to the menu below |
 | `netlify/lib/opening.ts` | `/our-story`, `/details`, `/gallery`: the first section becomes a full-screen opening (Canva's photo, the nav, the lines rising in). Canva's section is held invisible at full-screen height from the start, so nothing below moves |
 | `netlify/lib/story.ts` | `/our-story`: the story section re-set as full-width bands (every other on a lavender wash) with a photo carousel per event, the quotes open above them, and a closing footer (colour monogram, date and venue, greeting; text in `FOOT`) re-set from the couple's painted card, shown while that card is in Canva; text and fonts read from Canva, photos from `story-photos.generated.ts` (see "Our Story photos") |
-| `scripts/story-photos.mjs` | The build step: resizes `source-images/our-story/<event>/*` into `public/_wedding/our-story/` and writes `netlify/lib/story-photos.generated.ts` |
+| `scripts/story-photos.mjs` | The build step: resizes `source-images/our-story/<event>/*` into `public/_wedding/our-story/` and `source-images/slideshow/*` into `public/_wedding/slideshow/`, and writes `netlify/lib/story-photos.generated.ts` and `netlify/lib/slideshow-photos.generated.ts` |
 | `netlify/lib/menu.ts` | Desktop: once the page's own nav scrolls away, a slim cream bar with the same links stays at the top (`#sj-navbar`). Phones: every page's Canva nav row becomes a fixed menu button (top right) with a dropdown; the music button sits level with it, top left. Links map `#page-N` by each page's `"P"` number in Canva's data |
 | `netlify/lib/gallery-page.ts` | `/gallery`: Canva's photo grid re-set as "THE GALLERY" with rounded portrait tiles (4 across, 2 on phones, each at Canva's largest size), any flower art the couple adds in Canva placed as corner/meadow decoration, and the shared monogram footer (`FOOT_HTML` from story.ts). The lightbox (gallery.ts) works on its tiles |
 | `netlify/lib/details.ts` | `/details`: the title, each category as a full-width band (timeline, venue + Google Maps, dress code, reminders), the FAQ as an accordion and the gift registry. See below |
@@ -268,6 +268,20 @@ stripped, phone rotation applied) into `public/_wedding/our-story/` under conten
 so a replaced photo is never served stale from the week-long immutable cache. Run
 `npm run photos` to do that step alone; commit the resized copies and
 `netlify/lib/story-photos.generated.ts` it writes.
+
+### Slideshow photos
+
+The `/main` slideshow shows the photos in `source-images/slideshow/` (main checkout, flat
+folder, not committed), in file-name order (`01.jpg`, `02.jpg`, ...). It is separate from the
+Canva Gallery: changing one does not change the other. With fewer than 2 photos in the folder,
+the slideshow falls back to the Gallery page's grid.
+
+Landscape screens show only the landscape photos when there are at least 3 of them, so include
+3+ landscape shots for desktop and portrait ones for phones.
+
+The same build step resizes them (2400px long edge, metadata stripped) into
+`public/_wedding/slideshow/` and writes `netlify/lib/slideshow-photos.generated.ts` with each
+photo's size. Commit both, as for Our Story.
 
 ### The Details page
 

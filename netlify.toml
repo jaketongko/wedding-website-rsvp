@@ -2,7 +2,8 @@
 # function, which declares its own routing in netlify/edge-functions/inject.ts.
 #
 # The one build step resizes the Our Story photos in source-images/our-story/
-# into public/ and lists them for the edge function (scripts/story-photos.mjs).
+# and the slideshow photos in source-images/slideshow/ into public/ and lists
+# them for the edge function (scripts/story-photos.mjs).
 # `netlify deploy --build` runs it locally before every deploy.
 
 [build]

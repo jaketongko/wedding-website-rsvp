@@ -13,8 +13,10 @@
  *     section, section...  <- the rest of the page, untouched
  *
  * Nothing is hard-coded that the couple might change in Canva:
- *  - the photos are the Gallery page's photo grid, read from Canva's page data
- *    on every request (media hashes change each time they re-publish);
+ *  - the photos are the repo's source-images/slideshow/ folder
+ *    (slideshow-photos.generated.ts); with fewer than 2 there, the Gallery
+ *    page's photo grid, read from Canva's page data on every request (media
+ *    hashes change each time they re-publish);
  *  - the names, date, venue and nav labels, and their fonts, are read from
  *    Canva's hero at runtime, just before it is hidden.
  * If either cannot be found, the slideshow does not mount and Canva's own hero
@@ -25,6 +27,7 @@
  */
 import { MOBILE } from "./player.ts";
 import { FONT } from "./rsvp.ts";
+import { SLIDESHOW_PHOTOS } from "./slideshow-photos.generated.ts";
 
 /** The main page's slug, as a prefix: it survives a `/main-2` style rename. */
 const ROUTE_PREFIX = "/main";
@@ -100,6 +103,8 @@ export function findSections(html: string): Record<string, string[]> {
 }
 
 export function findSlides(html: string): Slide[] {
+  // The couple's own slideshow folder wins; the Gallery grid is the fallback.
+  if (SLIDESHOW_PHOTOS.length >= 2) return SLIDESHOW_PHOTOS;
   try {
     const pages = [...html.matchAll(/"K":"([A-Za-z0-9_-]+)","L":"([a-z0-9-]*)"/g)]
       .map((m) => ({ slug: m[2], at: html.indexOf(`"a":"${m[1]}"`) }))

@@ -1,10 +1,14 @@
-// Prepares the Our Story photos: resizes the couple's originals for the web and
-// writes the list the edge function injects.
+// Prepares the Our Story and /main slideshow photos: resizes the couple's
+// originals for the web and writes the lists the edge function injects.
 //
 //   source-images/our-story/<event>/<photos>   originals, not in git - always in
 //                                              the MAIN checkout (see mainCheckout)
 //   public/_wedding/our-story/<event>/<hash>.jpg   resized copies, served
 //   netlify/lib/story-photos.generated.ts      which photos belong to which event
+//
+//   source-images/slideshow/<photos>           slideshow originals, flat folder
+//   public/_wedding/slideshow/<hash>.jpg       resized copies, served
+//   netlify/lib/slideshow-photos.generated.ts  the slideshow list, with sizes
 //
 // <event> is the story's title with everything but letters and digits removed,
 // lower-cased: "THE FIRST HELLO" -> thefirsthello. Photos show in file-name
@@ -14,7 +18,7 @@
 //
 // Runs as the Netlify build command (netlify.toml), so every
 // `netlify deploy --build` picks up added or removed photos. Also `npm run photos`.
-// STORY_SRC overrides the source folder (used for testing).
+// STORY_SRC and SLIDESHOW_SRC override the source folders (used for testing).
 
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -49,6 +53,13 @@ const OUT = path.join(ROOT, "public", "_wedding", "our-story");
 const LIST = path.join(ROOT, "netlify", "lib", "story-photos.generated.ts");
 const URL_BASE = "/_wedding/our-story";
 
+const SLIDE_SRC = path.resolve(process.env.SLIDESHOW_SRC || path.join(mainCheckout(), "source-images", "slideshow"));
+const SLIDE_OUT = path.join(ROOT, "public", "_wedding", "slideshow");
+const SLIDE_LIST = path.join(ROOT, "netlify", "lib", "slideshow-photos.generated.ts");
+const SLIDE_URL_BASE = "/_wedding/slideshow";
+/** Long edge, px, for a full-screen photo: covers a 1080p screen at 1.25x. */
+const SLIDE_MAX_EDGE = 2400;
+
 /** Long edge, px. A card photo shows at ~450px wide; this covers 3x screens. */
 const MAX_EDGE = 1600;
 /** ffmpeg's JPEG quality scale: 2 (best) to 31. 4 is visually clean at ~1/10 the size. */
@@ -79,55 +90,95 @@ let ffmpeg = null;
 const list = {};
 let made = 0;
 
+const photosIn = (dir) =>
+  fs
+    .readdirSync(dir)
+    .filter((f) => PHOTO.test(f))
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+/** Resizes one original into outDir (if not done before); returns the file name. */
+function resize(source, outDir, maxEdge) {
+  const hash = createHash("sha1")
+    .update(fs.readFileSync(source))
+    .update(`${maxEdge}/${QUALITY}`)
+    .digest("hex")
+    .slice(0, 12);
+  const name = `${hash}.jpg`;
+  const out = path.join(outDir, name);
+  if (!fs.existsSync(out)) {
+    ffmpeg ??= findFfmpeg();
+    fs.mkdirSync(outDir, { recursive: true });
+    // Shrinks only, never enlarges; strips metadata (location included).
+    // ffmpeg applies a phone photo's EXIF rotation itself.
+    execFileSync(ffmpeg, [
+      "-hide_banner", "-loglevel", "error", "-y",
+      "-i", source,
+      "-vf", `scale='min(${maxEdge},iw)':'min(${maxEdge},ih)':force_original_aspect_ratio=decrease`,
+      "-q:v", String(QUALITY),
+      "-map_metadata", "-1",
+      "-frames:v", "1",
+      out,
+    ]);
+    made++;
+  }
+  return name;
+}
+
+/** Deletes the files in dir not in keep, and dir itself once empty. Only ever
+ *  called on folders this script owns. */
+function prune(dir, keep) {
+  if (!fs.existsSync(dir)) return;
+  for (const f of fs.readdirSync(dir)) {
+    if (!keep.has(f) && fs.statSync(path.join(dir, f)).isFile()) fs.rmSync(path.join(dir, f));
+  }
+  if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
+}
+
+/** Width and height from a JPEG's frame header (ffmpeg writes baseline SOF0). */
+function jpegSize(file) {
+  const b = fs.readFileSync(file);
+  for (let i = 2; i + 9 < b.length && b[i] === 0xff; i += 2 + b.readUInt16BE(i + 2)) {
+    const m = b[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+      return { w: b.readUInt16BE(i + 7), h: b.readUInt16BE(i + 5) };
+    }
+  }
+  throw new Error(`No JPEG frame header in ${file}`);
+}
+
 for (const dir of events) {
   const key = keyOf(dir.name);
   if (!key) continue;
-  const files = fs
-    .readdirSync(path.join(SRC, dir.name))
-    .filter((f) => PHOTO.test(f))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const files = photosIn(path.join(SRC, dir.name));
   if (!files.length) continue;
-
-  fs.mkdirSync(path.join(OUT, key), { recursive: true });
-  list[key] = [];
-  for (const file of files) {
-    const source = path.join(SRC, dir.name, file);
-    const hash = createHash("sha1")
-      .update(fs.readFileSync(source))
-      .update(`${MAX_EDGE}/${QUALITY}`)
-      .digest("hex")
-      .slice(0, 12);
-    const out = path.join(OUT, key, `${hash}.jpg`);
-    if (!fs.existsSync(out)) {
-      ffmpeg ??= findFfmpeg();
-      // Shrinks only, never enlarges; strips metadata (location included).
-      // ffmpeg applies a phone photo's EXIF rotation itself.
-      execFileSync(ffmpeg, [
-        "-hide_banner", "-loglevel", "error", "-y",
-        "-i", source,
-        "-vf", `scale='min(${MAX_EDGE},iw)':'min(${MAX_EDGE},ih)':force_original_aspect_ratio=decrease`,
-        "-q:v", String(QUALITY),
-        "-map_metadata", "-1",
-        "-frames:v", "1",
-        out,
-      ]);
-      made++;
-    }
-    list[key].push(`${URL_BASE}/${key}/${hash}.jpg`);
-  }
+  list[key] = files.map(
+    (file) => `${URL_BASE}/${key}/${resize(path.join(SRC, dir.name, file), path.join(OUT, key), MAX_EDGE)}`,
+  );
 }
 
-// Drop resized copies whose original is gone. Only ever inside OUT, which
-// this script owns.
+// Drop resized copies whose original is gone.
 if (fs.existsSync(OUT)) {
   for (const key of fs.readdirSync(OUT)) {
     const dir = path.join(OUT, key);
-    if (!fs.statSync(dir).isDirectory()) continue;
-    const keep = new Set((list[key] || []).map((u) => path.basename(u)));
-    for (const f of fs.readdirSync(dir)) if (!keep.has(f)) fs.rmSync(path.join(dir, f));
-    if (!fs.readdirSync(dir).length) fs.rmdirSync(dir);
+    if (fs.statSync(dir).isDirectory()) prune(dir, new Set((list[key] || []).map((u) => path.basename(u))));
   }
 }
+
+// The /main slideshow: one flat folder, its own output, its own list.
+const slides = (fs.existsSync(SLIDE_SRC) ? photosIn(SLIDE_SRC) : []).map((file) => {
+  const name = resize(path.join(SLIDE_SRC, file), SLIDE_OUT, SLIDE_MAX_EDGE);
+  return { src: `${SLIDE_URL_BASE}/${name}`, ...jpegSize(path.join(SLIDE_OUT, name)) };
+});
+prune(SLIDE_OUT, new Set(slides.map((s) => path.basename(s.src))));
+
+fs.writeFileSync(
+  SLIDE_LIST,
+  "// Generated by scripts/story-photos.mjs - do not edit; run `npm run photos`.\n" +
+    "// The /main slideshow photos, in file-name order, from source-images/slideshow/.\n" +
+    "// Fewer than 2 and the slideshow uses the Canva Gallery grid instead.\n" +
+    `export const SLIDESHOW_PHOTOS: { src: string; w: number; h: number }[] = ${JSON.stringify(slides, null, 2)};\n`,
+);
+console.log(`[story-photos] ${slides.length} slideshow photo(s) from ${path.relative(ROOT, SLIDE_SRC) || SLIDE_SRC}.`);
 
 fs.writeFileSync(
   LIST,
