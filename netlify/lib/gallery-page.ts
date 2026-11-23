@@ -28,6 +28,10 @@ const ROUTE_PREFIX = "/gallery";
  *  section's cream colour shows instead. */
 const PAPER = "/_assets/media/bb2dc1916f2d3df4ff139aa6bf8da332.png";
 
+/** A tile's shape: Canva's own tiles are 313 x 449 (measured 2026-11-23). */
+const TILE_W = 313;
+const TILE_H = 449;
+
 const STYLES = `
   #sj-gal {
     position: relative;
@@ -96,9 +100,11 @@ const STYLES = `
     /* Marcellus, as the headings on the RSVP page (its @font-face is in rsvp.ts,
        injected on every page). */
     font-family: "SJ Marcellus", "Marcellus", Georgia, serif;
-    font-size: 1.9em;
+    /* Size and spacing as Canva's own heading (measured 2026-11-23: 50.7px,
+       0.11em), which the couple preferred to our smaller one. */
+    font-size: 3.15em;
     font-weight: 400;
-    letter-spacing: 0.32em;
+    letter-spacing: 0.11em;
     text-transform: uppercase;
     text-align: center;
   }
@@ -108,8 +114,10 @@ const STYLES = `
     max-width: 40em;
     margin: -0.9em auto 2.4em;
     font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
-    font-size: 1.05em;
-    line-height: 1.7;
+    /* Canva sets this at 26.7px in a light serif; Lato reads larger, so a
+       little smaller here looks the same size. */
+    font-size: 1.4em;
+    line-height: 1.6;
     text-align: center;
     text-wrap: balance;
     color: #77706c;
@@ -118,8 +126,9 @@ const STYLES = `
   #sj-gal .sjg-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1em;
-    max-width: 70em;
+    /* Canva's grid: 1275px wide, 8px apart (measured 2026-11-23). */
+    gap: 0.5em;
+    max-width: 80em;
     margin: 0 auto;
     padding: 0;
     list-style: none;
@@ -127,7 +136,7 @@ const STYLES = `
   /* The tile: the lightbox (gallery.ts) treats its clipping box as the photo. */
   #sj-gal .sjg-tile {
     position: relative;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: ${TILE_W} / ${TILE_H};
     overflow: hidden;
     border-radius: 0.9em;
     background: #e9e3ec;
@@ -153,6 +162,7 @@ const STYLES = `
   @media (max-width: 820px) {
     #sj-gal { padding: 3em 1em 0; }
     #sj-gal .sjg-title { font-size: 1.5em; }
+    #sj-gal .sjg-note { font-size: 1.05em; }
     #sj-gal .sjg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7em; }
     #sj-gal .sj-foot { margin: 3em -1em 0; padding: 2.8em 1em 3.2em; }
     #sj-gal.sjg-has-meadow .sj-foot { padding-bottom: 8em; }
@@ -177,6 +187,7 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
   var FOOT_HTML = ${JSON.stringify(FOOT_HTML)};
   var PAPER = ${JSON.stringify(PAPER)};
   var TOUCH = (window.matchMedia && matchMedia("(hover: none), (pointer: coarse)").matches) || "ontouchstart" in window;
+  var TILE_ASPECT = ${TILE_W} / ${TILE_H}; // width / height of a tile
   var SETTLE = 1500;   // ms with no new photo before building
   var GIVE_UP = 15000; // ms on the page before leaving Canva's grid as it is
 
@@ -230,7 +241,16 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
       /* Canva's phone layout leaves some images hanging off the page: never
          decoration, and not part of the grid either. */
       if (r.right <= sr.left + 2 || r.left >= sr.right - 2) continue;
-      all.push({ src: sharpest(src), orig: src, top: r.top - sr.top, left: r.left - sr.left, w: r.width, h: r.height });
+      /* Canva's crop: the whole photo hangs outside its frame, so where the
+         frame sits on it is the couple's crop. */
+      var ir = imgs[i].getBoundingClientRect();
+      var crop = ir.width && ir.height ? {
+        cx: (r.left + r.width / 2 - ir.left) / ir.width,
+        cy: (r.top + r.height / 2 - ir.top) / ir.height,
+        zoom: ir.width / r.width,
+        aspect: ir.width / ir.height
+      } : null;
+      all.push({ src: sharpest(src), orig: src, top: r.top - sr.top, left: r.left - sr.left, w: r.width, h: r.height, crop: crop });
     }
     if (!all.length) return null;
     /* The photos are the tiles: the most common size. Anything else is the
@@ -296,6 +316,23 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
     return flower;
   }
 
+  /* Lays a photo out in its tile with Canva's crop: the same point in the
+     middle and the same zoom, always covering the tile. Without a crop the
+     CSS default (centred cover) stays. Percentages, so it holds at any tile
+     size. */
+  function place(img, crop) {
+    if (!crop || !(crop.zoom > 0) || !(crop.aspect > 0)) return;
+    var w = crop.zoom * 100;                 /* % of the tile's width */
+    var h = w * TILE_ASPECT / crop.aspect;   /* % of the tile's height */
+    /* Never smaller than the tile, whatever the shape difference. */
+    var grow = Math.max(1, 100 / w, 100 / h);
+    w *= grow; h *= grow;
+    var left = Math.min(0, Math.max(100 - w, 50 - crop.cx * w));
+    var top = Math.min(0, Math.max(100 - h, 50 - crop.cy * h));
+    img.style.cssText = "inset:auto;object-fit:fill;width:" + w.toFixed(3) + "%;height:" + h.toFixed(3) +
+      "%;left:" + left.toFixed(3) + "%;top:" + top.toFixed(3) + "%;max-width:none;";
+  }
+
   function build(got, bg) {
     var s = el("section");
     s.id = "sj-gal";
@@ -345,6 +382,7 @@ const script = (sections: Record<string, string[]>, media: Record<string, string
         var f = this.getAttribute("data-fallback");
         if (f && this.src !== f) { this.removeAttribute("data-fallback"); this.src = f; }
       };
+      place(img, got.photos[i].crop);
       img.src = got.photos[i].src;
       if (img.complete && img.naturalWidth) img.classList.add("is-loaded");
       li.appendChild(img);
