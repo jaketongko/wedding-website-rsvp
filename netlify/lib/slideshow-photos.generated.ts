@@ -3,38 +3,38 @@
 // Fewer than 2 and the slideshow uses the Canva Gallery grid instead.
 export const SLIDESHOW_PHOTOS: { src: string; w: number; h: number }[] = [
   {
-    "src": "/_wedding/slideshow/ea074edc345a.jpg",
+    "src": "/_wedding/slideshow/cb7616de50c9.jpg",
     "w": 2048,
     "h": 1365
   },
   {
-    "src": "/_wedding/slideshow/0771056e02ea.jpg",
-    "w": 2048,
-    "h": 1365
-  },
-  {
-    "src": "/_wedding/slideshow/8cd7526dc6ed.jpg",
+    "src": "/_wedding/slideshow/04c6b1d0baa2.jpg",
     "w": 1365,
     "h": 2048
   },
   {
-    "src": "/_wedding/slideshow/65fe0e9ce93e.jpg",
-    "w": 1957,
-    "h": 1237
+    "src": "/_wedding/slideshow/be6d7ef6b73f.jpg",
+    "w": 2048,
+    "h": 1365
   },
   {
-    "src": "/_wedding/slideshow/9c6daa52f28c.jpg",
-    "w": 2400,
-    "h": 1604
+    "src": "/_wedding/slideshow/82ac8a1aac1f.jpg",
+    "w": 2048,
+    "h": 1365
   },
   {
-    "src": "/_wedding/slideshow/8f50fb7a080a.jpg",
-    "w": 1850,
-    "h": 1237
+    "src": "/_wedding/slideshow/da4ea51c93d6.jpg",
+    "w": 2048,
+    "h": 1365
   },
   {
-    "src": "/_wedding/slideshow/db7d3e6bb41e.jpg",
-    "w": 825,
-    "h": 1237
+    "src": "/_wedding/slideshow/0eadb914ee54.jpg",
+    "w": 2048,
+    "h": 1365
+  },
+  {
+    "src": "/_wedding/slideshow/dc897b860e5a.jpg",
+    "w": 2048,
+    "h": 1369
   }
 ];

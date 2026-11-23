@@ -15,18 +15,31 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/thequestion/673999006893.jpg",
     "/_wedding/our-story/thequestion/1068a62f7333.jpg",
     "/_wedding/our-story/thequestion/1452a4bbf550.jpg",
-    "/_wedding/our-story/thequestion/8bb19d853071.jpg",
+    "/_wedding/our-story/thequestion/480326ebb336.jpg",
+    "/_wedding/our-story/thequestion/86dc7e7c6aa4.jpg",
     "/_wedding/our-story/thequestion/0623dbc184ea.jpg",
     "/_wedding/our-story/thequestion/d0de2444f274.jpg",
+    "/_wedding/our-story/thequestion/8719425b35aa.jpg",
+    "/_wedding/our-story/thequestion/69bfc2abf7c0.jpg",
+    "/_wedding/our-story/thequestion/1694bfc31d79.jpg",
     "/_wedding/our-story/thequestion/b0e06b277bf3.jpg",
+    "/_wedding/our-story/thequestion/7af94800f1fb.jpg",
+    "/_wedding/our-story/thequestion/7fe40d5fdc29.jpg",
+    "/_wedding/our-story/thequestion/66081dfb469e.jpg",
     "/_wedding/our-story/thequestion/6625c133ff81.jpg",
+    "/_wedding/our-story/thequestion/fd27350c89dd.jpg",
     "/_wedding/our-story/thequestion/307e07fbc7eb.jpg",
-    "/_wedding/our-story/thequestion/b3ddc5555873.jpg"
+    "/_wedding/our-story/thequestion/46a4c022cfeb.jpg",
+    "/_wedding/our-story/thequestion/70a68f3a43b5.jpg"
   ],
   "usalongtheway": [
+    "/_wedding/our-story/usalongtheway/38aa9ee55cff.jpg",
+    "/_wedding/our-story/usalongtheway/5208f9a5b0df.jpg",
+    "/_wedding/our-story/usalongtheway/3e0e021e645f.jpg",
     "/_wedding/our-story/usalongtheway/08d8e20990f1.jpg",
     "/_wedding/our-story/usalongtheway/58745d784743.jpg",
-    "/_wedding/our-story/usalongtheway/621a83b13f40.jpg",
+    "/_wedding/our-story/usalongtheway/66986283ed27.jpg",
+    "/_wedding/our-story/usalongtheway/f653fbf2b70d.jpg",
     "/_wedding/our-story/usalongtheway/d3a73ac13f7d.jpg",
     "/_wedding/our-story/usalongtheway/cce8b06331f7.jpg",
     "/_wedding/our-story/usalongtheway/6bdb4134fc53.jpg",
@@ -38,6 +51,7 @@ export const STORY_PHOTOS: Record<string, string[]> = {
     "/_wedding/our-story/usalongtheway/57ad3d085019.jpg",
     "/_wedding/our-story/usalongtheway/6d5149533f95.jpg",
     "/_wedding/our-story/usalongtheway/64df00b84884.jpg",
+    "/_wedding/our-story/usalongtheway/5737b17efc1d.jpg",
     "/_wedding/our-story/usalongtheway/38019c8d7e30.jpg"
   ]
 };
