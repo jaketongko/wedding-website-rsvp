@@ -1,8 +1,7 @@
 /**
  * Full-screen openings for the Our Story, Details and Gallery pages: each
  * page's first Canva section is replaced by one of ours, one screen tall on
- * desktop (on portrait phones Canva's own height, as in its mobile view) -
- * Canva's photo filling it, the nav, and the
+ * desktop and phone - Canva's photo filling the screen, the nav, and the
  * section's lines rising in one after another. (The main page has its own
  * slideshow, slideshow.ts.)
  *
@@ -199,13 +198,6 @@ const styles = (heroSelector: string) => `
   /* Phones: the menu button (menu.ts) stands in for the nav row. */
   @media ${MOBILE} {
     #sj-shero .sj-shero-nav { display: none; }
-  }
-  /* Portrait phones: Canva's own height, not a full screen, so the whole
-     photo shows as in Canva's mobile view (couple's ask, 2026-11-23). Canva's
-     section is not held, so its natural height can be read (fitHeight). */
-  @media (max-width: 600px) {
-    ${heroSelector} { min-height: 0; }
-    #sj-shero.sj-shero--fit { height: auto; }
   }
 
   /* ---------- the Gallery's title (fillGallery) ---------- */
@@ -423,18 +415,6 @@ const script = (
     shero.insertBefore(img, shero.firstChild);
   }
 
-  /* Ours takes the shape of Canva's section (CSS uses it on portrait phones
-     only). Read while Canva's is still laid out; once it is display:none the
-     last shape read stays. */
-  function fitHeight() {
-    /* Wider, Canva's section is held full-screen: its shape means nothing. */
-    if (!window.matchMedia("(max-width: 600px)").matches) return;
-    var r = heroSrc.getBoundingClientRect();
-    if (r.width < 100 || r.height < 100) return;
-    shero.style.aspectRatio = Math.round(r.width) + " / " + Math.round(r.height);
-    shero.classList.add("sj-shero--fit");
-  }
-
   function styleLike(node, src) {
     node.style.fontFamily = src.look.font + ", " + FALLBACK_FONT;
     if (src.look.upper) node.style.textTransform = "uppercase";
@@ -639,7 +619,6 @@ const script = (
       /* Out of the flow (ours holds the place) but still laid out, so its
          text can be read. */
       heroSrc.classList.add("sj-shero-reading");
-      fitHeight();
       if (!shero.querySelector(".sj-shero-img")) {
         var src = heroImage(heroSrc);
         if (src) addHeroImage(src);
@@ -689,7 +668,6 @@ const script = (
       var late = heroImage(heroSrc);
       if (late) addHeroImage(late);
     }
-    if (heroSrc.style.display !== "none") fitHeight();
     heroSrc.classList.remove("sj-shero-reading");
     if (heroSrc.style.display !== "none") heroSrc.style.display = "none";
   }
