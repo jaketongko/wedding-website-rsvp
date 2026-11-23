@@ -127,12 +127,14 @@ const STYLES = `
   /* ---------- the cards ---------- */
   #sj-story .sj-card {
     display: grid;
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    /* The photos take the larger share (the couple asked for bigger photos,
+       2026-11-23). */
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
     align-items: center;
-    max-width: 68em;
+    max-width: 78em;
     margin: 0 auto;
   }
-  #sj-story .sj-card--flip { grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr); }
+  #sj-story .sj-card--flip { grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr); }
   #sj-story .sj-card--flip .sj-card-media { order: 2; }
   #sj-story .sj-card--text { grid-template-columns: 1fr; }
 
@@ -140,10 +142,14 @@ const STYLES = `
   #sj-story .sj-card-photos {
     position: relative;
     aspect-ratio: 4 / 5;
+    /* Never taller than a laptop screen: the photo is cropped a little more
+       instead (object-fit: cover). */
+    max-height: 85vh;
     overflow: hidden;
     border-radius: 1.5em;
     background: #eee7f5;
     touch-action: pan-y;
+    cursor: zoom-in;
   }
   #sj-story .sj-card-photos img {
     position: absolute;
@@ -492,7 +498,8 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
       var media = el("div", "sj-card-media");
       var frame = el("div", "sj-card-photos");
       frame.setAttribute("aria-roledescription", "carousel");
-      frame.setAttribute("aria-label", "Photos: " + event.title.text);
+      frame.setAttribute("aria-label", "Photos: " + event.title.text + ". Press Enter to view full size.");
+      frame.tabIndex = 0;
       for (var p = 0; p < photos.length; p++) {
         var img = el("img");
         img.alt = p === 0 ? event.title.text : "";
@@ -665,14 +672,53 @@ const script = (photos: Record<string, string[]>, sections: Record<string, strin
     return null;
   }
 
+  function frameAt(x, y) {
+    if (!root || !root.isConnected) return null;
+    var frames = root.querySelectorAll(".sj-card-photos");
+    for (var i = 0; i < frames.length; i++) {
+      var r = frames[i].getBoundingClientRect();
+      if (r.width && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return frames[i];
+    }
+    return null;
+  }
+
+  /* The card's photos in the site's photo viewer (gallery.ts), starting on
+     the one showing. */
+  function enlarge(frame) {
+    var imgs = frame.getElementsByTagName("img"), list = [];
+    for (var i = 0; i < imgs.length; i++) list.push(imgs[i].getAttribute("data-src"));
+    window.sjLightbox(list, current(frame), "Photo");
+  }
+
+  /* A focused photo opens with Enter or Space, like a click. */
+  document.addEventListener("keydown", function (e) {
+    if (!onRoute() || !root) return;
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    var frame = document.activeElement;
+    if (!frame || !frame.classList || !frame.classList.contains("sj-card-photos") || !window.sjLightbox) return;
+    e.preventDefault();
+    enlarge(frame);
+  });
+
   document.addEventListener("click", function (e) {
     if (!onRoute() || !root) return;
+    /* The photo viewer is open over the page: its clicks are its own. */
+    var viewer = document.getElementById("sj-gbox");
+    if (viewer && !viewer.hidden) return;
     /* The phone menu and music button float above the page; theirs. */
     var over = e.detail !== 0 && document.elementFromPoint(e.clientX, e.clientY);
     if (over && over.closest && over.closest("#sj-menu, #bgm-toggle")) return;
     var hit = buttonAt(e.clientX, e.clientY);
     if (!hit && e.detail === 0 && root.contains(e.target)) hit = e.target.closest("button");
-    if (!hit) return;
+    if (!hit) {
+      /* Anywhere else on a photo opens it full size. */
+      var photo = frameAt(e.clientX, e.clientY) || (e.detail === 0 && root.contains(e.target) && e.target.closest(".sj-card-photos"));
+      if (!photo || !window.sjLightbox) return;
+      e.preventDefault();
+      e.stopPropagation();
+      enlarge(photo);
+      return;
+    }
     var frame = hit.closest(".sj-card-photos");
     if (!frame) return;
     e.preventDefault();

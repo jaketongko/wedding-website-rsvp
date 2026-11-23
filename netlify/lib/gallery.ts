@@ -248,6 +248,10 @@ const SCRIPT = `
   var touchX = 0, touchY = 0;
   var observer = null;
   var imageCount = -1;
+  /* What the viewer calls a photo, for screen readers. */
+  var label = "Pre-wedding photo";
+  /* The page another script opened the viewer on (window.sjLightbox). */
+  var openedOn = null;
 
   function onRoute() {
     return location.pathname.indexOf(ROUTE) === 0;
@@ -321,6 +325,7 @@ const SCRIPT = `
     /* Clear the previous set first, so a frame that is no longer a photo tile
        does not keep the hover styling and a stale label. */
     untag();
+    label = "Pre-wedding photo";
     if (!found.length) return;
 
     /* The couple's grid repeats the same photos, so previous/next walks the
@@ -418,7 +423,7 @@ const SCRIPT = `
        "next" brings the following photo in from the right. */
     boxImg.style.setProperty("--sj-gslide", (direction * 18) + "px");
     boxImg.src = photos[index];
-    boxImg.alt = "Pre-wedding photo " + (index + 1) + " of " + photos.length;
+    boxImg.alt = label + " " + (index + 1) + " of " + photos.length;
     boxCount.textContent = (index + 1) + " / " + photos.length;
     /* One photo: nothing to step to. */
     btnPrev.hidden = btnNext.hidden = photos.length < 2;
@@ -491,7 +496,8 @@ const SCRIPT = `
   }, true);
 
   document.addEventListener("keydown", function (e) {
-    if (!onRoute()) return;
+    /* Open, the viewer takes the keys on any page (window.sjLightbox). */
+    if (!onRoute() && !isOpen()) return;
 
     if (!isOpen()) {
       /* A focused tile opens the same way a click does. */
@@ -541,7 +547,10 @@ const SCRIPT = `
 
     if (!onRoute()) {
       if (tiles.length) untag();
-      if (box) { close(); if (box.parentNode) box.parentNode.removeChild(box); }
+      /* Kept while another script's viewer is open on this same page. */
+      var lent = isOpen() && openedOn === location.pathname;
+      if (box && !lent) { close(); if (box.parentNode) box.parentNode.removeChild(box); }
+      if (lent) mount();
       imageCount = -1;
     } else {
       /* Cheap steady-state check: re-scan only when the page's images changed
@@ -572,6 +581,16 @@ const SCRIPT = `
     scheduled = true;
     window.requestAnimationFrame(function () { scheduled = false; sync(); });
   }
+
+  /* The same viewer for other pages' photos (Our Story's carousels): a list
+     of URLs, the one to start on, and what to call a photo. */
+  window.sjLightbox = function (list, start, name) {
+    if (!list || !list.length || isOpen()) return;
+    photos = list.slice();
+    label = name || "Photo";
+    openedOn = location.pathname;
+    open(Math.max(0, Math.min(list.length - 1, start || 0)));
+  };
 
   if (document.body) sync();
   else document.addEventListener("DOMContentLoaded", sync);
