@@ -3,13 +3,27 @@
 // digits kept, lower-cased ("THE FIRST HELLO" -> thefirsthello).
 export const STORY_PHOTOS: Record<string, string[]> = {
   "thefirsthello": [
+    "/_wedding/our-story/thefirsthello/230a19565eb9.jpg",
+    "/_wedding/our-story/thefirsthello/92543647c452.jpg",
     "/_wedding/our-story/thefirsthello/ea16c5bc8a3b.jpg",
+    "/_wedding/our-story/thefirsthello/1ea4348c6887.jpg",
+    "/_wedding/our-story/thefirsthello/2f6aec34a07a.jpg",
     "/_wedding/our-story/thefirsthello/9c3ebf899d2c.jpg",
+    "/_wedding/our-story/thefirsthello/83fc8fda8dc5.jpg",
     "/_wedding/our-story/thefirsthello/ebc0b11d072c.jpg",
+    "/_wedding/our-story/thefirsthello/dcb0b628c835.jpg",
+    "/_wedding/our-story/thefirsthello/41237e74853c.jpg",
+    "/_wedding/our-story/thefirsthello/e0e7d1fe4685.jpg",
     "/_wedding/our-story/thefirsthello/bfbcbe46f367.jpg",
     "/_wedding/our-story/thefirsthello/854ae5ed3bc1.jpg",
     "/_wedding/our-story/thefirsthello/beed567b3450.jpg",
-    "/_wedding/our-story/thefirsthello/504c5f20af39.jpg"
+    "/_wedding/our-story/thefirsthello/4d1a5e5b454e.jpg",
+    "/_wedding/our-story/thefirsthello/504c5f20af39.jpg",
+    "/_wedding/our-story/thefirsthello/2a81d85c16dc.jpg",
+    "/_wedding/our-story/thefirsthello/2498f9508525.jpg",
+    "/_wedding/our-story/thefirsthello/7ede88615924.jpg",
+    "/_wedding/our-story/thefirsthello/102dbbecb62c.jpg",
+    "/_wedding/our-story/thefirsthello/fb4de6c1db17.jpg"
   ],
   "thequestion": [
     "/_wedding/our-story/thequestion/673999006893.jpg",
